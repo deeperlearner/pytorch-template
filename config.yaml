@@ -9,5 +9,5 @@ optimizer:
 loss: "cross-entropy"
 trainer:
     epochs: 1000
-    save_der: "saved/"k
+    save_der: "saved/"
     early_stop: 10

@@ -1,5 +1,5 @@
 # PyTorch Template Project
-PyTorch deep learning project made easy.
+A pytorch template files generator.
 
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
 
@@ -41,6 +41,7 @@ PyTorch deep learning project made easy.
 ## Features
 * Clear folder structure which is suitable for many deep learning projects.
 * `.yaml` config file support for convenient parameter tuning.
+* By adding PATH in .bashrc, you can execute `torch_new_project.py` under all paths.
 * Customizable command line options for more convenient parameter tuning.
 * Checkpoint saving and resuming.
 * Abstract base classes for faster development:
@@ -50,7 +51,7 @@ PyTorch deep learning project made easy.
 
 ## Folder Structure
   ```
-  pytorch-template/
+  Pytorch-Template/
   │
   ├── train.py - main script to start training
   ├── test.py - evaluation of trained model
