@@ -40,7 +40,7 @@ PyTorch deep learning project made easy.
 
 ## Features
 * Clear folder structure which is suitable for many deep learning projects.
-* `.json` config file support for convenient parameter tuning.
+* `.yaml` config file support for convenient parameter tuning.
 * Customizable command line options for more convenient parameter tuning.
 * Checkpoint saving and resuming.
 * Abstract base classes for faster development:
@@ -55,7 +55,7 @@ PyTorch deep learning project made easy.
   ├── train.py - main script to start training
   ├── test.py - evaluation of trained model
   │
-  ├── config.json - holds configuration for training
+  ├── config.yaml - holds configuration for training
   ├── parse_config.py - class to handle config file and cli options
   │
   ├── new_project.py - initialize new project with template files
@@ -85,7 +85,7 @@ PyTorch deep learning project made easy.
   ├── logger/ - module for tensorboard visualization and logging
   │   ├── visualization.py
   │   ├── logger.py
-  │   └── logger_config.json
+  │   └── logger_config.yaml
   │  
   └── utils/ - small utility functions
       ├── util.py
@@ -94,10 +94,10 @@ PyTorch deep learning project made easy.
 
 ## Usage
 The code in this repo is an MNIST example of the template.
-Try `python train.py -c config.json` to run code.
+Try `python train.py -c config.yaml` to run code.
 
 ### Config file format
-Config files are in `.json` format:
+Config files are in `.yaml` format:
 ```javascript
 {
   "name": "Mnist_LeNet",        // training session name
@@ -155,10 +155,10 @@ Config files are in `.json` format:
 Add addional configurations if you need.
 
 ### Using config files
-Modify the configurations in `.json` config files, then run:
+Modify the configurations in `.yaml` config files, then run:
 
   ```
-  python train.py --config config.json
+  python train.py --config config.yaml
   ```
 
 ### Resuming from checkpoints
@@ -173,7 +173,7 @@ You can enable multi-GPU training by setting `n_gpu` argument of the config file
 If configured to use smaller number of gpu than available, first n devices will be used by default.
 Specify indices of available GPUs by cuda environmental variable.
   ```
-  python train.py --device 2,3 -c config.json
+  python train.py --device 2,3 -c config.yaml
   ```
   This is equivalent to
   ```
@@ -192,7 +192,7 @@ This script will filter out unneccessary files like cache, git files or readme f
 Changing values of config file is a clean, safe and easy way of tuning hyperparameters. However, sometimes
 it is better to have command line options if some values need to be changed too often or quickly.
 
-This template uses the configurations stored in the json file by default, but by registering custom options as follows
+This template uses the configurations stored in the yaml file by default, but by registering custom options as follows
 you can change some of them using CLI flags.
 
   ```python
@@ -206,7 +206,7 @@ you can change some of them using CLI flags.
   ```
 `target` argument should be sequence of keys, which are used to access that option in the config dict. In this example, `target` 
 for the learning rate option is `('optimizer', 'args', 'lr')` because `config['optimizer']['args']['lr']` points to the learning rate.
-`python train.py -c config.json --bs 256` runs training with options given in `config.json` except for the `batch size`
+`python train.py -c config.yaml --bs 256` runs training with options given in `config.yaml` except for the `batch size`
 which is increased to 256 by command line options.
 
 
@@ -283,7 +283,7 @@ Custom loss functions can be implemented in 'model/loss.py'. Use them by changin
 Metric functions are located in 'model/metric.py'.
 
 You can monitor multiple metrics by providing a list in the configuration file, e.g.:
-  ```json
+  ```yaml
   "metrics": ["accuracy", "top_k_acc"],
   ```
 
@@ -308,8 +308,8 @@ The `validation_split` can be a ratio of validation set per total data(0.0 <= fl
 
 ### Checkpoints
 You can specify the name of the training session in config files:
-  ```json
-  "name": "MNIST_LeNet",
+  ```yaml
+  name: MNIST_LeNet,
   ```
 
 The checkpoints will be saved in `save_dir/name/timestamp/checkpoint_epoch_n`, with timestamp in mmdd_HHMMSS format.

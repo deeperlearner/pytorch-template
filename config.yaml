@@ -1,0 +1,13 @@
+dataset:
+    data_dir: "data/"
+data_loader:
+    batch_size: 64
+    shuffle: true
+    num_workers: 2
+optimizer:
+    lr: 0.001
+loss: "cross-entropy"
+trainer:
+    epochs: 1000
+    save_der: "saved/"k
+    early_stop: 10
