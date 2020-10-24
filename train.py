@@ -1,24 +1,20 @@
 import argparse
-import yaml
 import collections
 
 import torch
 import numpy as np
 
-from data_loader import data_loader
+import data_loader.data_loaders as module_data
 import model.loss as module_loss
 import model.metric as module_metric
 import model.model as module_arch
-from parse_config import config
+from parse_config import ConfigParser
 from trainer import Trainer
 
 
 def main(config):
-    logger = config.get_logger('train')
-
     # setup data_loader instances
     data_loader = config.init_obj('data_loader', module_data)
-    valid_data_loader = data_loader.split_validation()
 
     # build model architecture, then print to console
     model = config.init_obj('arch', module_arch)
@@ -45,9 +41,9 @@ def main(config):
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser()
-    args.add_argument('-c', '--config', default='config.yaml', type=str,
-                      help='config file path (default: None)')
-    config = args.parse_args()
+    args.add_argument('-c', '--config', default='config.json', type=str)
+    args = args.parse_args()
+    config = ConfigParser(args)
 
     main(config)
 

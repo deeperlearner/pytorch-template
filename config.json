@@ -1,0 +1,39 @@
+{
+    "n_gpu": 1,
+
+    "dataset": {
+        "type": "MyDataset",
+        "args": {
+            "data_dir": "data/"
+        }
+    },
+    "data_loader": {
+        "type": "MyDataLoader",
+        "args": {
+            "batch_size": 64,
+            "shuffle": true,
+            "num_workers": 2
+        }
+    },
+    "model": {
+        "type": "VGG16",
+        "args": {}
+    },
+    "optimizer":
+        "type": "Adam",
+        "args": {
+            "lr": 0.001
+        },
+    "loss": "cross-entropy",
+    "trainer": {
+        "epochs": 1000,
+
+        "save_dir": "saved/",
+        "save_period": 1,
+
+        "monitor": "min val_loss",
+        "early_stop": 10,
+
+        "tensorboard": false
+    }
+}
