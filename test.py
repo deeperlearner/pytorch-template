@@ -59,22 +59,13 @@ def main(config):
             for i, metric in enumerate(metric_fns):
                 total_metrics[i] += metric(output, target) * batch_size
 
-    n_samples = len(data_loader.sampler)
-    log = {'loss': total_loss / n_samples}
-    log.update({
-        met.__name__: total_metrics[i].item() / n_samples for i, met in enumerate(metric_fns)
-    })
-    logger.info(log)
-
 
 if __name__ == '__main__':
-    args = argparse.ArgumentParser(description='PyTorch Template')
-    args.add_argument('-c', '--config', default=None, type=str,
-                      help='config file path (default: None)')
-    args.add_argument('-r', '--resume', default=None, type=str,
-                      help='path to latest checkpoint (default: None)')
-    args.add_argument('-d', '--device', default=None, type=str,
-                      help='indices of GPUs to enable (default: all)')
+    args = argparse.ArgumentParser(description='testing')
+    args.add_argument('-c', '--config', default='config.json', type=str)
+    args.add_argument('--test_dir', default='test', type=str)
+    args.add_argument('--out_dir', default='out', type=str)
+    args = args.parse_args()
+    config = ConfigParser(args)
 
-    config = ConfigParser.from_args(args)
     main(config)

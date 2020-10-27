@@ -1,5 +1,5 @@
+import os
 import argparse
-import collections
 
 import torch
 import numpy as np
@@ -7,18 +7,22 @@ import numpy as np
 import data_loader.data_loaders as module_data
 import model.loss as module_loss
 import model.metric as module_metric
-import model.model as module_arch
+from model.model import models
 from parse_config import ConfigParser
-from trainer import Trainer
+from trainer.trainer import Trainer
 
 
 def main(config):
-    # setup data_loader instances
-    data_loader = config.init_obj('data_loader', module_data)
+    # dataset
+    trainset = config.init_obj('dataset', module_data, mode='train')
+    validset = config.init_obj('dataset', module_data, mode='valid')
 
-    # build model architecture, then print to console
-    model = config.init_obj('arch', module_arch)
-    logger.info(model)
+    # dataloader
+    trainloader = config.init_obj('data_loader', module_data, trainset)
+    validloader = config.init_obj('data_loader', module_data, validset)
+
+    # model
+    model = models.vgg16(pretrained=True)
 
     # get function handles of loss and metrics
     criterion = getattr(module_loss, config['loss'])
@@ -32,18 +36,17 @@ def main(config):
 
     trainer = Trainer(model, criterion, metrics, optimizer,
                       config=config,
-                      data_loader=data_loader,
-                      valid_data_loader=valid_data_loader,
+                      data_loader=trainloader,
+                      valid_data_loader=validloader,
                       lr_scheduler=lr_scheduler)
 
     trainer.train()
 
 
 if __name__ == '__main__':
-    args = argparse.ArgumentParser()
+    args = argparse.ArgumentParser(description='training')
     args.add_argument('-c', '--config', default='config.json', type=str)
     args = args.parse_args()
     config = ConfigParser(args)
 
     main(config)
-

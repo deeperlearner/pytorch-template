@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 import os
-from os.path import expanduser, join, isfile, abspath
+from os.path import expandvars, join, isfile, abspath
 import sys
 from shutil import copytree, ignore_patterns
 
 # The directory of Pytorch-Template
-template_dir = expanduser("~/Github/Pytorch-Template")
+template_dir = expandvars("${code_path}/Github/Pytorch-Template")
 
 # This script initializes new pytorch project with the template files.
 # Add `export PATH=$PATH:${HOME}/Github/Pytorch-Template` to ~/.bashrc

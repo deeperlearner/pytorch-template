@@ -1,12 +1,8 @@
 import os
-import logging
 from pathlib import Path
-from functools import reduce, partial
-from operator import getitem
-from datetime import datetime
+from functools import partial
 
-from logger import setup_logging
-from utils import read_json, write_json
+from utils.util import read_json, write_json
 
 
 class ConfigParser:
@@ -14,8 +10,8 @@ class ConfigParser:
         """
         Initialize this class from config.json. Used in train, test.
         """
-        cfg_fname = Path(args.config)
-        self.config = read_json(cfg_fname)
+        config_path = Path(args.config)
+        self.config = read_json(config_path)
         self.save_dir = Path(self.config['trainer']['save_dir'])
 
     def init_obj(self, name, module, *args, **kwargs):
@@ -50,7 +46,7 @@ class ConfigParser:
         """Access items like ordinary dict."""
         return self.config[name]
 
-    # setting read-only attributes
+    # read-only attributes
     @property
     def config(self):
         return self.config
