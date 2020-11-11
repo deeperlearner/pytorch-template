@@ -7,7 +7,7 @@ import numpy as np
 import data_loader.data_loaders as module_data
 import model.loss as module_loss
 import model.metric as module_metric
-import  model.model as module_model
+import  model.model as module_arch
 from parse_config import ConfigParser
 from trainer import Trainer
 
@@ -25,7 +25,7 @@ def main(args):
     validloader = config.init_obj('data_loader', module_data, validset)
 
     # model
-    model = config.init_obj('model', module_model)
+    model = config.init_obj('model', module_arch)
     logger.info(model)
 
     # get function handles of loss and metrics

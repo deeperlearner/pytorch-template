@@ -11,10 +11,17 @@ plotting = False
 import data_loader.data_loaders as module_data
 import model.loss as module_loss
 import model.metric as module_metric
-import model.model as module_model
+import model.model as module_arch
 from parse_config import ConfigParser
 from utils import ensure_dir
 
+
+# fix random seeds for reproducibility
+SEED = 123
+torch.manual_seed(SEED)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+np.random.seed(SEED)
 
 def main(args):
     config = ConfigParser(args, resume=args.model_path)
@@ -26,7 +33,7 @@ def main(args):
     testloader = config.init_obj('data_loader', module_data, testset)
 
     # build model architecture
-    model = config.init_obj('model', module_model)
+    model = config.init_obj('model', module_arch)
     logger.debug(model)
 
     # get function handles of loss and metrics
