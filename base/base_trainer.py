@@ -1,5 +1,6 @@
-import torch
 from abc import abstractmethod
+
+import torch
 from numpy import inf
 
 
@@ -9,6 +10,8 @@ class BaseTrainer:
     """
     def __init__(self, model, criterion, metric_ftns, optimizer, config):
         self.config = config
+        self.logger = config.get_logger('trainer', config['trainer']['verbosity'])
+
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.model = model.to(self.device)
 
@@ -35,7 +38,7 @@ class BaseTrainer:
 
         self.start_epoch = 1
 
-        self.checkpoint_dir = config.save_dir
+        self.checkpoint_dir = config.save_dir['model']
 
         if config.resume is not None:
             self._resume_checkpoint(config.resume)
@@ -60,6 +63,7 @@ class BaseTrainer:
             # save logged informations into log dict
             log = {'epoch': epoch}
             log.update(result)
+            self.logger.info('\nMetric: {}'.format(log))
 
             # evaluate model performance according to configured metric, save best checkpoint as model_best
             best = False
@@ -69,6 +73,8 @@ class BaseTrainer:
                     improved = (self.mnt_mode == 'min' and log[self.mnt_metric] <= self.mnt_best) or \
                                (self.mnt_mode == 'max' and log[self.mnt_metric] >= self.mnt_best)
                 except KeyError:
+                    self.logger.warning("Warning: Metric '{}' is not found. "
+                                        "Model performance monitoring is disabled.".format(self.mnt_metric))
                     self.mnt_mode = 'off'
                     improved = False
 
@@ -80,9 +86,12 @@ class BaseTrainer:
                     not_improved_count += 1
 
                 if not_improved_count > self.early_stop:
+                    self.logger.info("Validation performance didn\'t improve for {} epochs. "
+                                     "Training stops.".format(self.early_stop))
                     break
 
             if epoch % self.save_period == 0:
+                self.logger.info('Best val loss: {}'.format(self.mnt_best))
                 self._save_checkpoint(epoch, save_best=best)
 
     def _save_checkpoint(self, epoch, save_best=False):
@@ -103,9 +112,11 @@ class BaseTrainer:
         }
         filename = str(self.checkpoint_dir / 'checkpoint-epoch{}.pth'.format(epoch))
         torch.save(state, filename)
+        self.logger.info("Saving checkpoint: {} ...".format(filename))
         if save_best:
             best_path = str(self.checkpoint_dir / 'model_best.pth')
             torch.save(state, best_path)
+            self.logger.info("Saving current best: model_best.pth ...")
 
     def _resume_checkpoint(self, resume_path):
         """
@@ -114,16 +125,22 @@ class BaseTrainer:
         :param resume_path: Checkpoint path to be resumed
         """
         resume_path = str(resume_path)
+        self.logger.info("Loading checkpoint: {} ...".format(resume_path))
         checkpoint = torch.load(resume_path)
         self.start_epoch = checkpoint['epoch'] + 1
         self.mnt_best = checkpoint['monitor_best']
 
         # load architecture params from checkpoint.
+        if checkpoint['config']['model'] != self.config['model']:
+            self.logger.warning("Warning: Architecture configuration given in config file is different from that of "
+                                "checkpoint. This may yield an exception while state_dict is being loaded.")
         self.model.load_state_dict(checkpoint['state_dict'])
 
         # load optimizer state from checkpoint only when optimizer type is not changed.
         if checkpoint['config']['optimizer']['type'] != self.config['optimizer']['type']:
-            pass
+            self.logger.warning("Warning: Optimizer type given in config file is different from that of checkpoint. "
+                                "Optimizer parameters not being resumed.")
         else:
             self.optimizer.load_state_dict(checkpoint['optimizer'])
 
+        self.logger.info("Checkpoint loaded. Resume training from epoch {}".format(self.start_epoch))

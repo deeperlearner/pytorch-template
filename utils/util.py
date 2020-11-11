@@ -27,7 +27,7 @@ def inf_loop(data_loader):
 
 class MetricTracker:
     def __init__(self, *keys):
-        self.writer = writer
+        pd.set_option('precision', 5)
         self._data = pd.DataFrame(index=keys, columns=['total', 'counts', 'average'])
         self.reset()
         

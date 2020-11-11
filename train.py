@@ -7,12 +7,15 @@ import numpy as np
 import data_loader.data_loaders as module_data
 import model.loss as module_loss
 import model.metric as module_metric
-from model.model import models
+import  model.model as module_model
 from parse_config import ConfigParser
-from trainer.trainer import Trainer
+from trainer import Trainer
 
 
-def main(config):
+def main(args):
+    config = ConfigParser(args, resume=args.model_path)
+    logger = config.get_logger('train')
+
     # dataset
     trainset = config.init_obj('dataset', module_data, mode='train')
     validset = config.init_obj('dataset', module_data, mode='valid')
@@ -22,7 +25,8 @@ def main(config):
     validloader = config.init_obj('data_loader', module_data, validset)
 
     # model
-    model = models.vgg16(pretrained=True)
+    model = config.init_obj('model', module_model)
+    logger.info(model)
 
     # get function handles of loss and metrics
     criterion = getattr(module_loss, config['loss'])
@@ -46,7 +50,8 @@ def main(config):
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='training')
     args.add_argument('-c', '--config', default='config.json', type=str)
+    args.add_argument('--mode', default='train', type=str)
+    args.add_argument('--model_path', type=str)
     args = args.parse_args()
-    config = ConfigParser(args)
 
-    main(config)
+    main(args)

@@ -1,8 +1,11 @@
 {
+    "n_gpu": 1,
+    "name": "EXP0",
     "dataset": {
         "type": "MyDataset",
         "args": {
-            "data_dir": "../hw2_data/p1_data"
+            "data_dir": "./data",
+            "test_dir": "./test"
         }
     },
     "data_loader": {
@@ -15,24 +18,36 @@
     },
     "model": {
         "type": "VGG16",
-        "args": {}
+        "args": {
+            "feature_extracting": true
+        }
     },
-    "loss": "cross-entropy",
-    "optimizer":
+    "loss": "CELoss",
+    "metrics": [
+        "accuracy", "top_k_acc"
+    ],
+    "optimizer": {
         "type": "Adam",
         "args": {
             "lr": 0.001
-        },
+        }
+    },
+    "lr_scheduler": {
+        "type": "StepLR",
+        "args": {
+            "step_size": 50,
+            "gamma": 0.1
+        }
+    },
     "trainer": {
         "epochs": 1000,
 
         "save_dir": "saved/",
-        "save_period": 1,
+        "save_period": 2,
         "verbosity": 2,
 
         "monitor": "min val_loss",
-        "early_stop": 10,
+        "early_stop": 10
 
-        "tensorboard": false
     }
 }

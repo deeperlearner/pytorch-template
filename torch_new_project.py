@@ -5,10 +5,11 @@ import sys
 from shutil import copytree, ignore_patterns
 
 # The directory of Pytorch-Template
-template_dir = expandvars("${code_path}/Github/Pytorch-Template")
+template_dir = expandvars("$Pytorch_Template")
 
 # This script initializes new pytorch project with the template files.
-# Add `export PATH=$PATH:${HOME}/Github/Pytorch-Template` to ~/.bashrc
+# $Pytorch_Template is the path to the repo
+# Add `export PATH=$PATH:$Pytorch_Template` to ~/.bashrc
 # so that you can run `torch_new_project.py MyNewProject` in everywhere
 # and new project named MyNewProject will be made.
 assert isfile(join(template_dir, 'torch_new_project.py')), 'torch_new_project.py should be in template_dir'

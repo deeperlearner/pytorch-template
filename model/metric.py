@@ -18,3 +18,23 @@ def top_k_acc(output, target, k=3):
         for i in range(k):
             correct += torch.sum(pred[:, i] == target).item()
     return correct / len(target)
+
+smooth = 1e-6
+def mean_iou_score(output, labels):
+    '''
+    Compute mean IoU score over 6 classes
+    '''
+    with torch.no_grad():
+        pred = torch.argmax(output, dim=1)
+        pred = pred.data.cpu().numpy()
+        labels = labels.data.cpu().numpy()
+        mean_iou = 0
+        for i in range(6):
+            tp_fp = np.sum(pred == i)
+            tp_fn = np.sum(labels == i)
+            tp = np.sum((pred == i) * (labels == i))
+            iou = (tp + smooth) / (tp_fp + tp_fn - tp + smooth)
+            mean_iou += iou / 6
+
+    return mean_iou
+

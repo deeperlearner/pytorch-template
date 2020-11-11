@@ -1,9 +1,8 @@
 import numpy as np
 import torch
-from torchvision.utils import make_grid
 
 from base import BaseTrainer
-from utils.util import inf_loop, MetricTracker
+from utils import inf_loop, MetricTracker
 
 
 class Trainer(BaseTrainer):
@@ -13,7 +12,6 @@ class Trainer(BaseTrainer):
     def __init__(self, model, criterion, metric_ftns, optimizer, config, data_loader,
                  valid_data_loader=None, lr_scheduler=None, len_epoch=None):
         super().__init__(model, criterion, metric_ftns, optimizer, config)
-        self.config = config
         self.data_loader = data_loader
         if len_epoch is None:
             # epoch-based training
@@ -25,6 +23,7 @@ class Trainer(BaseTrainer):
         self.valid_data_loader = valid_data_loader
         self.do_validation = self.valid_data_loader is not None
         self.lr_scheduler = lr_scheduler
+        self.log_step = int(np.sqrt(data_loader.batch_size))
 
         self.train_metrics = MetricTracker('loss', *[m.__name__ for m in self.metric_ftns])
         self.valid_metrics = MetricTracker('loss', *[m.__name__ for m in self.metric_ftns])
@@ -50,6 +49,12 @@ class Trainer(BaseTrainer):
             self.train_metrics.update('loss', loss.item())
             for met in self.metric_ftns:
                 self.train_metrics.update(met.__name__, met(output, target))
+
+            if batch_idx % self.log_step == 0:
+                self.logger.debug('Train Epoch: {} {} Loss: {:.6f}'.format(
+                    epoch,
+                    self._progress(batch_idx),
+                    loss.item()))
 
             if batch_idx == self.len_epoch:
                 break
@@ -84,3 +89,7 @@ class Trainer(BaseTrainer):
                     self.valid_metrics.update(met.__name__, met(output, target))
 
         return self.valid_metrics.result()
+
+    def _progress(self, batch_idx):
+        ratio = '[{}/{} ({:.0f}%)]'
+        return ratio.format(batch_idx, self.len_epoch, 100.0 * batch_idx / self.len_epoch)
