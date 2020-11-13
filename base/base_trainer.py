@@ -123,6 +123,7 @@ class BaseTrainer:
         Saving checkpoints
 
         :param epoch: current epoch number
+        :param log: logging information of the epoch
         :param save_best: if True, rename the saved checkpoint to 'model_best.pth'
         """
         arch = type(self.model).__name__
