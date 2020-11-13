@@ -24,7 +24,7 @@ class ConfigParser:
                 self.save_dir.update({dir_name: dir_path})
 
             # save config file to the experiment dirctory
-            write_json(self.config, exp_dir / 'config.json')
+            write_json(self.config, exp_dir / args.config)
 
             # configure logging module
             setup_logging(self.save_dir['log'])

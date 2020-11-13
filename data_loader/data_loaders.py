@@ -1,27 +1,22 @@
 import os
 import glob
 
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 from torchvision import transforms
 from PIL import Image
 
-class MyDataset(Dataset):
-    def __init__(self, data_dir='./data', test_dir='./test', mode=''):
-        self.mode = mode
-        if mode == 'train':
-            imgs_dir = os.path.join(data_dir, 'train')
-        elif mode == 'valid':
-            imgs_dir = os.path.join(data_dir, 'valid')
-        elif mode == 'test':
-            imgs_dir = test_dir
+from base import BaseDataLoader
 
+
+class ImageDataset(Dataset):
+    def __init__(self, data_dir, mode=''):
         # read filenames
         if mode != 'test':
-            img_file = os.path.join(imgs_dir, '*.png')
+            img_file = os.path.join(data_dir, '*.png')
             self.filenames = glob.glob(img_file)
             self.labels = []
         else:
-            img_file = os.path.join(imgs_dir, '*.png')
+            img_file = os.path.join(data_dir, '*.png')
             self.filenames = glob.glob(img_file)
 
         # transforms
@@ -34,7 +29,6 @@ class MyDataset(Dataset):
             transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                   std=[0.229, 0.224, 0.225]),
         ])
-
 
     def __getitem__(self, idx):
         image_file = self.filenames[idx]
@@ -52,5 +46,19 @@ class MyDataset(Dataset):
     def __len__(self):
         return len(self.filenames)
 
-class MyDataLoader(DataLoader):
-    pass
+class ImageDataLoader(BaseDataLoader):
+    def __init__(self, train_dir='./data', valid_dir=None, test_dir=None, batch_size=1, shuffle=True, validation_split=0.0, num_workers=1):
+        if valid_dir is not None:
+            trainset = ImageDataset(train_dir, mode='train')
+            validset = ImageDataset(valid_dir, mode='valid')
+            validation_split = 0.0
+            super().__init__(trainset, batch_size, shuffle, validation_split, num_workers)
+            self.valid_loader = DataLoader(validset, batch_size, shuffle, num_workers)
+        else:
+            dataset = ImageDataset(train_dir)
+            super().__init__(dataset, batch_size, shuffle, validation_split, num_workers)
+
+        if test_dir is not None:
+            testset = ImageDataset(test_dir, mode='test')
+            validation_split = 0.0
+            super().__init__(testset, batch_size, shuffle, validation_split, num_workers)

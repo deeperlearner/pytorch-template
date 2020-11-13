@@ -4,10 +4,10 @@ import argparse
 import torch
 import numpy as np
 
-import data_loader.data_loaders as module_data
+import data_loader.mnist as module_data
 import model.loss as module_loss
 import model.metric as module_metric
-import  model.model as module_arch
+import  model.mnist as module_arch
 from parse_config import ConfigParser
 from trainer import Trainer
 
@@ -16,16 +16,12 @@ def main(args):
     config = ConfigParser(args, resume=args.model_path)
     logger = config.get_logger('train')
 
-    # dataset
-    trainset = config.init_obj('dataset', module_data, mode='train')
-    validset = config.init_obj('dataset', module_data, mode='valid')
-
     # dataloader
-    trainloader = config.init_obj('data_loader', module_data, trainset)
-    validloader = config.init_obj('data_loader', module_data, validset)
+    data_loader = config.init_obj('data_loader', module_data)
+    valid_data_loader = data_loader.valid_loader
 
     # model
-    model = config.init_obj('model', module_arch)
+    model = config.init_obj('arch', module_arch)
     logger.info(model)
 
     # get function handles of loss and metrics
@@ -40,8 +36,8 @@ def main(args):
 
     trainer = Trainer(model, criterion, metrics, optimizer,
                       config=config,
-                      data_loader=trainloader,
-                      valid_data_loader=validloader,
+                      data_loader=data_loader,
+                      valid_data_loader=valid_data_loader,
                       lr_scheduler=lr_scheduler)
 
     trainer.train()
@@ -49,7 +45,7 @@ def main(args):
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='training')
-    args.add_argument('-c', '--config', default='config.json', type=str)
+    args.add_argument('-c', '--config', default='mnist.json', type=str)
     args.add_argument('--mode', default='train', type=str)
     args.add_argument('--model_path', type=str)
     args = args.parse_args()

@@ -3,6 +3,8 @@ from abc import abstractmethod
 import torch
 from numpy import inf
 
+from logger import TensorboardWriter
+
 
 class BaseTrainer:
     """
@@ -41,6 +43,9 @@ class BaseTrainer:
         self.start_epoch = 1
 
         self.checkpoint_dir = config.save_dir['model']
+
+        # setup visualization writer instance
+        self.writer = TensorboardWriter(config.save_dir['log'], self.logger, cfg_trainer['tensorboard'])
 
         if config.resume is not None:
             self._resume_checkpoint(config.resume)

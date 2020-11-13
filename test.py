@@ -27,8 +27,6 @@ def main(args):
     config = ConfigParser(args, resume=args.model_path)
     logger = config.get_logger('test')
 
-    # testset
-    testset = config.init_obj('dataset', module_data, mode='test')
     # dataloader
     testloader = config.init_obj('data_loader', module_data, testset)
 
@@ -85,7 +83,7 @@ def main(args):
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='testing')
-    args.add_argument('-c', '--config', default='config.json', type=str)
+    args.add_argument('-c', '--config', default='mnist.json', type=str)
     args.add_argument('--mode', default='test', type=str)
     args.add_argument('--model_path', type=str)
     args.add_argument('--test_dir', default='test', type=str)

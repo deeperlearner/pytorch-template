@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torchvision.models import vgg16
 
 # https://github.com/shelhamer/fcn.berkeleyvision.org/blob/master/surgery.py
