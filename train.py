@@ -4,10 +4,10 @@ import argparse
 import torch
 import numpy as np
 
-import data_loader.mnist as module_data
+import data_loader.data_loaders as module_data
 import model.loss as module_loss
 import model.metric as module_metric
-import  model.mnist as module_arch
+import  model.model as module_arch
 from parse_config import ConfigParser
 from trainer import Trainer
 
@@ -45,7 +45,7 @@ def main(args):
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='training')
-    args.add_argument('-c', '--config', default='mnist.json', type=str)
+    args.add_argument('-c', '--config', default='config/mnist.json', type=str)
     args.add_argument('--mode', default='train', type=str)
     args.add_argument('--model_path', type=str)
     args = args.parse_args()

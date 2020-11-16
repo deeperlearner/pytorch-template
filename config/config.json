@@ -1,7 +1,7 @@
 {
-    "name": "Mnist_LeNet",
+    "name": "EXP0",
     "data_loader": {
-        "type": "MnistDataLoader",
+        "type": "MyDataLoader",
         "args": {
             "batch_size": 64,
             "shuffle": true,
@@ -9,11 +9,12 @@
         }
     },
     "arch": {
-        "type": "MnistModel",
+        "type": "VGG16",
         "args": {
+            "feature_extracting": true
         }
     },
-    "loss": "nll_loss",
+    "loss": "CELoss",
     "metrics": [
         "accuracy", "top_k_acc"
     ],
@@ -32,15 +33,15 @@
     },
     "n_gpu": 1,
     "trainer": {
-        "epochs": 10,
+        "epochs": 100,
 
         "save_dir": "saved/",
-        "save_period": 5,
+        "save_period": 2,
         "verbosity": 2,
 
         "monitor": "min val_loss",
         "early_stop": 10,
-
+        
         "tensorboard": true
     }
 }

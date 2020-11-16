@@ -83,7 +83,7 @@ def main(args):
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='testing')
-    args.add_argument('-c', '--config', default='mnist.json', type=str)
+    args.add_argument('-c', '--config', default='config/mnist.json', type=str)
     args.add_argument('--mode', default='test', type=str)
     args.add_argument('--model_path', type=str)
     args.add_argument('--test_dir', default='test', type=str)
