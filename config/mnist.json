@@ -32,6 +32,7 @@
     },
     "n_gpu": 1,
     "trainer": {
+        "type": "normal",
         "epochs": 2,
 
         "save_dir": "saved/",

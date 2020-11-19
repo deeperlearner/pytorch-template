@@ -39,11 +39,21 @@ class Trainer(BaseTrainer):
         self.model.train()
         self.train_metrics.reset()
         for batch_idx, (data, target) in enumerate(self.data_loader):
-            data, target = data.to(self.device), target.to(self.device)
-
-            self.optimizer.zero_grad()
-            output = self.model(data)
-            loss = self.criterion(output, target)
+            if self._type_ == 'normal':
+                data, target = data.to(self.device), target.to(self.device)
+                self.optimizer.zero_grad()
+                output = self.model(data)
+                loss = self.criterion(output, target)
+            elif self._type_ == 'vae':
+                data = data.to(self.device)
+                self.optimizer.zero_grad()
+                output, mu, logvar = self.model(data)
+                loss = self.criterion(output, mu, logvar, target)
+            elif self._type_ == 'gan':
+                data, target = data.to(self.device), target.to(self.device)
+                self.optimizer.zero_grad()
+                output = self.model(data)
+                loss = self.criterion(output, target)
             loss.backward()
             self.optimizer.step()
 
@@ -82,10 +92,18 @@ class Trainer(BaseTrainer):
         self.valid_metrics.reset()
         with torch.no_grad():
             for batch_idx, (data, target) in enumerate(self.valid_data_loader):
-                data, target = data.to(self.device), target.to(self.device)
-
-                output = self.model(data)
-                loss = self.criterion(output, target)
+                if self._type_ == 'normal':
+                    data, target = data.to(self.device), target.to(self.device)
+                    output = self.model(data)
+                    loss = self.criterion(output, target)
+                elif self._type_ == 'vae':
+                    data = data.to(self.device)
+                    output, mu, logvar = self.model(data)
+                    loss = self.criterion(output, mu, logvar, target)
+                elif self._type_ == 'gan':
+                    data, target = data.to(self.device), target.to(self.device)
+                    output = self.model(data)
+                    loss = self.criterion(output, target)
 
                 self.valid_metrics.update('loss', loss.item())
                 for met in self.metric_ftns:

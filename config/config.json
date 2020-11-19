@@ -1,22 +1,23 @@
 {
     "name": "EXP0",
     "data_loader": {
-        "type": "MyDataLoader",
+        "type": "Image_loader",
         "args": {
+            "train_dir": "hw3_data/face/train",
+            "test_dir": "hw3_data/face/test",
+            "label_dir": "hw3_data/face",
             "batch_size": 64,
             "shuffle": true,
             "num_workers": 2
         }
     },
     "arch": {
-        "type": "VGG16",
+        "type": "VAE",
         "args": {
-            "feature_extracting": true
         }
     },
-    "loss": "CELoss",
+    "loss": "vae_loss",
     "metrics": [
-        "accuracy", "top_k_acc"
     ],
     "optimizer": {
         "type": "Adam",
@@ -33,6 +34,7 @@
     },
     "n_gpu": 1,
     "trainer": {
+        "type": "vae",
         "epochs": 100,
 
         "save_dir": "saved/",

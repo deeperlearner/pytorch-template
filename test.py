@@ -24,11 +24,11 @@ torch.backends.cudnn.benchmark = False
 np.random.seed(SEED)
 
 def main(args):
-    config = ConfigParser(args, resume=args.model_path)
+    config = ConfigParser(args)
     logger = config.get_logger('test')
 
     # dataloader
-    testloader = config.init_obj('data_loader', module_data, testset)
+    testloader = config.init_obj('data_loader', module_data, mode=args.mode)
 
     # build model architecture
     model = config.init_obj('model', module_arch)
@@ -84,8 +84,8 @@ def main(args):
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='testing')
     args.add_argument('-c', '--config', default='config/mnist.json', type=str)
-    args.add_argument('--mode', default='test', type=str)
     args.add_argument('--model_path', type=str)
+    args.add_argument('--mode', default='test', type=str)
     args.add_argument('--test_dir', default='test', type=str)
     args.add_argument('--out_dir', default='out', type=str)
     args = args.parse_args()

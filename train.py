@@ -13,11 +13,11 @@ from trainer import Trainer
 
 
 def main(args):
-    config = ConfigParser(args, resume=args.model_path)
+    config = ConfigParser(args)
     logger = config.get_logger('train')
 
     # dataloader
-    data_loader = config.init_obj('data_loader', module_data)
+    data_loader = config.init_obj('data_loader', module_data, mode=args.mode)
     valid_data_loader = data_loader.valid_loader
 
     # model
@@ -46,8 +46,8 @@ def main(args):
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='training')
     args.add_argument('-c', '--config', default='config/mnist.json', type=str)
-    args.add_argument('--mode', default='train', type=str)
     args.add_argument('--model_path', type=str)
+    args.add_argument('--mode', default='train', type=str)
     args = args.parse_args()
 
     main(args)

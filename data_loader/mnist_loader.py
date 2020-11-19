@@ -13,6 +13,7 @@ class MnistDataset(MNIST):
         super().__init__(data_dir, download=True, transform=trsfm)
 
 class MnistDataLoader(BaseDataLoader):
-    def __init__(self, train_dir='./data', valid_dir=None, test_dir=None, batch_size=1, shuffle=True, validation_split=0.1, num_workers=1):
+    def __init__(self, mode='train', train_dir='./data', valid_dir=None, test_dir=None, label_dir=None, 
+            batch_size=1, shuffle=True, validation_split=0.1, num_workers=1):
         dataset = MnistDataset(train_dir)
         super().__init__(dataset, batch_size, shuffle, validation_split, num_workers)

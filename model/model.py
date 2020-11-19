@@ -1,1 +1,2 @@
-from model.mnist import *
+from .mnist import *
+from . import *
