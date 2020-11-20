@@ -17,6 +17,6 @@ assert len(sys.argv) == 2, 'Specify a name for the new project. Example: torch_n
 
 target_dir = abspath(sys.argv[1])
 
-ignore = [".git", "saved", "torch_new_project.py", "LICENSE", "README.md", "__pycache__"]
+ignore = [".git", "*.vim", "saved", "torch_new_project.py", "LICENSE", "README.md", "__pycache__", "data", "mnist.*"]
 copytree(template_dir, target_dir, ignore=ignore_patterns(*ignore))
 print('New project initialized at', target_dir)
