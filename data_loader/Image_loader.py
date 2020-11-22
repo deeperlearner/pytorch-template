@@ -50,7 +50,7 @@ class ImageDataset(Dataset):
         return len(self.filenames)
 
 class ImageDataLoader(BaseDataLoader):
-    def __init__(self, mode='train', train_dir='./data', valid_dir=None, test_dir=None, label_dir=None, 
+    def __init__(self, mode='train', train_dir='./data', valid_dir=None, test_dir=None, label_dir=None,
             batch_size=1, shuffle=True, validation_split=0.0, num_workers=1):
         if mode == 'train':
             # train and valid load from specified directory

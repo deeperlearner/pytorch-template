@@ -1,7 +1,7 @@
 {
     "name": "EXP0",
     "data_loader": {
-        "type": "Image_loader",
+        "type": "ImageDataLoader",
         "args": {
             "train_dir": "hw3_data/face/train",
             "test_dir": "hw3_data/face/test",
@@ -43,7 +43,7 @@
 
         "monitor": "min val_loss",
         "early_stop": 10,
-        
+
         "tensorboard": true
     }
 }

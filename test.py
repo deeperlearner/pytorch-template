@@ -31,7 +31,7 @@ def main(args):
     testloader = config.init_obj('data_loader', module_data, mode=args.mode)
 
     # build model architecture
-    model = config.init_obj('model', module_arch)
+    model = config.init_obj('arch', module_arch)
     logger.debug(model)
 
     # get function handles of loss and metrics
@@ -66,7 +66,6 @@ def main(args):
             #
             image_id.extend(target)
             label.extend(pred.data.cpu().tolist())
-            output_path = os.path.join(args.output_dir, target)
 
             ## computing loss, metrics on test set
             #loss = loss_fn(output, target)
