@@ -58,8 +58,7 @@ class ImageDataLoader(BaseDataLoader):
                 trainset = ImageDataset(train_dir, label_dir, mode)
                 validset = ImageDataset(valid_dir, label_dir, mode)
                 validation_split = 0.0
-                super().__init__(trainset, batch_size, shuffle, validation_split, num_workers)
-                self.valid_loader = DataLoader(validset, batch_size, shuffle, num_workers)
+                super().__init__(trainset, batch_size, shuffle, validation_split, num_workers, validset)
             # train and valid with validation_split
             else:
                 dataset = ImageDataset(train_dir, label_dir, mode)

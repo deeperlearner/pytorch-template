@@ -98,7 +98,7 @@ class BaseTrainer:
                                      "Training stops.".format(self.early_stop))
                     break
 
-            if epoch % self.save_period == 0:
+            if epoch % self.save_period == 0 or best:
                 self.logger.info('Best val loss: {}'.format(self.mnt_best))
                 self._save_checkpoint(epoch, save_best=best)
 
@@ -136,13 +136,12 @@ class BaseTrainer:
             'monitor_best': self.mnt_best,
             'config': self.config
         }
-        filename = str(self.checkpoint_dir / 'checkpoint-epoch{}.pth'.format(epoch))
-        torch.save(state, filename)
-        self.logger.info("Saving checkpoint: {} ...".format(filename))
         if save_best:
-            best_path = str(self.checkpoint_dir / 'model_best.pth')
-            torch.save(state, best_path)
-            self.logger.info("Saving current best: model_best.pth ...")
+            filename = str(self.checkpoint_dir / 'model_best.pth')
+        else:
+            filename = str(self.checkpoint_dir / 'checkpoint-epoch{}.pth'.format(epoch))
+        torch.save(state, filename)
+        self.logger.info("Saving model: {} ...".format(filename))
 
     def _resume_checkpoint(self, resume_path):
         """

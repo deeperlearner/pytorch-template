@@ -99,7 +99,7 @@ class Trainer(BaseTrainer):
                 elif self._type_ == 'vae':
                     data = data.to(self.device)
                     output, mu, logvar = self.model(data)
-                    loss = self.criterion(output, mu, logvar, target)
+                    loss = self.criterion(output, mu, logvar, data)
                 elif self._type_ == 'gan':
                     data, target = data.to(self.device), target.to(self.device)
                     output = self.model(data)

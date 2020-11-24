@@ -1,12 +1,12 @@
 {
-    "name": "EXP0",
+    "name": "VAE",
     "data_loader": {
         "type": "ImageDataLoader",
         "args": {
-            "train_dir": "hw3_data/face/train",
-            "test_dir": "hw3_data/face/test",
-            "label_dir": "hw3_data/face",
-            "batch_size": 64,
+            "train_dir": "$DLCV_path/hw3-deeperlearner/hw3_data/face/train",
+            "test_dir": "$DLCV_path/hw3-deeperlearner/hw3_data/face/test",
+            "label_dir": "$DLCV_path/hw3-deeperlearner/hw3_data/face",
+            "batch_size": 32,
             "shuffle": true,
             "num_workers": 2
         }
@@ -22,7 +22,7 @@
     "optimizer": {
         "type": "Adam",
         "args": {
-            "lr": 0.001
+            "lr": 0.0001
         }
     },
     "lr_scheduler": {
@@ -38,11 +38,11 @@
         "epochs": 100,
 
         "save_dir": "saved/",
-        "save_period": 2,
+        "save_period": 5,
         "verbosity": 2,
 
         "monitor": "min val_loss",
-        "early_stop": 10,
+        "early_stop": 5,
 
         "tensorboard": true
     }

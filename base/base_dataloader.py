@@ -8,7 +8,8 @@ class BaseDataLoader(DataLoader):
     """
     Base class for all data loaders
     """
-    def __init__(self, dataset, batch_size, shuffle, validation_split, num_workers, collate_fn=default_collate):
+    def __init__(self, dataset, batch_size, shuffle, validation_split, num_workers, validset=None,
+            collate_fn=default_collate):
         self.n_samples = len(dataset)
 
         self.init_kwargs = {
@@ -18,13 +19,16 @@ class BaseDataLoader(DataLoader):
             'collate_fn': collate_fn,
             'num_workers': num_workers
         }
+        self.valid_loader = None
         if validation_split == 0.0:
             super().__init__(**self.init_kwargs)
-            self.valid_loader = None
+            if validset is not None:
+                self.valid_loader = DataLoader(validset, batch_size, num_workers)
         else:
-            self.sampler, self.valid_sampler = self._split_sampler(validation_split)
-            super().__init__(sampler=self.sampler, **self.init_kwargs)
-            self.valid_loader = self.split_validation()
+            sampler, valid_sampler = self._split_sampler(validation_split)
+            super().__init__(sampler=sampler, **self.init_kwargs)
+            if valid_sampler is not None:
+                self.valid_loader = DataLoader(sampler=valid_sampler, **self.init_kwargs)
 
     def _split_sampler(self, split):
         idx_full = np.arange(self.n_samples)
@@ -49,9 +53,3 @@ class BaseDataLoader(DataLoader):
         self.n_samples = len(train_idx)
 
         return train_sampler, valid_sampler
-
-    def split_validation(self):
-        if self.valid_sampler is None:
-            return None
-        else:
-            return DataLoader(sampler=self.valid_sampler, **self.init_kwargs)

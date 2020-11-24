@@ -15,20 +15,19 @@ class ConfigParser:
         self._config = read_json(config_path)
         self.resume = args.model_path
 
-        if args.mode == 'train':
-            save_dir = Path(self.config['trainer']['save_dir'])
-            exp_dir  = save_dir / self.config['name']
-            self.save_dir = dict()
-            for dir_name in ['log', 'model']:
-                dir_path = exp_dir / dir_name
-                ensure_dir(dir_path)
-                self.save_dir.update({dir_name: dir_path})
+        save_dir = Path(self.config['trainer']['save_dir'])
+        exp_dir  = save_dir / self.config['name']
+        self.save_dir = dict()
+        for dir_name in ['log', 'model']:
+            dir_path = exp_dir / dir_name
+            ensure_dir(dir_path)
+            self.save_dir.update({dir_name: dir_path})
 
-            # save config file to the experiment dirctory
-            write_json(self.config, exp_dir / os.path.basename(args.config))
+        # save config file to the experiment dirctory
+        write_json(self.config, exp_dir / os.path.basename(args.config))
 
-            # configure logging module
-            setup_logging(self.save_dir['log'])
+        # configure logging module
+        setup_logging(self.save_dir['log'])
 
         self.log_levels = {
             0: logging.WARNING,

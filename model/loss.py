@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-from torch.nn import CrossEntropyLoss
+from torch.nn import CrossEntropyLoss, MSELoss
 
 
 def nll_loss(output, target):
@@ -8,13 +8,9 @@ def nll_loss(output, target):
 
 CELoss = CrossEntropyLoss()
 
+lm = 1e-5
 def vae_loss(recon_x, mu, logvar, x):
-    BCE = F.binary_cross_entropy(recon_x, x.view(-1, 784), reduction='sum')
-
-    # see Appendix B from VAE paper:
-    # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
-    # https://arxiv.org/abs/1312.6114
-    # 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
-    KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-
-    return BCE + KLD
+    loss_fn = MSELoss()
+    loss_recon = loss_fn(recon_x, x)
+    kl_divergence = torch.mean(-0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp()))
+    return loss_recon
