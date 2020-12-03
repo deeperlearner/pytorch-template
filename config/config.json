@@ -1,49 +1,74 @@
 {
-    "name": "VAE",
-    "data_loader": {
-        "type": "ImageDataLoader",
-        "args": {
-            "train_dir": "$DLCV_path/hw3-deeperlearner/hw3_data/face/train",
-            "test_dir": "$DLCV_path/hw3-deeperlearner/hw3_data/face/test",
-            "label_dir": "$DLCV_path/hw3-deeperlearner/hw3_data/face",
-            "batch_size": 32,
-            "shuffle": true,
-            "num_workers": 2
-        }
-    },
-    "arch": {
-        "type": "VAE",
-        "args": {
-        }
-    },
-    "loss": "vae_loss",
-    "metrics": [
-    ],
-    "optimizer": {
-        "type": "Adam",
-        "args": {
-            "lr": 0.0001
-        }
-    },
-    "lr_scheduler": {
-        "type": "StepLR",
-        "args": {
-            "step_size": 50,
-            "gamma": 0.1
-        }
-    },
     "n_gpu": 1,
+    "name": "EXP",
+    "data_loaders": {
+        "dataloader": {
+            "module": "image_loader",
+            "type": "ImageDataLoader",
+            "args": {
+                "train_dir": null,
+                "valid_dir": null,
+                "test_dir": null,
+                "train_label": null,
+                "valid_label": null,
+                "test_label": null,
+                "batch_size": 32,
+                "shuffle": true,
+                "num_workers": 2
+            }
+        }
+    },
+    "models": {
+        "model" : {
+            "module": "MNIST",
+            "type": "MnistModel",
+            "args": {
+            }
+        }
+    },
+    "losses": {
+        "loss": {
+            "type": "nll_loss",
+            "args": {
+            }
+        }
+    },
+    "metrics": [
+        "accuracy", "top_k_acc"
+    ],
+    "optimizers": {
+        "model": {
+            "type": "Adam",
+            "args": {
+                "lr": 0.001
+            }
+        }
+    },
+    "lr_schedulers": {
+        "model": {
+            "type": "StepLR",
+            "args": {
+                "step_size": 50,
+                "gamma": 0.1
+            }
+        }
+    },
     "trainer": {
-        "type": "vae",
-        "epochs": 100,
+        "module": "my_trainer",
+        "type": "My_Trainer",
 
-        "save_dir": "saved/",
-        "save_period": 5,
+        "epochs": 2,
+        "len_epoch": null,
+
+        "save_period": 1,
         "verbosity": 2,
 
         "monitor": "min val_loss",
-        "early_stop": 5,
+        "early_stop": 10,
 
-        "tensorboard": true
+        "tensorboard": true,
+
+        "save_dir": "saved/",
+        "log_config": "logger/logger_config.json"
     }
 }

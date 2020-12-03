@@ -1,33 +1,54 @@
+import importlib
 import os
 import logging
 from pathlib import Path
+from functools import reduce, partial
+from operator import getitem
+from datetime import datetime
 
 from logger import setup_logging
 from utils import ensure_dir, read_json, write_json
 
 
 class ConfigParser:
-    def __init__(self, args):
+    def __init__(self, config_json, resume=None, mode='train', modification=None, run_id=None, log_name=None):
         """
-        Initialize this class from config.json. Used in train, test.
+        class to parse configuration json file. Handles hyperparameters for training, initializations of modules, checkpoint saving
+        and logging module.
+        :param config_json: String, path to the config file.
+        :param resume: String, path to the checkpoint being loaded.
+        :param mode: String, 'train', 'test' or 'inference'.
+        :param modification: Dict keychain:value, specifying position values to be replaced from config dict.
+        :param run_id: Unique Identifier for training processes. Used to save checkpoints and training log. Timestamp is being used as default
         """
-        config_path = Path(args.config)
-        self._config = read_json(config_path)
-        self.resume = args.model_path
+        # load config file and apply modification
+        config = read_json(config_json)
+        self._config = _update_config(config, modification)
+        self.resume = resume
+        self.mode = mode
 
-        save_dir = Path(self.config['trainer']['save_dir'])
-        exp_dir  = save_dir / self.config['name']
-        self.save_dir = dict()
-        for dir_name in ['log', 'model']:
-            dir_path = exp_dir / dir_name
-            ensure_dir(dir_path)
-            self.save_dir.update({dir_name: dir_path})
+        if self.mode == 'train':
+            save_dir = Path(self.config['trainer']['save_dir'])
+            if run_id is None: # use timestamp as default run-id
+                run_id = datetime.now().strftime(r'%m%d_%H%M%S')
+            exp_dir  = save_dir / self.config['name'] / run_id
 
-        # save config file to the experiment dirctory
-        write_json(self.config, exp_dir / os.path.basename(args.config))
+            self.save_dir = dict()
+            for dir_name in ['log', 'model']:
+                dir_path = exp_dir / dir_name
+                ensure_dir(dir_path)
+                self.save_dir.update({dir_name: dir_path})
 
-        # configure logging module
-        setup_logging(self.save_dir['log'])
+            # save config file to the experiment dirctory
+            write_json(self.config, exp_dir / os.path.basename(config_json))
+
+            # configure logging module
+            setup_logging(self.save_dir['log'], log_config=self.config['trainer']['log_config'], filename=log_name)
+        elif self.mode == 'test':
+            # configure logging module
+            log_dir = Path('log')
+            ensure_dir(log_dir)
+            setup_logging(log_dir, log_config=self.config['trainer']['log_config'], filename=log_name)
 
         self.log_levels = {
             0: logging.WARNING,
@@ -35,23 +56,75 @@ class ConfigParser:
             2: logging.DEBUG
         }
 
-    def init_obj(self, name, module, *args, **kwargs):
+    @classmethod
+    def from_args(cls, args, options=''):
         """
-        Finds a class/function handle with the name given as 'type' in config, and returns the
-        instance/function initialized with given arguments.
-        `object/function = config.init_obj('name', module, a, b=1)`
+        Initialize this class from some cli arguments. Used in train, test.
+        """
+        for opt in options:
+            args.add_argument(*opt.flags, default=None, type=opt.type)
+
+        args = args.parse_args()
+
+        msg_no_cfg = "Configuration file need to be specified. Add '-c config.json', for example."
+        assert args.config is not None, msg_no_cfg
+        config_json = Path(args.config)
+
+        resume = Path(args.resume) if args.resume is not None else None
+        mode = args.mode
+
+        # parse custom cli options into dictionary
+        modification = {opt.target : getattr(args, _get_opt_name(opt.flags)) for opt in options}
+
+        run_id = args.run_id
+        log_name = args.log_name
+
+        return cls(config_json, resume, mode, modification, run_id, log_name)
+
+    def init_obj(self, kind, name, module, *args, **kwargs):
+        """
+        Finds a class handle with the name given as 'type' in config, and returns the
+        instance initialized with given arguments.
+        `object = config.init_obj('kind', 'name', module, a, b=1)`
         is equivalent to
-        `object/function = module.name(a, b=1)`
+        `object = module.name(a, b=1)`
         """
-        module_name = self[name]['type']
-        module_args = dict(self[name]['args'])
+        try:
+            module_name = self[kind][name]['module']
+            class_name = self[kind][name]['type']
+            obj = reduce(getattr, [module , module_name, class_name])
+        except KeyError:
+            class_name = self[kind][name]['type']
+            obj = getattr(module, class_name)
+
+        module_args = dict(self[kind][name]['args'])
         assert all([k not in module_args for k in kwargs]), 'Overwriting kwargs given in config file is not allowed'
         module_args.update(kwargs)
-        return getattr(module, module_name)(*args, **module_args)
+
+        return obj(*args, **module_args)
+
+    def init_ftn(self, kind, name, module, *args, **kwargs):
+        """
+        Finds a function handle with the name given as 'type' in config, and returns the
+        function with given arguments fixed with functools.partial.
+        `function = config.init_ftn('kind', 'name', module, a, b=1)`
+        is equivalent to
+        `function = lambda *args, **kwargs: module.name(a, *args, b=1, **kwargs)`.
+        """
+        class_name = self[kind][name]['type']
+        ftn = getattr(module, class_name)
+        module_args = dict(self[kind][name]['args'])
+        assert all([k not in module_args for k in kwargs]), 'Overwriting kwargs given in config file is not allowed'
+        module_args.update(kwargs)
+
+        return partial(ftn, *args, **module_args)
 
     def __getitem__(self, name):
         """Access items like ordinary dict."""
-        return self.config[name]
+        if name is None:
+            return self.config
+        else:
+            return self.config[name]
 
     def get_logger(self, name, verbosity=2):
         msg_verbosity = 'verbosity option {} is invalid. Valid options are {}.'.format(verbosity, self.log_levels.keys())
@@ -64,3 +137,28 @@ class ConfigParser:
     @property
     def config(self):
         return self._config
+
+# helper functions to update config dict with custom cli options
+def _update_config(config, modification):
+    if modification is None:
+        return config
+
+    for k, v in modification.items():
+        if v is not None:
+            _set_by_path(config, k, v)
+    return config
+
+def _get_opt_name(flags):
+    for flg in flags:
+        if flg.startswith('--'):
+            return flg.replace('--', '')
+    return flags[0].replace('--', '')
+
+def _set_by_path(tree, keys, value):
+    """Set a value in a nested object in tree by sequence of keys."""
+    keys = keys.split(';')
+    _get_by_path(tree, keys[:-1])[keys[-1]] = value
+
+def _get_by_path(tree, keys):
+    """Access a nested object in tree by sequence of keys."""
+    return reduce(getitem, keys, tree)

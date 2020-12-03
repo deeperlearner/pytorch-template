@@ -1,5 +1,6 @@
 import os
 import argparse
+import collections
 
 import torch
 import torch.nn as nn
@@ -8,13 +9,12 @@ import pandas as pd
 from sklearn.manifold import TSNE
 import numpy as np
 import matplotlib.pyplot as plt
-report = True
 
-import data_loader.data_loaders as module_data
+from parse_config import ConfigParser
+import data_loader as module_data
+import model as module_arch
 import model.loss as module_loss
 import model.metric as module_metric
-import model.models as module_arch
-from parse_config import ConfigParser
 from utils import ensure_dir
 
 
@@ -25,22 +25,23 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 np.random.seed(SEED)
 
-def main(args):
-    config = ConfigParser(args)
-    logger = config.get_logger('test')
+def main(config):
+    test_dir = config['test']['test_dir']
+    out_dir = config['test']['out_dir']
+    output_path = config['test']['output_path']
 
     # dataloader
-    testloader = config.init_obj('data_loader', module_data, mode=args.mode)
+    testloader = config.init_obj('data_loader', module_data, mode=config.mode)
 
     # build model architecture
     model = config.init_obj('arch', module_arch, mode='test')
-    logger.debug(model)
+    print(model)
 
     # get function handles of loss and metrics
     loss_fn = getattr(module_loss, config['loss'])
     metric_fns = [getattr(module_metric, met) for met in config['metrics']]
 
-    logger.debug('Loading model: {} ...'.format(config.resume))
+    print('Loading model: {} ...'.format(config.resume))
     checkpoint = torch.load(config.resume)
     state_dict = checkpoint['state_dict']
     if config['n_gpu'] > 1:
@@ -58,7 +59,7 @@ def main(args):
     image_id = []
     label = []
     with torch.no_grad():
-        logger.debug('testing...')
+        print('testing...')
         for i, (data, target) in enumerate(testloader):
             data = data.to(device)
             output = model(data)
@@ -70,10 +71,10 @@ def main(args):
             label.extend(pred.data.cpu().tolist())
 
         df = pd.DataFrame({'image_id': image_id, 'label': label})
-        out_csv = os.path.join(args.out_dir, 'test_pred.csv')
+        out_csv = os.path.join(config.out_dir, 'test_pred.csv')
         df.to_csv(out_csv, index=False)
 
-        if report:
+        if args.mode == 'test':
             print("1-3: VAE on test")
             for i, (data, target) in enumerate(testloader):
                 data = data.to(device)
@@ -103,7 +104,7 @@ def main(args):
 
         save_image(predict, args.output_path, nrow=8)
 
-        if report:
+        if args.mode == 'test':
             print("1-5: TSNE")
             tsne = TSNE(n_components=2, random_state=20, verbose=1, n_iter=1000)
             encoder = model.encoder
@@ -136,17 +137,23 @@ def main(args):
             save_path = os.path.join('p1/fig', 'fig1_5.jpg')
             plt.savefig(save_path)
 
-    logger.debug('done.')
+    print('done.')
 
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='testing')
     args.add_argument('-c', '--config', default='config/mnist.json', type=str)
-    args.add_argument('--model_path', type=str)
+    args.add_argument('--resume', default=None, type=str)
     args.add_argument('--mode', default='test', type=str)
-    args.add_argument('--test_dir', default='test', type=str)
-    args.add_argument('--out_dir', default='out', type=str)
-    args.add_argument('--output_path', default='out', type=str)
-    args = args.parse_args()
+    args.add_argument('--run_id', default=None, type=str)
+    args.add_argument('--log_name', default=None, type=str)
 
-    main(args)
+    # custom cli options to modify configuration from default values given in json file.
+    CustomArgs = collections.namedtuple('CustomArgs', 'flags type target')
+    options = [
+        CustomArgs(['--test_dir'], type=str, target='test;test_dir'),
+        CustomArgs(['--out_dir'], type=str, target='test;out_dir'),
+        CustomArgs(['--output_path'], type=str, target='test;output_path'),
+    ]
+    config = ConfigParser.from_args(args, options)
+    main(config)

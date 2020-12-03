@@ -1,1 +1,1 @@
-from .trainer import *
+from . import mnist_trainer

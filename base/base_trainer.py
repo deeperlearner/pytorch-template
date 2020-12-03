@@ -3,28 +3,56 @@ from abc import abstractmethod
 import torch
 from numpy import inf
 
+import data_loader as module_data
 from logger import TensorboardWriter
+import model as module_arch
+import model.loss as module_loss
+import model.metric as module_metric
 
 
 class BaseTrainer:
     """
     Base class for all trainers
     """
-    def __init__(self, model, criterion, metric_ftns, optimizer, config):
+    def __init__(self, config):
         self.config = config
+        # data_loaders
+        self.data_loaders = dict()
+        for name in config['data_loaders'].keys():
+            self.data_loaders[name] = config.init_obj('dataloaders', name, module_data, mode=config.mode)
+
         self.logger = config.get_logger('trainer', config['trainer']['verbosity'])
-        self._type_ = config['trainer']['type']
-
         # setup GPU device if available, move model into configured device
-        self.device, device_ids = self._prepare_device(config['n_gpu'])
-        self.model = model.to(self.device)
-        if len(device_ids) > 1:
-            self.model = torch.nn.DataParallel(model, device_ids=device_ids)
+        self.device, self.device_ids = self._prepare_device(config['n_gpu'])
+        # models
+        self.models = dict()
+        for name in config['models'].keys():
+            self.models[name] = config.init_obj('models', name, module_arch)
+            self.models[name] = self.models[name].to(self.device)
+            if len(self.device_ids) > 1:
+                self.models[name] = torch.nn.DataParallel(self.models[name], device_ids=self.device_ids)
+            self.logger.info(self.models[name])
 
-        self.criterion = criterion
-        self.metric_ftns = metric_ftns
-        self.optimizer = optimizer
+        # losses
+        self.losses = dict()
+        for name in config['losses'].keys():
+            self.losses[name] = config.init_ftn('losses', name, module_loss)
 
+        # metrics
+        self.metrics = [getattr(module_metric, met) for met in config['metrics']]
+
+        # optimizers
+        self.optimizers = dict()
+        for name in config['optimizers'].keys():
+            trainable_params = filter(lambda p: p.requires_grad, self.models[name].parameters())
+            self.optimizers[name] = config.init_obj(name, torch.optim, trainable_params)
+
+        # learning rate schedulers
+        self.lr_schedulers = dict()
+        for name in config['lr_schedulers'].keys():
+            self.lr_schedulers[name] = config.init_obj(name, torch.optim.lr_scheduler, self.optimizers[name])
+
+        # trainer
         cfg_trainer = config['trainer']
         self.epochs = cfg_trainer['epochs']
         self.save_period = cfg_trainer['save_period']
@@ -104,7 +132,7 @@ class BaseTrainer:
 
     def _prepare_device(self, n_gpu_use):
         """
-        setup GPU device if available, move model into configured device
+        Setup GPU device if available, move model into configured device
         """
         n_gpu = torch.cuda.device_count()
         if n_gpu_use > 0 and n_gpu == 0:
@@ -115,7 +143,7 @@ class BaseTrainer:
             self.logger.warning("Warning: The number of GPU\'s configured to use is {}, but only {} are available "
                                 "on this machine.".format(n_gpu_use, n_gpu))
             n_gpu_use = n_gpu
-        device = torch.device('cuda:0' if n_gpu_use > 0 else 'cpu')
+        device = torch.device('cuda' if n_gpu_use > 0 else 'cpu')
         list_ids = list(range(n_gpu_use))
         return device, list_ids
 
@@ -127,12 +155,11 @@ class BaseTrainer:
         :param log: logging information of the epoch
         :param save_best: if True, rename the saved checkpoint to 'model_best.pth'
         """
-        arch = type(self.model).__name__
         state = {
-            'arch': arch,
+            'arch': self.config['name'],
             'epoch': epoch,
-            'state_dict': self.model.state_dict(),
-            'optimizer': self.optimizer.state_dict(),
+            'models': { key: value.state_dict() for key, value in self.models.items() },
+            'optimizers': { key: value.state_dict() for key, value in self.optimizers.items() },
             'monitor_best': self.mnt_best,
             'config': self.config
         }
@@ -155,17 +182,18 @@ class BaseTrainer:
         self.start_epoch = checkpoint['epoch'] + 1
         self.mnt_best = checkpoint['monitor_best']
 
-        # load architecture params from checkpoint.
-        if checkpoint['config']['arch'] != self.config['arch']:
-            self.logger.warning("Warning: Architecture configuration given in config file is different from that of "
-                                "checkpoint. This may yield an exception while state_dict is being loaded.")
-        self.model.load_state_dict(checkpoint['state_dict'])
+        # load each model params from checkpoint.
+        for name in self.models.keys():
+            try:
+                self.models[name].load_state_dict(checkpoint['models'][name])
+            except:
+                raise "models not match, can not resume."
 
-        # load optimizer state from checkpoint only when optimizer type is not changed.
-        if checkpoint['config']['optimizer']['type'] != self.config['optimizer']['type']:
-            self.logger.warning("Warning: Optimizer type given in config file is different from that of checkpoint. "
-                                "Optimizer parameters not being resumed.")
-        else:
-            self.optimizer.load_state_dict(checkpoint['optimizer'])
+        # load each optimizer from checkpoint.
+        for name in self.optimizers.keys():
+            try:
+                self.optimizers[name].load_state_dict(checkpoint['optimizers'][name])
+            except:
+                raise "optimizers not match, can not resume."
 
         self.logger.info("Checkpoint loaded. Resume training from epoch {}".format(self.start_epoch))

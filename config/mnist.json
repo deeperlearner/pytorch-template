@@ -1,47 +1,74 @@
 {
+    "n_gpu": 1,
     "name": "Mnist_LeNet",
-    "data_loader": {
-        "type": "MnistDataLoader",
-        "args": {
-            "batch_size": 64,
-            "shuffle": true,
-            "num_workers": 2
+    "data_loaders": {
+        "dataloader": {
+            "module": "mnist_loader",
+            "type": "MnistDataLoader",
+            "args": {
+                "train_dir": null,
+                "valid_dir": null,
+                "test_dir": null,
+                "train_label": null,
+                "valid_label": null,
+                "test_label": null,
+                "batch_size": 32,
+                "shuffle": true,
+                "num_workers": 2
+            }
         }
     },
-    "arch": {
-        "type": "MnistModel",
-        "args": {
+    "models": {
+        "mnist": {
+            "module": "MNIST",
+            "type": "MnistModel",
+            "args": {
+            }
         }
     },
-    "loss": "nll_loss",
+    "losses": {
+        "loss": {
+            "type": "nll_loss",
+            "args": {
+            }
+        }
+    },
     "metrics": [
         "accuracy", "top_k_acc"
     ],
-    "optimizer": {
-        "type": "Adam",
-        "args": {
-            "lr": 0.001
+    "optimizers": {
+        "mnist": {
+            "type": "Adam",
+            "args": {
+                "lr": 0.001
+            }
         }
     },
-    "lr_scheduler": {
-        "type": "StepLR",
-        "args": {
-            "step_size": 50,
-            "gamma": 0.1
+    "lr_schedulers": {
+        "mnist": {
+            "type": "StepLR",
+            "args": {
+                "step_size": 50,
+                "gamma": 0.1
+            }
         }
     },
-    "n_gpu": 1,
     "trainer": {
-        "type": "normal",
-        "epochs": 2,
+        "module": "mnist_trainer",
+        "type": "Mnist_Trainer",
 
-        "save_dir": "saved/",
+        "epochs": 2,
+        "len_epoch": null,
+
         "save_period": 1,
         "verbosity": 2,
 
         "monitor": "min val_loss",
         "early_stop": 10,
 
-        "tensorboard": true
+        "tensorboard": true,
+
+        "save_dir": "saved/",
+        "log_config": "logger/logger_config.json"
     }
 }
