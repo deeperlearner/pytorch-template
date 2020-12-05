@@ -33,11 +33,12 @@ A pytorch template files generator.
 <!-- /code_chunk_output -->
 
 ## Requirements
-* Python >= 3.5 (3.6 recommended)
-* PyTorch >= 0.4 (1.2 recommended)
+* Python >= 3.6
+* torch >= 1.4.0
+* torchvision >= 0.5.0
 * numpy
 * pandas
-* tqdm
+* Pillow
 
 ## Features
 * Clear folder structure which is suitable for many deep learning projects.
@@ -46,48 +47,52 @@ A pytorch template files generator.
 * Customizable command line options for more convenient parameter tuning.
 * Checkpoint saving and resuming.
 * Abstract base classes for faster development:
-  * `BaseTrainer` handles checkpoint saving/resuming, training process logging, and more.
+  * `BaseTrainer` handles checkpoint saving/resuming, training process logging, and initialize all kinds of objects.
   * `BaseDataLoader` handles batch generation, data shuffling, and validation data splitting.
-  * `BaseModel` provides basic model summary.
+  * `BaseModel` : currently none.
 
 ## Folder Structure
   ```
   Pytorch-Template/
   │
+  ├── torch_new_project.py - initialize new project with template files
+  │
   ├── train.py - main script to start training
   ├── test.py - evaluation of trained model
   │
-  ├── config.json - holds configuration for training
-  ├── parse_config.py - class to handle config file and cli options
-  │
-  ├── new_project.py - initialize new project with template files
-  │
   ├── base/ - abstract base classes
   │   ├── base_data_loader.py
-  │   ├── base_model.py
+  │   ├── base_model.py (currently none)
   │   └── base_trainer.py
   │
-  ├── data_loader/ - anything about data loading goes here
-  │   └── data_loaders.py
+  ├── config/ - configurations for training
+  │   ├── config.json
+  │   └── *.json
+  ├── parse_config.py - class to handle config file and cli options
   │
   ├── data/ - default directory for storing input data
-  │
-  ├── model/ - models, losses, and metrics
-  │   ├── model.py
-  │   ├── metric.py
-  │   └── loss.py
-  │
-  ├── saved/
-  │   ├── models/ - trained models are saved here
-  │   └── log/ - default logdir for tensorboard and logging output
-  │
-  ├── trainer/ - trainers
-  │   └── trainer.py
+  ├── data_loader/ - anything about data loading goes here
+  │   └── *_loader.py
   │
   ├── logger/ - module for tensorboard visualization and logging
   │   ├── visualization.py
   │   ├── logger.py
   │   └── logger_config.json
+  │
+  ├── model/ - models, losses, and metrics
+  │   ├── model.py
+  │   ├── metric.py
+  │   ├── loss.py
+  │   └── ...
+  │
+  ├── saved/
+  │   └── EXP_name/
+  │       └── run_id/
+  │           ├── models/ - trained models are saved here
+  │           └── log/ - default logdir for tensorboard and logging output   
+  │
+  ├── trainer/ - trainers
+  │   └── *_trainer.py
   │  
   └── utils/ - small utility functions
       ├── util.py
@@ -102,55 +107,81 @@ Try `python train.py -c config.json` to run code.
 Config files are in `.json` format:
 ```javascript
 {
-  "name": "Mnist_LeNet",        // training session name
-  "n_gpu": 1,                   // number of GPUs to use for training.
+    "n_gpu": 1,                                 // number of GPUs to use for training.
+    "name": "EXP_name",                         // training session name
   
-  "arch": {
-    "type": "MnistModel",       // name of model architecture to train
-    "args": {
+    "data_loaders": {
+        "dataloader": {
+            "module": "image_loader",           // selecting module
+            "type": "ImageDataLoader",          // selecting class
+            "args":{
+                "train_dir": null,
+                "valid_dir": null,
+                "test_dir": null,
+                "train_label": null,
+                "valid_label": null,
+                "test_label": null,
+                "batch_size": 32,               // batch size
+                "shuffle": true,                // shuffle when training
+                "num_workers": 2,               // number of cpu processes to be used for data loading
+                "validation_split": 0.0         // size of validation dataset. float(portion) or int(number of samples)
+            }
+        }
+    },
+    "models": {
+        "model" : {
+            "module": "MNIST",                  // selecting module
+            "type": "MnistModel",               // selecting class
+            "args": {
+            }
+        }
+    },
+    "losses": {
+        "loss": {
+            "type": "nll_loss",
+            "args": {
+            }
+        }
+    },
+    "metrics": [
+        "accuracy", "top_k_acc"                 // list of metrics to evaluate
+    ],                         
+    "optimizers": {
+        "model": {
+            "type": "Adam",
+            "args":{
+                "lr": 0.001,                    // learning rate
+                "weight_decay": 0,              // weight decay
+                "amsgrad": true
+            }
+        }
+    },
+    "lr_schedulers": {
+        "model": {
+            "type": "StepLR",
+            "args": {
+                "step_size": 50,
+                "gamma": 0.1
+            }
+        }
+    },
+    "trainer": {
+        "module": "my_trainer",
+        "type": "My_Trainer",
 
-    }                
-  },
-  "data_loader": {
-    "type": "MnistDataLoader",         // selecting data loader
-    "args":{
-      "data_dir": "data/",             // dataset path
-      "batch_size": 64,                // batch size
-      "shuffle": true,                 // shuffle training data before splitting
-      "validation_split": 0.1          // size of validation dataset. float(portion) or int(number of samples)
-      "num_workers": 2,                // number of cpu processes to be used for data loading
+        "epochs": 100,                              // number of training epochs
+        "len_epoch": null,                          // length of one training epoch
+
+        "save_dir": "saved/",                       // checkpoints are saved in save_dir/models/name
+        "save_freq": 1,                             // save checkpoints every save_freq epochs
+        "verbosity": 2,                             // 0: quiet, 1: per epoch, 2: full
+
+        "monitor": "min val_loss",                  // mode and metric for model performance monitoring. set 'off' to disable.
+        "early_stop": 10,                           // number of epochs to wait before early stop. set 0 to disable.
+
+        "tensorboard": true,                        // enable tensorboard visualization
+        "log_config": "logger/logger_config.json"   // path to log config file
     }
-  },
-  "optimizer": {
-    "type": "Adam",
-    "args":{
-      "lr": 0.001,                     // learning rate
-      "weight_decay": 0,               // (optional) weight decay
-      "amsgrad": true
-    }
-  },
-  "loss": "nll_loss",                  // loss
-  "metrics": [
-    "accuracy", "top_k_acc"            // list of metrics to evaluate
-  ],                         
-  "lr_scheduler": {
-    "type": "StepLR",                  // learning rate scheduler
-    "args":{
-      "step_size": 50,          
-      "gamma": 0.1
-    }
-  },
-  "trainer": {
-    "epochs": 100,                     // number of training epochs
-    "save_dir": "saved/",              // checkpoints are saved in save_dir/models/name
-    "save_freq": 1,                    // save checkpoints every save_freq epochs
-    "verbosity": 2,                    // 0: quiet, 1: per epoch, 2: full
-  
-    "monitor": "min val_loss"          // mode and metric for model performance monitoring. set 'off' to disable.
-    "early_stop": 10	                 // number of epochs to wait before early stop. set 0 to disable.
-  
-    "tensorboard": true,               // enable tensorboard visualization
-  }
 }
 ```
 

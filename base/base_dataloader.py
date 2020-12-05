@@ -1,6 +1,5 @@
 import numpy as np
 from torch.utils.data import DataLoader
-from torch.utils.data.dataloader import default_collate
 from torch.utils.data.sampler import SubsetRandomSampler
 
 
@@ -8,43 +7,38 @@ class BaseDataLoader(DataLoader):
     """
     Base class for all data loaders
     """
-    def __init__(self, MyDataset, 
-            batch_size=1, shuffle=False, num_workers=1,
-            mode='train', validation_split=0.0,
-            train_dir=None, valid_dir=None, test_dir=None,
-            train_label_path=None, valid_label_path=None, test_label_path=None):
+    def __init__(self, config_args: dict, MyDataset, mode='train'):
+        data_paths = config_args['data_paths']
+        validation_split = config_args['validation_split']
+        self.init_kwargs = config_args['DataLoader_args']
+        self.mode = mode
 
-        if mode == 'train':
-            assert train_dir is not None, "must specify train directory"
-            # train and valid load from specified directory
-            dataset = MyDataset(train_dir, label_path=train_label_path)
-            validset = None
-            if valid_dir is not None:
-                validset = MyDataset(valid_dir, label_path=valid_label_path)
-        elif mode == 'test':
-            assert test_dir is not None, "must specify test directory"
-            dataset = MyDataset(test_dir, label_path=test_label_path)
-        elif mode == 'inference':
-            return
+        self.create_dataset(MyDataset, data_paths)
+        self.n_samples = len(self.dataset)
 
-        self.n_samples = len(dataset)
-
-        self.init_kwargs = {
-            'dataset': dataset,
-            'batch_size': batch_size,
-            'shuffle': shuffle,
-            'collate_fn': default_collate,
-            'num_workers': num_workers
-        }
         if validation_split == 0.0:
-            super().__init__(**self.init_kwargs)
+            super().__init__(self.dataset, **self.init_kwargs)
             self.valid_loader = None
-            if validset is not None:
-                self.valid_loader = DataLoader(validset, batch_size=batch_size, num_workers=num_workers)
+            if self.validset is not None:
+                self.valid_loader = DataLoader(self.validset, **self.init_kwargs)
         else:
             sampler, valid_sampler = self._split_sampler(validation_split)
             super().__init__(sampler=sampler, **self.init_kwargs)
             self.valid_loader = DataLoader(sampler=valid_sampler, **self.init_kwargs)
+
+    def create_dataset(self, my_dataset, data_paths):
+        if self.mode == 'train':
+            assert data_paths['train_dir'] is not None, "must specify train directory"
+            # train and valid load from specified directory
+            self.dataset = my_dataset(data_paths['train_dir'], label_path=data_paths['train_label'])
+            self.validset = None
+            if data_paths['valid_dir'] is not None:
+                self.validset = my_dataset(data_paths['valid_dir'], label_path=data_paths['valid_label'])
+        elif self.mode == 'test':
+            assert data_paths['test_dir'] is not None, "must specify test directory"
+            self.dataset = my_dataset(data_paths['test_dir'], label_path=data_paths['test_label'])
+        elif self.mode == 'inference':
+            return
 
     def _split_sampler(self, split):
         idx_full = np.arange(self.n_samples)

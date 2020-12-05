@@ -6,18 +6,17 @@ from base import BaseTrainer
 from utils import inf_loop, MetricTracker
 
 
-class MNIST_Trainer(BaseTrainer):
+class Trainer(BaseTrainer):
     """
     Trainer class
     """
-    def __init__(self, config):
-        super().__init__(config)
+    def __init__(self, config, len_epoch=None, **kwargs):
+        super().__init__(config, **kwargs)
 
         # data_loaders
         self.data_loader = self.data_loaders['dataloader']
         self.valid_data_loader = self.data_loader.valid_loader
         self.do_validation = self.valid_data_loader is not None
-        len_epoch = config['trainer']['len_epoch']
         if len_epoch is None:
             # epoch-based training
             self.len_epoch = len(self.data_loader)
@@ -31,7 +30,7 @@ class MNIST_Trainer(BaseTrainer):
         self.model = self.models['model']
 
         # losses
-        self.criterion = self.losses['loss']
+        self.criterion = self.losses['model']
 
         # metrics
         self.train_metrics = MetricTracker('loss', *[m.__name__ for m in self.metrics], writer=self.writer)
@@ -53,7 +52,7 @@ class MNIST_Trainer(BaseTrainer):
         """
         self.model.train()
         self.train_metrics.reset()
-        for batch_idx, (_, data, target) in enumerate(self.data_loader):
+        for batch_idx, (data, target) in enumerate(self.data_loader):
             data, target = data.to(self.device), target.to(self.device)
             self.optimizer.zero_grad()
             output = self.model(data)
@@ -95,7 +94,7 @@ class MNIST_Trainer(BaseTrainer):
         self.model.eval()
         self.valid_metrics.reset()
         with torch.no_grad():
-            for batch_idx, (_, data, target) in enumerate(self.valid_data_loader):
+            for batch_idx, (data, target) in enumerate(self.valid_data_loader):
                 data, target = data.to(self.device), target.to(self.device)
                 output = self.model(data)
                 loss = self.criterion(output, target)

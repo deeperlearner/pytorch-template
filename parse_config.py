@@ -1,4 +1,3 @@
-import importlib
 import os
 import logging
 from pathlib import Path
@@ -11,24 +10,29 @@ from utils import ensure_dir, read_json, write_json
 
 
 class ConfigParser:
-    def __init__(self, config_json, resume=None, mode='train', modification=None, run_id=None, log_name=None):
+    def __init__(self, config_json: str, run_args: dict, modification=None):
         """
-        class to parse configuration json file. Handles hyperparameters for training, initializations of modules, checkpoint saving
-        and logging module.
+        class to parse configuration json file. Handles hyperparameters for training,
+        initializations of modules, checkpoint saving and logging module.
         :param config_json: String, path to the config file.
-        :param resume: String, path to the checkpoint being loaded.
-        :param mode: String, 'train', 'test' or 'inference'.
+        :param run_args: Dict, running arguments including resume, mode, run_id, log_name.
+            - resume: String, path to the checkpoint being loaded.
+            - mode: String, 'train', 'test' or 'inference'.
+            - run_id: Unique Identifier for training processes. Used to save checkpoints and training log.
+                     Timestamp is being used as default
+            - log_name: Change info.log into <log_name>.log.
         :param modification: Dict keychain:value, specifying position values to be replaced from config dict.
-        :param run_id: Unique Identifier for training processes. Used to save checkpoints and training log. Timestamp is being used as default
         """
         # load config file and apply modification
         config = read_json(config_json)
         self._config = _update_config(config, modification)
-        self.resume = resume
-        self.mode = mode
+        self.resume = run_args['resume']
+        self.mode = run_args['mode']
+        run_id = run_args['run_id']
+        log_name = run_args['log_name']
 
         if self.mode == 'train':
-            save_dir = Path(self.config['trainer']['save_dir'])
+            save_dir = Path(self.config['save_dir'])
             if run_id is None: # use timestamp as default run-id
                 run_id = datetime.now().strftime(r'%m%d_%H%M%S')
             exp_dir  = save_dir / self.config['name'] / run_id
@@ -43,12 +47,12 @@ class ConfigParser:
             write_json(self.config, exp_dir / os.path.basename(config_json))
 
             # configure logging module
-            setup_logging(self.save_dir['log'], log_config=self.config['trainer']['log_config'], filename=log_name)
+            setup_logging(self.save_dir['log'], log_config=self.config['log_config'], filename=log_name)
         elif self.mode == 'test':
             # configure logging module
             log_dir = Path('log')
             ensure_dir(log_dir)
-            setup_logging(log_dir, log_config=self.config['trainer']['log_config'], filename=log_name)
+            setup_logging(log_dir, log_config=self.config['log_config'], filename=log_name)
 
         self.log_levels = {
             0: logging.WARNING,
@@ -70,16 +74,16 @@ class ConfigParser:
         assert args.config is not None, msg_no_cfg
         config_json = Path(args.config)
 
-        resume = Path(args.resume) if args.resume is not None else None
-        mode = args.mode
+        run_args = dict()
+        run_args['resume'] = Path(args.resume) if args.resume is not None else None
+        run_args['mode'] = args.mode
+        run_args['run_id'] = args.run_id
+        run_args['log_name'] = args.log_name
 
         # parse custom cli options into dictionary
         modification = {opt.target : getattr(args, _get_opt_name(opt.flags)) for opt in options}
 
-        run_id = args.run_id
-        log_name = args.log_name
-
-        return cls(config_json, resume, mode, modification, run_id, log_name)
+        return cls(config_json, run_args, modification)
 
     def init_obj(self, kind, name, module, *args, **kwargs):
         """
@@ -87,7 +91,7 @@ class ConfigParser:
         instance initialized with given arguments.
         `object = config.init_obj('kind', 'name', module, a, b=1)`
         is equivalent to
-        `object = module.name(a, b=1)`
+        `object = module.name(obj_args, a, b=1)`
         """
         try:
             module_name = self[kind][name]['module']
@@ -97,11 +101,9 @@ class ConfigParser:
             class_name = self[kind][name]['type']
             obj = getattr(module, class_name)
 
-        module_args = dict(self[kind][name]['args'])
-        assert all([k not in module_args for k in kwargs]), 'Overwriting kwargs given in config file is not allowed'
-        module_args.update(kwargs)
+        obj_args = self[kind][name]['args'] # type: dict
 
-        return obj(*args, **module_args)
+        return obj(obj_args, *args, **kwargs)
 
     def init_ftn(self, kind, name, module, *args, **kwargs):
         """
@@ -121,13 +123,11 @@ class ConfigParser:
 
     def __getitem__(self, name):
         """Access items like ordinary dict."""
-        if name is None:
-            return self.config
-        else:
-            return self.config[name]
+        return self.config[name]
 
     def get_logger(self, name, verbosity=2):
-        msg_verbosity = 'verbosity option {} is invalid. Valid options are {}.'.format(verbosity, self.log_levels.keys())
+        msg_verbosity = 'verbosity option {} is invalid. Valid options are {}.'.format(verbosity,
+                                                                                    self.log_levels.keys())
         assert verbosity in self.log_levels, msg_verbosity
         logger = logging.getLogger(name)
         logger.setLevel(self.log_levels[verbosity])
@@ -143,9 +143,9 @@ def _update_config(config, modification):
     if modification is None:
         return config
 
-    for k, v in modification.items():
-        if v is not None:
-            _set_by_path(config, k, v)
+    for key, value in modification.items():
+        if value is not None:
+            _set_by_path(config, key, value)
     return config
 
 def _get_opt_name(flags):

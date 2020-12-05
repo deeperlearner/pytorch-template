@@ -1,11 +1,19 @@
 {
     "n_gpu": 1,
-    "name": "EXP",
+    "name": "Mnist_LeNet",
 
     "datasets": {
         "dataset": {
             "module": "data_loader",
             "type": "ImageDataset",
+            "args": {
+            }
+        }
+    },
+    "data_loaders": {
+        "dataloader": {
+            "module": "mnist_loader",
+            "type": "BaseDataLoader",
             "args": {
                 "data_paths": {
                     "train_dir": "./data",
@@ -14,26 +22,20 @@
                     "train_label": null,
                     "valid_label": null,
                     "test_label": null
+                },
+                "validation_split": 0.0,
+                "DataLoader_args": {
+                    "batch_size": 128,
+                    "shuffle": true,
+                    "num_workers": 2
                 }
             }
         }
     },
-    "data_loaders": {
-        "dataloader": {
-            "module": "data_loader",
-            "type": "BaseDataLoader",
-            "args": {
-                "validation_split": 0.0,
-                "batch_size": 128,
-                "shuffle": true,
-                "num_workers": 2
-            }
-        }
-    },
     "models": {
-        "model" : {
+        "model": {
             "module": "model",
-            "type": "MyModel",
+            "type": "LeNet",
             "args": {
             }
         }
@@ -66,8 +68,8 @@
         }
     },
     "trainer": {
-        "module": "my_trainer",
-        "type": "My_Trainer",
+        "module": "trainer",
+        "type": "Trainer",
         "args": {
             "epochs": 2,
             "len_epoch": null,

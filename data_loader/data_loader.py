@@ -1,7 +1,7 @@
 import os
 import glob
 
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 from torchvision import transforms
 from PIL import Image
 import pandas as pd
@@ -19,6 +19,8 @@ class ImageDataset(Dataset):
         if label_path is not None:
             self.labels = pd.read_csv(label_path, index_col=['image_name'])
 
+        mean = (0.5, 0.5, 0.5)
+        std  = (0.5, 0.5, 0.5)
         # transforms
         self.transform = transforms.Compose([
             #transforms.RandomRotation(10),
@@ -26,8 +28,7 @@ class ImageDataset(Dataset):
             #transforms.RandomAffine(degrees=0, translate=(0.2, 0.2), shear=0.2),
             #transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
-            transforms.Normalize(mean=(0.5, 0.5, 0.5),
-                                  std=(0.5, 0.5, 0.5)),
+            transforms.Normalize(mean, std)
         ])
 
     def __getitem__(self, idx):
@@ -38,15 +39,10 @@ class ImageDataset(Dataset):
             image = self.transform(image)
 
         img_idx = os.path.basename(image_file)
-        if self.label_path is not None:
-            label = self.labels.loc[img_idx].values
-            return img_idx, image, label[0]
-        else:
+        if self.label_path is None:
             return img_idx, image
+        label = self.labels.loc[img_idx].values
+        return img_idx, image, label[0]
 
     def __len__(self):
         return len(self.filenames)
-
-class ImageDataLoader(BaseDataLoader):
-    def __init__(self, **kwargs):
-        super().__init__(ImageDataset, **kwargs)

@@ -16,12 +16,16 @@ class BaseTrainer:
     """
     def __init__(self, config):
         self.config = config
+
+        # dataset
+        dataset = config.init_obj('dataset',)
+
         # data_loaders
         self.data_loaders = dict()
         for name in config['data_loaders'].keys():
-            self.data_loaders[name] = config.init_obj('dataloaders', name, module_data, mode=config.mode)
+            self.data_loaders[name] = config.init_obj('data_loaders', name, module_data, mode=config.mode)
 
-        self.logger = config.get_logger('trainer', config['trainer']['verbosity'])
+        self.logger = config.get_logger('trainer', verbosity)
         # setup GPU device if available, move model into configured device
         self.device, self.device_ids = self._prepare_device(config['n_gpu'])
         # models
@@ -45,18 +49,19 @@ class BaseTrainer:
         self.optimizers = dict()
         for name in config['optimizers'].keys():
             trainable_params = filter(lambda p: p.requires_grad, self.models[name].parameters())
-            self.optimizers[name] = config.init_obj(name, torch.optim, trainable_params)
+            self.optimizers[name] = config.init_obj('optimizers', name, torch.optim, trainable_params)
 
         # learning rate schedulers
         self.lr_schedulers = dict()
         for name in config['lr_schedulers'].keys():
-            self.lr_schedulers[name] = config.init_obj(name, torch.optim.lr_scheduler, self.optimizers[name])
-
+            self.lr_schedulers[name] = config.init_obj('lr_schedulers', name, torch.optim.lr_scheduler, self.optimizers[name])
+        
         # trainer
-        cfg_trainer = config['trainer']
+        cfg_trainer = config['trainer']['args']
         self.epochs = cfg_trainer['epochs']
         self.save_period = cfg_trainer['save_period']
         self.monitor = cfg_trainer.get('monitor', 'off')
+        self.early_stop = cfg_trainer.get('early_stop', inf)
 
         # configuration to monitor model performance and save best
         if self.monitor == 'off':
@@ -65,16 +70,14 @@ class BaseTrainer:
         else:
             self.mnt_mode, self.mnt_metric = self.monitor.split()
             assert self.mnt_mode in ['min', 'max']
-
             self.mnt_best = inf if self.mnt_mode == 'min' else -inf
-            self.early_stop = cfg_trainer.get('early_stop', inf)
 
         self.start_epoch = 1
 
         self.checkpoint_dir = config.save_dir['model']
 
         # setup visualization writer instance
-        self.writer = TensorboardWriter(config.save_dir['log'], self.logger, cfg_trainer['tensorboard'])
+        self.writer = TensorboardWriter(config.save_dir['log'], self.logger, tensorboard)
 
         if config.resume is not None:
             self._resume_checkpoint(config.resume)
