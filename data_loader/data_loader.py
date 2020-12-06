@@ -6,7 +6,7 @@ from torchvision import transforms
 from PIL import Image
 import pandas as pd
 
-from base import BaseDataLoader
+from base import BaseDataset, BaseDataLoader
 
 
 class ImageDataset(Dataset):
@@ -46,3 +46,10 @@ class ImageDataset(Dataset):
 
     def __len__(self):
         return len(self.filenames)
+
+class MyDataset(BaseDataset):
+    def __init__(self, data_paths: dict, mode='train'):
+        super().__init__(ImageDataset, data_paths, mode)
+
+class MyDataLoader(BaseDataLoader):
+    pass

@@ -3,42 +3,43 @@ from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 
 
-class BaseDataLoader(DataLoader):
+class BaseDataset:
     """
-    Base class for all data loaders
+    Base class for all datasets
     """
-    def __init__(self, config_args: dict, MyDataset, mode='train'):
-        data_paths = config_args['data_paths']
-        validation_split = config_args['validation_split']
-        self.init_kwargs = config_args['DataLoader_args']
+    def __init__(self, my_dataset, data_paths: dict, mode='train'):
         self.mode = mode
 
-        self.create_dataset(MyDataset, data_paths)
-        self.n_samples = len(self.dataset)
-
-        if validation_split == 0.0:
-            super().__init__(self.dataset, **self.init_kwargs)
-            self.valid_loader = None
-            if self.validset is not None:
-                self.valid_loader = DataLoader(self.validset, **self.init_kwargs)
-        else:
-            sampler, valid_sampler = self._split_sampler(validation_split)
-            super().__init__(sampler=sampler, **self.init_kwargs)
-            self.valid_loader = DataLoader(sampler=valid_sampler, **self.init_kwargs)
-
-    def create_dataset(self, my_dataset, data_paths):
+        self.validset = None
         if self.mode == 'train':
             assert data_paths['train_dir'] is not None, "must specify train directory"
             # train and valid load from specified directory
             self.dataset = my_dataset(data_paths['train_dir'], label_path=data_paths['train_label'])
-            self.validset = None
             if data_paths['valid_dir'] is not None:
                 self.validset = my_dataset(data_paths['valid_dir'], label_path=data_paths['valid_label'])
         elif self.mode == 'test':
             assert data_paths['test_dir'] is not None, "must specify test directory"
             self.dataset = my_dataset(data_paths['test_dir'], label_path=data_paths['test_label'])
         elif self.mode == 'inference':
-            return
+            self.dataset = None
+
+class BaseDataLoader(DataLoader):
+    """
+    Base class for all data loaders
+    """
+    def __init__(self, datasets, validation_split=0.0, DataLoader_args=None):
+        self.init_kwargs = DataLoader_args if DataLoader_args is not None else {}
+
+        self.n_samples = len(datasets.dataset)
+
+        if validation_split == 0.0:
+            super().__init__(datasets.dataset, **self.init_kwargs)
+            if datasets.validset is not None:
+                self.valid_loader = DataLoader(datasets.validset, **self.init_kwargs)
+        else:
+            sampler, valid_sampler = self._split_sampler(validation_split)
+            super().__init__(datasets.dataset, sampler=sampler, **self.init_kwargs)
+            self.valid_loader = DataLoader(datasets.dataset, sampler=valid_sampler, **self.init_kwargs)
 
     def _split_sampler(self, split):
         idx_full = np.arange(self.n_samples)

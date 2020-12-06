@@ -3,17 +3,9 @@
     "name": "Mnist_LeNet",
 
     "datasets": {
-        "dataset": {
-            "module": "data_loader",
-            "type": "ImageDataset",
-            "args": {
-            }
-        }
-    },
-    "data_loaders": {
-        "dataloader": {
+        "data": {
             "module": "mnist_loader",
-            "type": "BaseDataLoader",
+            "type": "MyDataset",
             "args": {
                 "data_paths": {
                     "train_dir": "./data",
@@ -22,8 +14,16 @@
                     "train_label": null,
                     "valid_label": null,
                     "test_label": null
-                },
-                "validation_split": 0.0,
+                }
+            }
+        }
+    },
+    "data_loaders": {
+        "data": {
+            "module": "mnist_loader",
+            "type": "MyDataLoader",
+            "args": {
+                "validation_split": 0.2,
                 "DataLoader_args": {
                     "batch_size": 128,
                     "shuffle": true,

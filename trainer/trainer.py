@@ -10,20 +10,20 @@ class Trainer(BaseTrainer):
     """
     Trainer class
     """
-    def __init__(self, config, len_epoch=None, **kwargs):
-        super().__init__(config, **kwargs)
+    def __init__(self, config):
+        super().__init__(config)
 
         # data_loaders
-        self.data_loader = self.data_loaders['dataloader']
+        self.data_loader = self.data_loaders['data']
         self.valid_data_loader = self.data_loader.valid_loader
         self.do_validation = self.valid_data_loader is not None
-        if len_epoch is None:
+        if self.len_epoch is None:
             # epoch-based training
             self.len_epoch = len(self.data_loader)
         else:
             # iteration-based training
-            data_loader = inf_loop(self.data_loader)
-            self.len_epoch = len_epoch
+            self.data_loader = inf_loop(self.data_loader)
+            self.len_epoch = self.len_epoch
         self.log_step = int(np.sqrt(self.data_loader.batch_size))
 
         # models
@@ -40,7 +40,7 @@ class Trainer(BaseTrainer):
         self.optimizer = self.optimizers['model']
 
         # learning rate schedulers
-        self.do_lr_scheduling = True if len(self.lr_schedulers) else False
+        self.do_lr_scheduling = len(self.lr_schedulers) > 0
         self.lr_scheduler = self.lr_schedulers['model']
 
     def _train_epoch(self, epoch):
@@ -99,14 +99,15 @@ class Trainer(BaseTrainer):
                 output = self.model(data)
                 loss = self.criterion(output, target)
 
+                self.writer.set_step((epoch - 1) * self.len_epoch + batch_idx, 'valid')
                 self.valid_metrics.update('loss', loss.item())
                 for met in self.metrics:
                     self.valid_metrics.update(met.__name__, met(output, target))
                 self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
 
         # add histogram of model parameters to the tensorboard
-        for name, p in self.model.named_parameters():
-            self.writer.add_histogram(name, p, bins='auto')
+        for name, param in self.model.named_parameters():
+            self.writer.add_histogram(name, param, bins='auto')
 
         return self.valid_metrics.result()
 

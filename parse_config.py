@@ -87,23 +87,28 @@ class ConfigParser:
 
     def init_obj(self, kind, name, module, *args, **kwargs):
         """
-        Finds a class handle with the name given as 'type' in config, and returns the
-        instance initialized with given arguments.
-        `object = config.init_obj('kind', 'name', module, a, b=1)`
+        Returns dictionary of objects, which are specified in config.
+        'module' corresponds to the module of each instance.
+        'type' corresponds to the class name of each instance.
+        And each instance is initialized with given arguments.
+        `objects = config.init_obj('kind', 'name', module, a, b=1)`
         is equivalent to
-        `object = module.name(obj_args, a, b=1)`
+        `objects = module.kind.name(obj_args, a, b=1)`, where obj_args are specified in config.
         """
+        obj_config = self[kind][name]
         try:
-            module_name = self[kind][name]['module']
-            class_name = self[kind][name]['type']
+            module_name = obj_config['module']
+            class_name = obj_config['type']
             obj = reduce(getattr, [module , module_name, class_name])
-        except KeyError:
-            class_name = self[kind][name]['type']
+        except KeyError: # In case no module specified
+            class_name = obj_config['type']
             obj = getattr(module, class_name)
 
-        obj_args = self[kind][name]['args'] # type: dict
+        module_args = dict(obj_config['args'])
+        assert all([k not in module_args for k in kwargs]), 'Overwriting kwargs given in config file is not allowed'
+        module_args.update(kwargs)
 
-        return obj(obj_args, *args, **kwargs)
+        return obj(*args, **module_args)
 
     def init_ftn(self, kind, name, module, *args, **kwargs):
         """
@@ -111,11 +116,12 @@ class ConfigParser:
         function with given arguments fixed with functools.partial.
         `function = config.init_ftn('kind', 'name', module, a, b=1)`
         is equivalent to
-        `function = lambda *args, **kwargs: module.name(a, *args, b=1, **kwargs)`.
+        `function = lambda *args, **kwargs: module.kind.name(a, *args, b=1, **kwargs)`.
         """
-        class_name = self[kind][name]['type']
+        ftn_config = self[kind][name]
+        class_name = ftn_config['type']
         ftn = getattr(module, class_name)
-        module_args = dict(self[kind][name]['args'])
+        module_args = dict(ftn_config['args'])
         assert all([k not in module_args for k in kwargs]), 'Overwriting kwargs given in config file is not allowed'
         module_args.update(kwargs)
 

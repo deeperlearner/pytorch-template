@@ -6,9 +6,9 @@ from parse_config import ConfigParser
 import trainer as module_trainer
 
 
-def main(config):
-    module_name = self['trainer']['module']
-    class_name = self['trainer']['type']
+def main(cfg):
+    module_name = cfg['trainer']['module']
+    class_name = cfg['trainer']['type']
     trainer_class = reduce(getattr, [module_trainer , module_name, class_name])
     trainer = trainer_class(config)
 
