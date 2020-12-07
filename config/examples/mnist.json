@@ -10,7 +10,7 @@
                 "data_paths": {
                     "train_dir": "./data",
                     "valid_dir": null,
-                    "test_dir": null,
+                    "test_dir": "./data/test",
                     "train_label": null,
                     "valid_label": null,
                     "test_label": null

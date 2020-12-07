@@ -10,7 +10,7 @@ from utils import ensure_dir, read_json, write_json
 
 
 class ConfigParser:
-    def __init__(self, config_json: str, run_args: dict, modification=None):
+    def __init__(self, run_args: dict, modification=None):
         """
         class to parse configuration json file. Handles hyperparameters for training,
         initializations of modules, checkpoint saving and logging module.
@@ -24,9 +24,10 @@ class ConfigParser:
         :param modification: Dict keychain:value, specifying position values to be replaced from config dict.
         """
         # load config file and apply modification
-        config = read_json(config_json)
+        config_json = run_args['config']
+        config = read_json(Path(config_json))
         self._config = _update_config(config, modification)
-        self.resume = run_args['resume']
+        self.resume = Path(run_args['resume']) if run_args['resume'] is not None else None
         self.mode = run_args['mode']
         run_id = run_args['run_id']
         log_name = run_args['log_name']
@@ -61,29 +62,29 @@ class ConfigParser:
         }
 
     @classmethod
-    def from_args(cls, args, options=''):
+    def from_args(cls, parser, options=''):
         """
         Initialize this class from some cli arguments. Used in train, test.
         """
-        for opt in options:
-            args.add_argument(*opt.flags, default=None, type=opt.type)
+        args = parser.parse_args()
 
-        args = args.parse_args()
+        for group in parser._action_groups:
+            if group.title == 'run_args':
+                run_args = { g.dest: getattr(args, g.dest, None) for g in group._group_actions }
+            elif group.title == 'mod_args':
+                mod_args = { g.dest: getattr(args, g.dest, None) for g in group._group_actions }
 
         msg_no_cfg = "Configuration file need to be specified. Add '-c config.json', for example."
         assert args.config is not None, msg_no_cfg
-        config_json = Path(args.config)
 
-        run_args = dict()
-        run_args['resume'] = Path(args.resume) if args.resume is not None else None
-        run_args['mode'] = args.mode
-        run_args['run_id'] = args.run_id
-        run_args['log_name'] = args.log_name
+        if args.mode == 'train':
+            # parse custom cli options into dictionary
+            modification = {opt.target : getattr(args, _get_opt_name(opt.flags)) for opt in options}
+        else:
+            modification = None
+            cls.test_args = mod_args
 
-        # parse custom cli options into dictionary
-        modification = {opt.target : getattr(args, _get_opt_name(opt.flags)) for opt in options}
-
-        return cls(config_json, run_args, modification)
+        return cls(run_args, modification)
 
     def init_obj(self, kind, name, module, *args, **kwargs):
         """
