@@ -1,4 +1,5 @@
 import os
+import argparse
 import logging
 from pathlib import Path
 from functools import reduce, partial
@@ -10,12 +11,12 @@ from utils import ensure_dir, read_json, write_json
 
 
 class ConfigParser:
-    def __init__(self, run_args: dict, modification=None):
+    def __init__(self, run_args, modification=None):
         """
         class to parse configuration json file. Handles hyperparameters for training,
         initializations of modules, checkpoint saving and logging module.
-        :param config_json: String, path to the config file.
         :param run_args: Dict, running arguments including resume, mode, run_id, log_name.
+            - config: String, path to the config file.
             - resume: String, path to the checkpoint being loaded.
             - mode: String, 'train', 'test' or 'inference'.
             - run_id: Unique Identifier for training processes. Used to save checkpoints and training log.
@@ -24,15 +25,15 @@ class ConfigParser:
         :param modification: Dict keychain:value, specifying position values to be replaced from config dict.
         """
         # load config file and apply modification
-        config_json = run_args['config']
+        config_json = run_args.config
         config = read_json(Path(config_json))
         self._config = _update_config(config, modification)
-        self.resume = Path(run_args['resume']) if run_args['resume'] is not None else None
-        self.mode = run_args['mode']
-        run_id = run_args['run_id']
-        log_name = run_args['log_name']
+        self.resume = Path(run_args.resume) if run_args.resume is not None else None
+        self.mode = run_args.mode
+        log_name = run_args.log_name
 
         if self.mode == 'train':
+            run_id = run_args.run_id
             save_dir = Path(self.config['save_dir'])
             if run_id is None: # use timestamp as default run-id
                 run_id = datetime.now().strftime(r'%m%d_%H%M%S')
@@ -68,21 +69,21 @@ class ConfigParser:
         """
         args = parser.parse_args()
 
+        modification = None
         for group in parser._action_groups:
-            if group.title == 'run_args':
-                run_args = { g.dest: getattr(args, g.dest, None) for g in group._group_actions }
-            elif group.title == 'mod_args':
-                mod_args = { g.dest: getattr(args, g.dest, None) for g in group._group_actions }
+            if group.title == 'mod_args':
+                # parse custom cli options into dictionary
+                modification = {opt.target: getattr(args, _get_opt_name(opt.flags)) for opt in options}
+            else:
+                group_dict = {g.dest: getattr(args, g.dest, None) for g in group._group_actions}
+                arg_group = argparse.Namespace(**group_dict)
+                if group.title == 'run_args':
+                    run_args = arg_group
+                elif group.title == 'test_args':
+                    cls.test_args = arg_group
 
         msg_no_cfg = "Configuration file need to be specified. Add '-c config.json', for example."
         assert args.config is not None, msg_no_cfg
-
-        if args.mode == 'train':
-            # parse custom cli options into dictionary
-            modification = {opt.target : getattr(args, _get_opt_name(opt.flags)) for opt in options}
-        else:
-            modification = None
-            cls.test_args = mod_args
 
         return cls(run_args, modification)
 

@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 class VAE(nn.Module):
     def __init__(self, mode='train'):
-        super(VAE, self).__init__()
+        super().__init__()
         self.mode = mode
         self.encoder = nn.Sequential(
             nn.Conv2d(3, 32, kernel_size=4, stride=2, padding=1, bias=False),

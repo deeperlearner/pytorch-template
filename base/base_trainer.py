@@ -167,8 +167,8 @@ class BaseTrainer:
         state = {
             'arch': self.config['name'],
             'epoch': epoch,
-            'models': { key: value.state_dict() for key, value in self.models.items() },
-            'optimizers': { key: value.state_dict() for key, value in self.optimizers.items() },
+            'models': {key: value.state_dict() for key, value in self.models.items()},
+            'optimizers': {key: value.state_dict() for key, value in self.optimizers.items()},
             'monitor_best': self.mnt_best,
             'config': self.config
         }

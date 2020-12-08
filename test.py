@@ -1,6 +1,5 @@
 import os
 import argparse
-import collections
 
 import torch
 import torch.nn as nn
@@ -88,19 +87,14 @@ if __name__ == '__main__':
     run_args.add_argument('-c', '--config', default="config/examples/mnist.json", type=str)
     run_args.add_argument('--resume', default=None, type=str)
     run_args.add_argument('--mode', default='test', type=str)
-    run_args.add_argument('--run_id', default=None, type=str)
     run_args.add_argument('--log_name', default=None, type=str)
 
-    # custom cli options to modify configuration from default values given in json file.
-    mod_args = args.add_argument_group('mod_args')
-    CustomArgs = collections.namedtuple('CustomArgs', 'flags type target')
-    options = [
-        CustomArgs(['--test_dir'], type=str, target='test'),
-        CustomArgs(['--out_dir'], type=str, target='test'),
-        CustomArgs(['--output_path'], type=str, target='test'),
-    ]
-    for opt in options:
-        mod_args.add_argument(*opt.flags, default=None, type=opt.type)
+    # additional arguments for testing
+    test_args = args.add_argument_group('test_args')
+    test_args.add_argument('--test_dir', default=None, type=str)
+    test_args.add_argument('--out_dir', default=None, type=str)
+    test_args.add_argument('--output_path', default=None, type=str)
 
-    config = ConfigParser.from_args(args, options)
+    config = ConfigParser.from_args(args)
+    print(config.test_args)
     main(config)
