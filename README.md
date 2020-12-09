@@ -428,4 +428,4 @@ Code should pass the [Flake8](http://flake8.pycqa.org/en/latest/) check before c
 - [ ] Support more tensorboard functions
 
 ## Acknowledgements
-This project is inspired by the project [pytorch-template](https://github.com/victorsque/pytorch-template)
+This project is inspired by the project [pytorch-template](https://github.com/victoresque/pytorch-template)
