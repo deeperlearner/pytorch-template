@@ -48,6 +48,7 @@ A pytorch template files generator.
 * Checkpoint saving and resuming.
 * Abstract base classes for faster development:
   * `BaseTrainer` handles checkpoint saving/resuming, training process logging, and initialize all kinds of objects.
+  * `BaseDataset` handles train, valid and test directories/label paths, and create corresponding datasets.
   * `BaseDataLoader` handles batch generation, data shuffling, and validation data splitting.
   * `BaseModel` : currently none.
 
@@ -58,7 +59,12 @@ A pytorch template files generator.
   ├── torch_new_project.py - initialize new project with template files
   │
   ├── train.py - main script to start training
+  │
   ├── test.py - evaluation of trained model
+  ├── test_examples/
+  │   └── *_test.py
+  ├── log/ - log generated from *_test.py
+  │   └── *.log
   │
   ├── base/ - abstract base classes
   │   ├── base_data_loader.py
@@ -67,12 +73,15 @@ A pytorch template files generator.
   │
   ├── config/ - configurations for training
   │   ├── config.json
-  │   └── *.json
+  │   └── examples/
+  │       └── *.json
   ├── parse_config.py - class to handle config file and cli options
   │
   ├── data/ - default directory for storing input data
   ├── data_loader/ - anything about data loading goes here
-  │   └── *_loader.py
+  │   ├── data_loader.py
+  │   └── examples/
+  │       └── *_loader.py
   │
   ├── logger/ - module for tensorboard visualization and logging
   │   ├── visualization.py
@@ -83,20 +92,25 @@ A pytorch template files generator.
   │   ├── model.py
   │   ├── metric.py
   │   ├── loss.py
-  │   └── ...
+  │   └── examples/
+  │       └── *.py
   │
   ├── saved/
   │   └── EXP_name/
   │       └── run_id/
   │           ├── models/ - trained models are saved here
-  │           └── log/ - default logdir for tensorboard and logging output   
+  │           ├── log/ - default logdir for tensorboard and logging output   
+  │           └── *.json - backup config file when start training
   │
   ├── trainer/ - trainers
-  │   └── *_trainer.py
+  │   ├── trainer.py
+  │   └── examples/
+  │       └── *_trainer.py
   │  
   └── utils/ - small utility functions
       ├── util.py
-      └── ...
+      └── examples/
+          └── *.py
   ```
 
 ## Usage
@@ -107,51 +121,63 @@ Try `python train.py -c config.json` to run code.
 Config files are in `.json` format:
 ```javascript
 {
-    "n_gpu": 1,                                 // number of GPUs to use for training.
-    "name": "EXP_name",                         // training session name
+    "n_gpu": 1,                                     // number of GPUs to use for training.
+    "name": "EXP_name",                             // training session name
   
+    "datasets": {
+        "data": {
+            "module": "data_loader",
+            "type": "MyDataset",
+            "args": {
+                "data_paths": {
+                    "train_dir": "./data",          // must be specified in train mode
+                    "valid_dir": null,
+                    "test_dir": "./data/test",      // must be specified in test mode
+                    "train_label": null,
+                    "valid_label": null,
+                    "test_label": null
+                }
+            }
+        }
+    },
     "data_loaders": {
-        "dataloader": {
-            "module": "image_loader",           // selecting module
-            "type": "ImageDataLoader",          // selecting class
+        "data": {
+            "module": "data_loader",                // selecting module
+            "type": "MyDataLoader",                 // selecting class
             "args":{
-                "train_dir": null,
-                "valid_dir": null,
-                "test_dir": null,
-                "train_label": null,
-                "valid_label": null,
-                "test_label": null,
-                "batch_size": 32,               // batch size
-                "shuffle": true,                // shuffle when training
-                "num_workers": 2,               // number of cpu processes to be used for data loading
-                "validation_split": 0.0         // size of validation dataset. float(portion) or int(number of samples)
+                "validation_split": 0.2,            // size of validation dataset. float(portion) or int(number of samples)
+                "DataLoader_args": {
+                    "batch_size": 128,              // batch size
+                    "shuffle": true,                // shuffle when training
+                    "num_workers": 2                // number of cpu processes to be used for data loading
+                }
             }
         }
     },
     "models": {
         "model" : {
-            "module": "MNIST",                  // selecting module
-            "type": "MnistModel",               // selecting class
+            "module": "MNIST",                      // selecting module
+            "type": "MnistModel",                   // selecting class
             "args": {
             }
         }
     },
     "losses": {
-        "loss": {
+        "model": {
             "type": "nll_loss",
             "args": {
             }
         }
     },
     "metrics": [
-        "accuracy", "top_k_acc"                 // list of metrics to evaluate
+        "accuracy", "top_k_acc"                     // list of metrics to evaluate
     ],                         
     "optimizers": {
         "model": {
             "type": "Adam",
             "args":{
-                "lr": 0.001,                    // learning rate
-                "weight_decay": 0,              // weight decay
+                "lr": 0.001,                        // learning rate
+                "weight_decay": 0,                  // weight decay
                 "amsgrad": true
             }
         }
@@ -168,20 +194,21 @@ Config files are in `.json` format:
     "trainer": {
         "module": "my_trainer",
         "type": "My_Trainer",
+        "args": {
+            "epochs": 100,                          // number of training epochs
+            "len_epoch": null,                      // length of one training epoch
 
-        "epochs": 100,                              // number of training epochs
-        "len_epoch": null,                          // length of one training epoch
+            "save_period": 1,                       // save checkpoints every save_period epochs
+            "verbosity": 2,                         // 0: quiet, 1: per epoch, 2: full
 
-        "save_dir": "saved/",                       // checkpoints are saved in save_dir/models/name
-        "save_freq": 1,                             // save checkpoints every save_freq epochs
-        "verbosity": 2,                             // 0: quiet, 1: per epoch, 2: full
+            "monitor": "min val_loss",              // mode and metric for model performance monitoring. set 'off' to disable.
+            "early_stop": 10,                       // number of epochs to wait before early stop. set 0 to disable.
 
-        "monitor": "min val_loss",                  // mode and metric for model performance monitoring. set 'off' to disable.
-        "early_stop": 10,                           // number of epochs to wait before early stop. set 0 to disable.
-
-        "tensorboard": true,                        // enable tensorboard visualization
-        "log_config": "logger/logger_config.json"   // path to log config file
+            "tensorboard": true,                    // enable tensorboard visualization
+        }
     }
+    "save_dir": "saved/",                           // saved directory of model, log, and backup config file
+    "log_config": "logger/logger_config.json"       // path of log config file
 }
 ```
 
@@ -395,17 +422,8 @@ Code should pass the [Flake8](http://flake8.pycqa.org/en/latest/) check before c
 
 ## TODOs
 
-- [ ] Multiple optimizers
+- [ ] Revise trainer/examples and test\_examples
 - [ ] Support more tensorboard functions
-- [x] Using fixed random seed
-- [x] Support pytorch native tensorboard
-- [x] `tensorboardX` logger support
-- [x] Configurable logging layout, checkpoint naming
-- [x] Iteration-based training (instead of epoch-based)
-- [x] Adding command line option for fine-tuning
-
-## License
-This project is licensed under the MIT License. See  LICENSE for more details
 
 ## Acknowledgements
-This project is inspired by the project [Tensorflow-Project-Template](https://github.com/MrGemy95/Tensorflow-Project-Template) by [Mahmoud Gemy](https://github.com/MrGemy95)
+This project is inspired by the project [pytorch-template](https://github.com/victorsque/pytorch-template)
