@@ -43,6 +43,8 @@ A pytorch template files generator.
 ## Features
 * Clear folder structure which is suitable for many deep learning projects.
 * `.json` config file support for convenient parameter tuning.
+* Support multi-dataset, multi-dataloader, multi-model, multi-optimizer, multi-loss, multi-optimizer, multi-lr\_scheduler.
+And all of above can be constructed in `.json` config!
 * By adding PATH in .bashrc, you can execute `torch_new_project.py` under all paths.
 * Customizable command line options for more convenient parameter tuning.
 * Checkpoint saving and resuming.
