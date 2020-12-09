@@ -1,0 +1,113 @@
+{
+    "n_gpu": 1,
+    "name": "DANN",
+
+    "datasets": {
+        "source": {
+            "module": "data_loader",
+            "type": "MyDataset",
+            "args": {
+                "data_paths": {
+                    "train_dir": "./data",
+                    "valid_dir": null,
+                    "test_dir": null,
+                    "train_label": null,
+                    "valid_label": null,
+                    "test_label": null
+                }
+            }
+        },
+        "target": {
+            "module": "data_loader",
+            "type": "MyDataset",
+            "args": {
+                "data_paths": {
+                    "train_dir": "./data",
+                    "valid_dir": null,
+                    "test_dir": null,
+                    "train_label": null,
+                    "valid_label": null,
+                    "test_label": null
+                }
+            }
+        }
+    },
+    "data_loaders": {
+        "source": {
+            "module": "data_loader",
+            "type": "MyDataLoader",
+            "args": {
+                "validation_split": 0.0,
+                "DataLoader_args": {
+                    "batch_size": 128,
+                    "shuffle": true,
+                    "num_workers": 2
+                }
+            }
+        },
+        "target": {
+            "module": "data_loader",
+            "type": "MyDataLoader",
+            "args": {
+                "validation_split": 0.0,
+                "DataLoader_args": {
+                    "batch_size": 128,
+                    "shuffle": true,
+                    "num_workers": 2
+                }
+            }
+        }
+    },
+    "models": {
+        "model": {
+            "module": "DANN",
+            "type": "DANN",
+            "args": {
+            }
+        }
+    },
+    "losses": {
+        "model": {
+            "type": "CELoss",
+            "args": {
+            }
+        }
+    },
+    "metrics": [
+        "accuracy"
+    ],
+    "optimizers": {
+        "model": {
+            "type": "Adam",
+            "args": {
+                "lr": 0.0001
+            }
+        }
+    },
+    "lr_schedulers": {
+        "model": {
+            "type": "StepLR",
+            "args": {
+                "step_size": 10,
+                "gamma": 0.1
+            }
+        }
+    },
+    "trainer": {
+        "module": "dann_trainer",
+        "type": "DANN_Trainer",
+        "args": {
+            "epochs": 100,
+
+            "save_period": 5,
+            "verbosity": 2,
+
+            "monitor": "max val_accuracy",
+            "early_stop": 10,
+
+            "tensorboard": true
+        }
+    },
+    "save_dir": "saved/",
+    "log_config": "logger/logger_config.json"
+}

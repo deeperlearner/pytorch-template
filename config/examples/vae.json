@@ -1,0 +1,85 @@
+{
+    "n_gpu": 1,
+    "name": "VAE",
+
+    "datasets": {
+        "data": {
+            "module": "data_loader",
+            "type": "MyDataset",
+            "args": {
+                "data_paths": {
+                    "train_dir": "./data",
+                    "valid_dir": null,
+                    "test_dir": null,
+                    "train_label": null,
+                    "valid_label": null,
+                    "test_label": null
+                }
+            }
+        }
+    },
+    "data_loaders": {
+        "data": {
+            "module": "data_loader",
+            "type": "MyDataLoader",
+            "args": {
+                "validation_split": 0.0,
+                "DataLoader_args": {
+                    "batch_size": 128,
+                    "shuffle": true,
+                    "num_workers": 2
+                }
+            }
+        }
+    },
+    "models": {
+        "model" : {
+            "module": "VAE",
+            "type": "VAE",
+            "args": {
+            }
+        }
+    },
+    "losses": {
+        "model": {
+            "type": "vae_loss",
+            "args": {
+                "lm": 1e-06
+            }
+        }
+    },
+    "metrics": [],
+    "optimizers": {
+        "model": {
+            "type": "Adam",
+            "args": {
+                "lr": 0.001
+            }
+        }
+    },
+    "lr_schedulers": {
+        "model": {
+            "type": "StepLR",
+            "args": {
+                "step_size": 50,
+                "gamma": 0.1
+            }
+        }
+    },
+    "trainer": {
+        "module": "vae_trainer",
+        "type": "VAE_Trainer",
+        "args": {
+            "epochs": 200,
+
+            "save_period": 5,
+            "verbosity": 2,
+
+            "monitor": "min val_loss",
+
+            "tensorboard": true
+        }
+    },
+    "save_dir": "saved/",
+    "log_config": "logger/logger_config.json"
+}

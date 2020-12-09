@@ -22,7 +22,7 @@ class ConfigParser:
             - run_id: Unique Identifier for training processes. Used to save checkpoints and training log.
                      Timestamp is being used as default
             - log_name: Change info.log into <log_name>.log.
-        :param modification: Dict keychain:value, specifying position values to be replaced from config dict.
+        :param modification: Dict {keychain: value}, specifying position values to be replaced from config dict.
         """
         # load config file and apply modification
         config_json = run_args.config
@@ -69,6 +69,9 @@ class ConfigParser:
         """
         args = parser.parse_args()
 
+        msg_no_cfg = "Configuration file need to be specified. Add '-c config.json', for example."
+        assert args.config is not None, msg_no_cfg
+
         modification = None
         for group in parser._action_groups:
             if group.title == 'mod_args':
@@ -82,9 +85,6 @@ class ConfigParser:
                 elif group.title == 'test_args':
                     cls.test_args = arg_group
 
-        msg_no_cfg = "Configuration file need to be specified. Add '-c config.json', for example."
-        assert args.config is not None, msg_no_cfg
-
         return cls(run_args, modification)
 
     def init_obj(self, kind, name, module, *args, **kwargs):
@@ -95,7 +95,7 @@ class ConfigParser:
         And each instance is initialized with given arguments.
         `objects = config.init_obj('kind', 'name', module, a, b=1)`
         is equivalent to
-        `objects = module.kind.name(obj_args, a, b=1)`, where obj_args are specified in config.
+        `objects = module.kind.name(a, b=1)`
         """
         obj_config = self[kind][name]
         try:

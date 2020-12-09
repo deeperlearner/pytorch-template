@@ -19,7 +19,7 @@ class BaseTrainer:
         # trainer
         cfg_trainer = config['trainer']['args']
         self.epochs = cfg_trainer['epochs']
-        self.len_epoch = cfg_trainer['len_epoch']
+        self.len_epoch = cfg_trainer.get('len_epoch', None)
         self.save_period = cfg_trainer['save_period']
         verbosity = cfg_trainer['verbosity']
         monitor = cfg_trainer.get('monitor', 'off')

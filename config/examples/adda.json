@@ -1,0 +1,125 @@
+{
+    "n_gpu": 1,
+    "name": "ADDA",
+
+    "datasets": {
+        "source": {
+            "module": "data_loader",
+            "type": "MyDataset",
+            "args": {
+                "data_paths": {
+                    "train_dir": "./data",
+                    "valid_dir": null,
+                    "test_dir": null,
+                    "train_label": null,
+                    "valid_label": null,
+                    "test_label": null
+                }
+            }
+        },
+        "target": {
+            "module": "data_loader",
+            "type": "MyDataset",
+            "args": {
+                "data_paths": {
+                    "train_dir": "./data",
+                    "valid_dir": null,
+                    "test_dir": null,
+                    "train_label": null,
+                    "valid_label": null,
+                    "test_label": null
+                }
+            }
+        }
+    },
+    "data_loaders": {
+        "source": {
+            "module": "data_loader",
+            "type": "MyDataLoader",
+            "args": {
+                "validation_split": 0.0,
+                "DataLoader_args": {
+                    "batch_size": 128,
+                    "shuffle": true,
+                    "num_workers": 2
+                }
+            }
+        },
+        "target": {
+            "module": "data_loader",
+            "type": "MyDataLoader",
+            "args": {
+                "validation_split": 0.0,
+                "DataLoader_args": {
+                    "batch_size": 128,
+                    "shuffle": true,
+                    "num_workers": 2
+                }
+            }
+        }
+    },
+    "models": {
+        "Encoder": {
+            "module": "ADDA",
+            "type": "ADDAEncoder",
+            "args": {
+            }
+        },
+        "Classifier": {
+            "module": "ADDA",
+            "type": "ADDAClassifier",
+            "args": {
+            }
+        },
+        "Discriminator": {
+            "module": "ADDA",
+            "type": "ADDADiscriminator",
+            "args": {
+            }
+        }
+    },
+    "losses": {
+        "model": {
+            "type": "CELoss",
+            "args": {
+            }
+        }
+    },
+    "metrics": [
+        "accuracy"
+    ],
+    "optimizers": {
+        "model": {
+            "type": "Adam",
+            "args": {
+                "lr": 0.0001
+            }
+        }
+    },
+    "lr_schedulers": {
+        "model": {
+            "type": "StepLR",
+            "args": {
+                "step_size": 10,
+                "gamma": 0.1
+            }
+        }
+    },
+    "trainer": {
+        "module": "adda_trainer",
+        "type": "ADDA_Trainer",
+        "args": {
+            "epochs": 100,
+
+            "save_period": 5,
+            "verbosity": 2,
+
+            "monitor": "max val_accuracy",
+            "early_stop": 5,
+
+            "tensorboard": true
+        }
+    },
+    "save_dir": "saved/",
+    "log_config": "logger/logger_config.json"
+}

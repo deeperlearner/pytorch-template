@@ -1,0 +1,91 @@
+{
+    "n_gpu": 1,
+    "name": "GAN",
+
+    "datasets": {
+        "data": {
+            "module": "data_loader",
+            "type": "MyDataset",
+            "args": {
+                "data_paths": {
+                    "train_dir": "./data",
+                    "valid_dir": null,
+                    "test_dir": null,
+                    "train_label": null,
+                    "valid_label": null,
+                    "test_label": null
+                }
+            }
+        }
+    },
+    "data_loaders": {
+        "data": {
+            "module": "data_loader",
+            "type": "MyDataLoader",
+            "args": {
+                "validation_split": 0.0,
+                "DataLoader_args": {
+                    "batch_size": 128,
+                    "shuffle": true,
+                    "num_workers": 2
+                }
+            }
+        }
+    },
+    "models": {
+        "net_G": {
+            "module": "GAN",
+            "type": "GANGenerator",
+            "args": {
+            }
+        },
+        "net_D": {
+            "module": "GAN",
+            "type": "GANDiscriminator",
+            "args": {
+            }
+        }
+    },
+    "losses": {
+        "model": {
+            "type": "BCELoss",
+            "args": {
+            }
+        }
+    },
+    "metrics": [],
+    "optimizers": {
+        "model": {
+            "type": "Adam",
+            "args": {
+                "lr": 0.0001
+            }
+        }
+    },
+    "lr_schedulers": {
+        "model": {
+            "type": "StepLR",
+            "args": {
+                "step_size": 10,
+                "gamma": 0.1
+            }
+        }
+    },
+    "trainer": {
+        "module": "gan_trainer",
+        "type": "GAN_Trainer",
+        "args": {
+            "epochs": 50,
+
+            "save_period": 5,
+            "verbosity": 2,
+
+            "monitor": "min val_loss",
+            "early_stop": 5,
+
+            "tensorboard": true
+        }
+    },
+    "save_dir": "saved/",
+    "log_config": "logger/logger_config.json"
+}
