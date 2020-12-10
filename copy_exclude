@@ -1,0 +1,10 @@
+copy_exclude
+.git
+*.vim
+__pycache__
+README.md
+torch_new_project.sh
+data
+log
+saved
+*examples

@@ -1,5 +1,5 @@
 # PyTorch Template Project
-A pytorch template files generator, which supports multi-handler for dataset, dataloader, model, optimizer, loss, optimizer and lr\_scheduler.
+A pytorch template files generator, which supports multi-handlers for dataset, dataloader, model, optimizer, loss, optimizer and lr\_scheduler.
 
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
 
@@ -16,11 +16,12 @@ A pytorch template files generator, which supports multi-handler for dataset, da
     * [Using Multiple GPU](#using-multiple-gpu)
 	* [Customization](#customization)
 		* [Custom CLI options](#custom-cli-options)
+		* [Dataset](#data-loader)
 		* [Data Loader](#data-loader)
 		* [Trainer](#trainer)
 		* [Model](#model)
 		* [Loss](#loss)
-		* [metrics](#metrics)
+		* [Metrics](#metrics)
 		* [Additional logging](#additional-logging)
 		* [Validation data](#validation-data)
 		* [Checkpoints](#checkpoints)
@@ -33,6 +34,7 @@ A pytorch template files generator, which supports multi-handler for dataset, da
 <!-- /code_chunk_output -->
 
 ## Requirements
+* Bash (Linux)
 * Python >= 3.6
 * torch >= 1.4.0
 * torchvision >= 0.5.0
@@ -208,7 +210,7 @@ Config files are in `.json` format:
 
             "tensorboard": true,                    // enable tensorboard visualization
         }
-    }
+    },
     "save_dir": "saved/",                           // saved directory of model, log, and backup config file
     "log_config": "logger/logger_config.json"       // path of log config file
 }
@@ -374,19 +376,19 @@ You can specify the name of the training session in config files:
   name: MNIST_LeNet,
   ```
 
-The checkpoints will be saved in `save_dir/name/timestamp/checkpoint_epoch_n`, with timestamp in mmdd_HHMMSS format.
+The checkpoints will be saved in `save_dir/name/timestamp/checkpoint_epoch_n`, with timestamp in mmdd\_HHMMSS format.
 
 A copy of config file will be saved in the same folder.
 
 **Note**: checkpoints contain:
   ```python
   {
-    'arch': arch,
-    'epoch': epoch,
-    'state_dict': self.model.state_dict(),
-    'optimizer': self.optimizer.state_dict(),
-    'monitor_best': self.mnt_best,
-    'config': self.config
+      'arch': self.config['name'],
+      'epoch': epoch,
+      'models': {key: value.state_dict() for key, value in self.models.items()},
+      'optimizers': {key: value.state_dict() for key, value in self.optimizers.items()},
+      'monitor_best': self.mnt_best,
+      'config': self.config
   }
   ```
 
@@ -395,7 +397,7 @@ This template supports Tensorboard visualization by using either  `torch.utils.t
 
 1. **Install**
 
-    If you are using pytorch 1.1 or higher, install tensorboard by 'pip install tensorboard>=1.14.0'.
+    If you are using pytorch 1.1 or higher, install tensorboard by `pip install tensorboard>=1.14.0`.
 
     Otherwise, you should install tensorboardx. Follow installation guide in [TensorboardX](https://github.com/lanpa/tensorboardX).
 

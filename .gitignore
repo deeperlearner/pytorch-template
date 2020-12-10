@@ -1,5 +1,5 @@
 __pycache__/
 data/
+log/
 saved/
 *.vim
-*.log

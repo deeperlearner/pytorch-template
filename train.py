@@ -17,7 +17,7 @@ def main(cfg):
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='training')
     run_args = args.add_argument_group('run_args')
-    run_args.add_argument('-c', '--config', default="config/examples/mnist.json", type=str)
+    run_args.add_argument('-c', '--config', default="config/config.json", type=str)
     run_args.add_argument('--resume', default=None, type=str)
     run_args.add_argument('--mode', default='train', type=str)
     run_args.add_argument('--run_id', default=None, type=str)
