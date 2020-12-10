@@ -1,5 +1,5 @@
 # PyTorch Template Project
-A pytorch template files generator.
+A pytorch template files generator, which supports multi-handler for dataset, dataloader, model, optimizer, loss, optimizer and lr\_scheduler.
 
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
 
@@ -43,7 +43,7 @@ A pytorch template files generator.
 ## Features
 * Clear folder structure which is suitable for many deep learning projects.
 * `.json` config file support for convenient parameter tuning.
-* Support multi-dataset, multi-dataloader, multi-model, multi-optimizer, multi-loss, multi-optimizer, multi-lr\_scheduler.
+* Support multi-dataset, multi-dataloader, multi-model, multi-optimizer, multi-loss, multi-optimizer and multi-lr\_scheduler.
 And all of above can be constructed in `.json` config!
 * By adding PATH in .bashrc, you can execute `torch_new_project.py` under all paths.
 * Customizable command line options for more convenient parameter tuning.
@@ -409,7 +409,7 @@ This template supports Tensorboard visualization by using either  `torch.utils.t
 
 3. **Open Tensorboard server** 
 
-    Type `tensorboard --logdir saved/log/` at the project root, then server will open at `http://localhost:6006`
+    Type `tensorboard --logdir saved/EXP/run_id/log/` at the project root, then server will open at `http://localhost:6006`
 
 By default, values of loss and metrics specified in config file, input images, and histogram of model parameters will be logged.
 If you need more visualizations, use `add_scalar('tag', data)`, `add_image('tag', image)`, etc in the `trainer._train_epoch` method.
@@ -424,7 +424,7 @@ Code should pass the [Flake8](http://flake8.pycqa.org/en/latest/) check before c
 
 ## TODOs
 
-- [ ] Revise trainer/examples and test\_examples
+- [ ] Revise trainer/examples and test\_examples/
 - [ ] Support more tensorboard functions
 
 ## Acknowledgements

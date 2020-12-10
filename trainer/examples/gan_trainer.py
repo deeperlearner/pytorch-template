@@ -12,13 +12,13 @@ from utils import inf_loop, MetricTracker
 
 class GAN_Trainer(BaseTrainer):
     """
-    Trainer class
+    GAN trainer class
     """
     def __init__(self, config, len_epoch=None):
         super().__init__(config)
 
         # dataloader
-        self.data_loader = config.init_obj('data_loader', module_data, mode=config.mode)
+        self.data_loader = self.data_loaders['data']
         self.valid_data_loader = self.data_loader.valid_loader
         self.do_validation = self.valid_data_loader is not None
         if len_epoch is None:
@@ -147,55 +147,3 @@ class GAN_Trainer(BaseTrainer):
     def _progress(self, batch_idx):
         ratio = '[{}/{} ({:.0f}%)]'
         return ratio.format(batch_idx, self.len_epoch, 100.0 * batch_idx / self.len_epoch)
-
-    def _save_checkpoint(self, epoch, save_best=False):
-        """
-        Saving checkpoints
-
-        :param epoch: current epoch number
-        :param log: logging information of the epoch
-        :param save_best: if True, rename the saved checkpoint to 'model_best.pth'
-        """
-        state = {
-            'arch': 'GAN',
-            'epoch': epoch,
-            'state_dict': [self.model_G.state_dict(), self.model_D.state_dict()],
-            'optimizer': [self.model_G.state_dict(), self.model_D.state_dict()],
-            'monitor_best': self.mnt_best,
-            'config': self.config
-        }
-        if save_best:
-            filename = str(self.checkpoint_dir / 'model_best.pth')
-        else:
-            filename = str(self.checkpoint_dir / 'checkpoint-epoch{}.pth'.format(epoch))
-        torch.save(state, filename)
-        self.logger.info("Saving model: {} ...".format(filename))
-
-    def _resume_checkpoint(self, resume_path):
-        """
-        Resume from saved checkpoints
-
-        :param resume_path: Checkpoint path to be resumed
-        """
-        resume_path = str(resume_path)
-        self.logger.info("Loading checkpoint: {} ...".format(resume_path))
-        checkpoint = torch.load(resume_path)
-        self.start_epoch = checkpoint['epoch'] + 1
-        self.mnt_best = checkpoint['monitor_best']
-
-        # load architecture params from checkpoint.
-        if checkpoint['config']['arch'] != self.config['arch']:
-            self.logger.warning("Warning: Architecture configuration given in config file is different from that of "
-                                "checkpoint. This may yield an exception while state_dict is being loaded.")
-        self.model_G.load_state_dict(checkpoint['state_dict'][0])
-        self.model_D.load_state_dict(checkpoint['state_dict'][1])
-
-        # load optimizer state from checkpoint only when optimizer type is not changed.
-        if checkpoint['config']['optimizer']['type'] != self.config['optimizer']['type']:
-            self.logger.warning("Warning: Optimizer type given in config file is different from that of checkpoint. "
-                                "Optimizer parameters not being resumed.")
-        else:
-            self.optimizer_G.load_state_dict(checkpoint['optimizer'][0])
-            self.optimizer_D.load_state_dict(checkpoint['optimizer'][1])
-
-        self.logger.info("Checkpoint loaded. Resume training from epoch {}".format(self.start_epoch))

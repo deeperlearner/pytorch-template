@@ -3,22 +3,18 @@ import torch
 from torchvision.utils import make_grid
 
 from base import BaseTrainer
-import data_loader as module_data
-import model.loss as module_loss
-import model.metric as module_metric
-import model as module_arch
 from utils import inf_loop, MetricTracker
 
 
 class VAE_Trainer(BaseTrainer):
     """
-    Trainer class
+    VAE trainer class
     """
     def __init__(self, config, len_epoch=None):
         super().__init__(config)
 
-        # dataloader
-        self.data_loader = config.init_obj('data_loader', module_data, mode=config.mode)
+        # dataloaders
+        self.data_loader = self.data_loaders['data']
         self.valid_data_loader = self.data_loader.valid_loader
         self.do_validation = self.valid_data_loader is not None
         if len_epoch is None:
@@ -31,24 +27,20 @@ class VAE_Trainer(BaseTrainer):
         self.log_step = int(np.sqrt(self.data_loader.batch_size))
 
         # model
-        self.model = config.init_obj('arch', module_arch)
-        self.model = self.model.to(self.device)
-        if len(self.device_ids) > 1:
-            self.model = torch.nn.DataParallel(self.model, device_ids=self.device_ids)
-        self.logger.info(self.model)
+        self.model = self.models['model']
 
-        # get function handles of loss and metrics
-        self.criterion = config.init_ftn('loss', module_loss)
-        self.metrics = [getattr(module_metric, met) for met in config['metrics']]
-
-        # build optimizer, learning rate scheduler. delete every lines containing lr_scheduler for disabling scheduler
-        trainable_params = filter(lambda p: p.requires_grad, self.model.parameters())
-        self.optimizer = config.init_obj('optimizer', torch.optim, trainable_params)
-
-        self.lr_scheduler = config.init_obj('lr_scheduler', torch.optim.lr_scheduler, self.optimizer)
+        # loss
+        self.criterion = self.losses['model']
 
         self.train_metrics = MetricTracker('loss', *[m.__name__ for m in self.metrics], writer=self.writer)
         self.valid_metrics = MetricTracker('loss', *[m.__name__ for m in self.metrics], writer=self.writer)
+
+        # optimizers
+        self.optimizer = self.optimizers['model']
+
+        # learning rate schedulers
+        self.do_lr_scheduling = len(self.lr_schedulers) > 0
+        self.lr_scheduler = self.lr_schedulers['model']
 
     def _train_epoch(self, epoch):
         """
@@ -122,54 +114,3 @@ class VAE_Trainer(BaseTrainer):
     def _progress(self, batch_idx):
         ratio = '[{}/{} ({:.0f}%)]'
         return ratio.format(batch_idx, self.len_epoch, 100.0 * batch_idx / self.len_epoch)
-
-    def _save_checkpoint(self, epoch, save_best=False):
-        """
-        Saving checkpoints
-
-        :param epoch: current epoch number
-        :param log: logging information of the epoch
-        :param save_best: if True, rename the saved checkpoint to 'model_best.pth'
-        """
-        arch = type(self.model).__name__
-        state = {
-            'arch': arch,
-            'epoch': epoch,
-            'state_dict': self.model.state_dict(),
-            'optimizer': self.optimizer.state_dict(),
-            'monitor_best': self.mnt_best,
-            'config': self.config
-        }
-        if save_best:
-            filename = str(self.checkpoint_dir / 'model_best.pth')
-        else:
-            filename = str(self.checkpoint_dir / 'checkpoint-epoch{}.pth'.format(epoch))
-        torch.save(state, filename)
-        self.logger.info("Saving model: {} ...".format(filename))
-
-    def _resume_checkpoint(self, resume_path):
-        """
-        Resume from saved checkpoints
-
-        :param resume_path: Checkpoint path to be resumed
-        """
-        resume_path = str(resume_path)
-        self.logger.info("Loading checkpoint: {} ...".format(resume_path))
-        checkpoint = torch.load(resume_path)
-        self.start_epoch = checkpoint['epoch'] + 1
-        self.mnt_best = checkpoint['monitor_best']
-
-        # load architecture params from checkpoint.
-        if checkpoint['config']['arch'] != self.config['arch']:
-            self.logger.warning("Warning: Architecture configuration given in config file is different from that of "
-                                "checkpoint. This may yield an exception while state_dict is being loaded.")
-        self.model.load_state_dict(checkpoint['state_dict'])
-
-        # load optimizer state from checkpoint only when optimizer type is not changed.
-        if checkpoint['config']['optimizer']['type'] != self.config['optimizer']['type']:
-            self.logger.warning("Warning: Optimizer type given in config file is different from that of checkpoint. "
-                                "Optimizer parameters not being resumed.")
-        else:
-            self.optimizer.load_state_dict(checkpoint['optimizer'])
-
-        self.logger.info("Checkpoint loaded. Resume training from epoch {}".format(self.start_epoch))
