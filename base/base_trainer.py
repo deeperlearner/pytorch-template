@@ -16,7 +16,7 @@ class BaseTrainer:
     """
     def __init__(self, config):
         self.config = config
-        # trainer
+        # trainer args
         cfg_trainer = config['trainer']['args']
         self.epochs = cfg_trainer['epochs']
         self.len_epoch = cfg_trainer.get('len_epoch', None)
@@ -24,6 +24,8 @@ class BaseTrainer:
         verbosity = cfg_trainer['verbosity']
         monitor = cfg_trainer.get('monitor', 'off')
         self.early_stop = cfg_trainer.get('early_stop', inf)
+        if self.early_stop <= 0 or self.early_stop is None:
+            self.early_stop = inf
         tensorboard = cfg_trainer['tensorboard']
 
         # datasets
@@ -136,7 +138,7 @@ class BaseTrainer:
                     break
 
             if epoch % self.save_period == 0 or best:
-                self.logger.info('Best val loss: {}'.format(self.mnt_best))
+                self.logger.info('Best {}: {}'.format(self.mnt_metric, self.mnt_best))
                 self._save_checkpoint(epoch, save_best=best)
 
     def _prepare_device(self, n_gpu_use):
