@@ -14,12 +14,12 @@ class BaseDataset:
         if self.mode == 'train':
             assert data_paths['train_dir'] is not None, "must specify train directory"
             # train and valid load from specified directory
-            self.dataset = my_dataset(data_paths['train_dir'], label_path=data_paths['train_label'])
+            self.dataset = my_dataset(data_paths['train_dir'], data_paths['train_label'], 'train')
             if data_paths['valid_dir'] is not None:
-                self.validset = my_dataset(data_paths['valid_dir'], label_path=data_paths['valid_label'])
+                self.validset = my_dataset(data_paths['valid_dir'], data_paths['valid_label'], 'valid')
         elif self.mode == 'test':
             assert data_paths['test_dir'] is not None, "must specify test directory"
-            self.dataset = my_dataset(data_paths['test_dir'], label_path=data_paths['test_label'])
+            self.dataset = my_dataset(data_paths['test_dir'], data_paths['test_label'], 'test')
         elif self.mode == 'inference':
             self.dataset = None
 

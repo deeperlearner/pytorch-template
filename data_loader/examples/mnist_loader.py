@@ -5,7 +5,7 @@ from base import BaseDataset, BaseDataLoader
 
 
 class MnistDataset(MNIST):
-    def __init__(self, data_dir='./data', label_path=None):
+    def __init__(self, data_dir='./data', label_path=None, mode='train'):
         trsfm = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize((0.1307,), (0.3081,))

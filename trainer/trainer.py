@@ -1,3 +1,6 @@
+import os
+# os._exit(0)
+
 import numpy as np
 import torch
 from torchvision.utils import make_grid
@@ -30,7 +33,7 @@ class Trainer(BaseTrainer):
         self.model = self.models['model']
 
         # losses
-        self.criterion = self.losses['model']
+        self.criterion = self.losses['loss']
 
         # metrics
         self.train_metrics = MetricTracker('loss', *[m.__name__ for m in self.metrics], writer=self.writer)

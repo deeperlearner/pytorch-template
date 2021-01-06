@@ -24,6 +24,7 @@ class ConfigParser:
             - log_name: Change info.log into <log_name>.log.
         :param modification: Dict {keychain: value}, specifying position values to be replaced from config dict.
         """
+        # run_args
         # load config file and apply modification
         config_json = run_args.config
         config = read_json(Path(config_json))
@@ -32,9 +33,10 @@ class ConfigParser:
         self.mode = run_args.mode
         log_name = run_args.log_name
 
+        self.root_dir = self.config['root_dir']
         if self.mode == 'train':
             run_id = run_args.run_id
-            save_dir = Path(self.config['save_dir'])
+            save_dir = Path(self.root_dir) / self.config['save_dir']
             if run_id is None: # use timestamp as default run-id
                 run_id = datetime.now().strftime(r'%m%d_%H%M%S')
             exp_dir  = save_dir / self.config['name'] / run_id
@@ -49,12 +51,12 @@ class ConfigParser:
             write_json(self.config, exp_dir / os.path.basename(config_json))
 
             # configure logging module
-            setup_logging(self.save_dir['log'], log_config=self.config['log_config'], filename=log_name)
+            setup_logging(self.save_dir['log'], root_dir=self.root_dir, filename=log_name)
         elif self.mode == 'test':
             # configure logging module
-            log_dir = Path('log')
+            log_dir = Path(self.root_dir) / 'log'
             ensure_dir(log_dir)
-            setup_logging(log_dir, log_config=self.config['log_config'], filename=log_name)
+            setup_logging(log_dir, root_dir=self.root_dir, filename=log_name)
 
         self.log_levels = {
             0: logging.WARNING,
@@ -101,7 +103,7 @@ class ConfigParser:
         try:
             module_name = obj_config['module']
             class_name = obj_config['type']
-            obj = reduce(getattr, [module , module_name, class_name])
+            obj = reduce(getattr, [module, module_name, class_name])
         except KeyError: # In case no module specified
             class_name = obj_config['type']
             obj = getattr(module, class_name)

@@ -10,7 +10,7 @@ from base import BaseDataset, BaseDataLoader
 
 
 class ImageDataset(Dataset):
-    def __init__(self, data_dir, label_path=None):
+    def __init__(self, data_dir, label_path=None, mode='train'):
         # read filenames
         img_files = os.path.join(data_dir, '*.png')
         self.filenames = glob.glob(img_files)
@@ -25,6 +25,7 @@ class ImageDataset(Dataset):
         self.transform = transforms.Compose([
             #transforms.RandomRotation(10),
             #transforms.Resize(28),
+            #transforms.ColorJitter(0.2, 0.2, 0.2, 0.01),
             #transforms.RandomAffine(degrees=0, translate=(0.2, 0.2), shear=0.2),
             #transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),

@@ -36,11 +36,7 @@ A pytorch template files generator, which supports multi-handlers for dataset, d
 ## Requirements
 * Bash (Linux)
 * Python >= 3.6
-* torch >= 1.4.0
-* torchvision >= 0.5.0
-* numpy
-* pandas
-* Pillow
+* requirements.txt
 
 ## Features
 * Clear folder structure which is suitable for many deep learning projects.
@@ -167,7 +163,7 @@ Config files are in `.json` format:
         }
     },
     "losses": {
-        "model": {
+        "loss": {
             "type": "nll_loss",
             "args": {
             }
@@ -426,8 +422,8 @@ Code should pass the [Flake8](http://flake8.pycqa.org/en/latest/) check before c
 
 ## TODOs
 
-- [ ] Revise trainer/examples and test\_examples/
+- [ ] Revise errors in trainer/examples and test\_examples/
 - [ ] Support more tensorboard functions
 
 ## Acknowledgements
-This project is inspired by the project [pytorch-template](https://github.com/victoresque/pytorch-template)
+This project is forked and enhanced from the project [pytorch-template](https://github.com/victoresque/pytorch-template)

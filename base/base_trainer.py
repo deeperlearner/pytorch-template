@@ -45,11 +45,13 @@ class BaseTrainer:
         # models
         self.models = dict()
         for name in config['models']:
-            self.models[name] = config.init_obj('models', name, module_arch)
-            self.models[name] = self.models[name].to(self.device)
+            model = config.init_obj('models', name, module_arch)
+            model = model.to(self.device)
+            model.apply(module_arch.weights_init)
             if len(self.device_ids) > 1:
-                self.models[name] = torch.nn.DataParallel(self.models[name], device_ids=self.device_ids)
-            self.logger.info(self.models[name])
+                model = torch.nn.DataParallel(model, device_ids=self.device_ids)
+            self.logger.info(model)
+            self.models[name] = model
 
         # losses
         self.losses = dict()

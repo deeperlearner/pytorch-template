@@ -1,5 +1,6 @@
 import os
 import argparse
+import collections
 
 import torch
 import torch.nn as nn
@@ -25,6 +26,8 @@ torch.backends.cudnn.benchmark = False
 np.random.seed(SEED)
 
 def main(cfg):
+    # test_args: cfg.test_args
+
     logger = cfg.get_logger('test')
 
     # dataset
@@ -38,7 +41,7 @@ def main(cfg):
     logger.info(model)
 
     # get function handles of loss and metrics
-    loss_fn = config.init_ftn('losses', 'model', module_loss)
+    loss_fn = config.init_ftn('losses', 'loss', module_loss)
     metric_fns = [getattr(module_metric, met) for met in cfg['metrics']]
 
     logger.info('Loading model: {} ...'.format(cfg.resume))
@@ -89,6 +92,17 @@ if __name__ == '__main__':
     run_args.add_argument('--mode', default='test', type=str)
     run_args.add_argument('--log_name', default=None, type=str)
 
+    # custom cli options to modify configuration from default values given in json file.
+    mod_args = args.add_argument_group('mod_args')
+    CustomArgs = collections.namedtuple('CustomArgs', 'flags type target')
+    options = [
+        CustomArgs(['--lr', '--learning_rate'], type=float, target='optimizers;model;args;lr'),
+        CustomArgs(['--bs', '--batch_size'], type=int, target='data_loaders;data;args;DataLoader_args;batch_size'),
+        CustomArgs(['--lm'], type=float, target='losses;model;args;lm'),
+    ]
+    for opt in options:
+        mod_args.add_argument(*opt.flags, default=None, type=opt.type)
+
     # additional arguments for testing
     test_args = args.add_argument_group('test_args')
     test_args.add_argument('--test_dir', default=None, type=str)
@@ -96,5 +110,4 @@ if __name__ == '__main__':
     test_args.add_argument('--output_path', default=None, type=str)
 
     config = ConfigParser.from_args(args)
-    print(config.test_args)
     main(config)

@@ -28,7 +28,7 @@ if __name__ == '__main__':
     CustomArgs = collections.namedtuple('CustomArgs', 'flags type target')
     options = [
         CustomArgs(['--lr', '--learning_rate'], type=float, target='optimizers;model;args;lr'),
-        CustomArgs(['--bs', '--batch_size'], type=int, target='data_loaders;data;args;batch_size'),
+        CustomArgs(['--bs', '--batch_size'], type=int, target='data_loaders;data;args;DataLoader_args;batch_size'),
         CustomArgs(['--lm'], type=float, target='losses;model;args;lm'),
     ]
     for opt in options:

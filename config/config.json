@@ -1,5 +1,7 @@
 {
     "n_gpu": 1,
+    "root_dir": "./",
+    "save_dir": "saved/",
     "name": "EXP",
 
     "datasets": {
@@ -33,7 +35,7 @@
         }
     },
     "models": {
-        "model" : {
+        "model": {
             "module": "model",
             "type": "MyModel",
             "args": {
@@ -41,7 +43,7 @@
         }
     },
     "losses": {
-        "model": {
+        "loss": {
             "type": "nll_loss",
             "args": {
             }
@@ -68,21 +70,19 @@
         }
     },
     "trainer": {
-        "module": "my_trainer",
-        "type": "My_Trainer",
+        "module": "trainer",
+        "type": "MyTrainer",
         "args": {
             "epochs": 2,
             "len_epoch": null,
 
-            "save_period": 1,
+            "save_period": 5,
             "verbosity": 2,
 
-            "monitor": "min val_loss",
-            "early_stop": 10,
+            "monitor": "max val_accuracy",
+            "early_stop": 0,
 
-            "tensorboard": true
+            "tensorboard": false
         }
-    },
-    "save_dir": "saved/",
-    "log_config": "logger/logger_config.json"
+    }
 }

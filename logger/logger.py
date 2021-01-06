@@ -5,11 +5,11 @@ from pathlib import Path
 from utils import read_json
 
 
-def setup_logging(save_dir, log_config='logger/logger_config.json', filename=None, default_level=logging.info):
+def setup_logging(save_dir, root_dir='./', filename=None, log_config='logger/logger_config.json', default_level=logging.info):
     """
     setup logging configuration
     """
-    log_config = Path(log_config)
+    log_config = Path(root_dir) / log_config
     if log_config.is_file():
         config = read_json(log_config)
         # modify logging paths based on run config
