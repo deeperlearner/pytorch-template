@@ -1,15 +1,15 @@
-from functools import reduce
+import importlib
 import argparse
 import collections
 
 from parse_config import ConfigParser
-import trainer as module_trainer
 
 
-def main(cfg):
-    module_name = cfg['trainer']['module']
-    class_name = cfg['trainer']['type']
-    trainer_class = reduce(getattr, [module_trainer , module_name, class_name])
+def main(config):
+    module_name = config['trainer']['module']
+    class_name = config['trainer']['type']
+    module_trainer = importlib.import_module(module_name, package='trainer')
+    trainer_class = getattr(module_trainer, class_name)
     trainer = trainer_class(config)
 
     trainer.train()
@@ -28,11 +28,10 @@ if __name__ == '__main__':
     CustomArgs = collections.namedtuple('CustomArgs', 'flags type target')
     options = [
         CustomArgs(['--lr', '--learning_rate'], type=float, target='optimizers;model;args;lr'),
-        CustomArgs(['--bs', '--batch_size'], type=int, target='data_loaders;data;args;DataLoader_args;batch_size'),
-        CustomArgs(['--lm'], type=float, target='losses;model;args;lm'),
+        CustomArgs(['--bs', '--batch_size'], type=int, target='data_loaders;train;data;args;DataLoader_args;batch_size'),
     ]
     for opt in options:
         mod_args.add_argument(*opt.flags, default=None, type=opt.type)
 
-    config = ConfigParser.from_args(args, options)
-    main(config)
+    cfg = ConfigParser.from_args(args, options)
+    main(cfg)

@@ -1,13 +1,15 @@
+import os
 from abc import abstractmethod
 
 import torch
 from numpy import inf
 
-import data_loader as module_data
+import data_loader
 from logger import TensorboardWriter
 import model as module_arch
 import model.loss as module_loss
 import model.metric as module_metric
+from utils import get_by_path
 
 
 class BaseTrainer:
@@ -16,8 +18,8 @@ class BaseTrainer:
     """
     def __init__(self, config):
         self.config = config
-        # trainer args
-        cfg_trainer = config['trainer']['args']
+        # trainer keyword arguments
+        cfg_trainer = config['trainer']['kwargs']
         self.epochs = cfg_trainer['epochs']
         self.len_epoch = cfg_trainer.get('len_epoch', None)
         self.save_period = cfg_trainer['save_period']
@@ -29,15 +31,34 @@ class BaseTrainer:
         tensorboard = cfg_trainer['tensorboard']
 
         # datasets
-        self.datasets = dict()
-        for name in config['datasets']:
-            self.datasets[name] = config.init_obj('datasets', name, module_data, mode=config.mode)
+        self.train_datasets = dict()
+        self.valid_datasets = dict()
+        ## train
+        keys = ['datasets', 'train']
+        for name in get_by_path(config, keys):
+            self.train_datasets[name] = config.init_obj([*keys, name], 'data_loader')
+        ## valid
+        valid = False
+        keys = ['datasets', 'valid']
+        for name in get_by_path(config, keys):
+            valid = True
+            self.valid_datasets[name] = config.init_obj([*keys, name], 'data_loader')
 
         # data_loaders
-        self.data_loaders = dict()
-        for name in config['data_loaders']:
-            dataset = self.datasets[name]
-            self.data_loaders[name] = config.init_obj('data_loaders', name, module_data, dataset)
+        self.train_data_loaders = dict()
+        self.valid_data_loaders = dict()
+        ## train
+        keys = ['data_loaders', 'train']
+        for name in get_by_path(config, keys):
+            dataset = self.train_datasets[name]
+            self.train_data_loaders[name] = config.init_obj([*keys, name], 'data_loader', dataset)
+            if not valid:
+                self.valid_data_loaders[name] = self.train_data_loaders[name].valid_loader
+        ## valid
+        keys = ['data_loaders', 'valid']
+        for name in get_by_path(config, keys):
+            dataset = self.valid_datasets[name]
+            self.valid_data_loaders[name] = config.init_obj([*keys, name], 'data_loader', dataset)
 
         self.logger = config.get_logger('trainer', verbosity)
         # setup GPU device if available, move model into configured device
@@ -45,7 +66,7 @@ class BaseTrainer:
         # models
         self.models = dict()
         for name in config['models']:
-            model = config.init_obj('models', name, module_arch)
+            model = config.init_obj(['models', name], 'model')
             model = model.to(self.device)
             model.apply(module_arch.weights_init)
             if len(self.device_ids) > 1:
@@ -56,7 +77,7 @@ class BaseTrainer:
         # losses
         self.losses = dict()
         for name in config['losses'].keys():
-            self.losses[name] = config.init_ftn('losses', name, module_loss)
+            self.losses[name] = config.init_ftn(['losses', name], module_loss)
 
         # metrics
         self.metrics = [getattr(module_metric, met) for met in config['metrics']]
@@ -65,15 +86,16 @@ class BaseTrainer:
         self.optimizers = dict()
         for name in config['optimizers']:
             trainable_params = filter(lambda p: p.requires_grad, self.models[name].parameters())
-            self.optimizers[name] = config.init_obj('optimizers', name, torch.optim, trainable_params)
+            self.optimizers[name] = config.init_obj(['optimizers', name], torch.optim, trainable_params)
 
         # learning rate schedulers
         self.lr_schedulers = dict()
         for name in config['lr_schedulers']:
-            self.lr_schedulers[name] = config.init_obj('lr_schedulers', name,
+            self.lr_schedulers[name] = config.init_obj(['lr_schedulers', name],
                                                         torch.optim.lr_scheduler, self.optimizers[name])
 
         # configuration to monitor model performance and save best
+        self.num_best = 0
         if monitor == 'off':
             self.mnt_mode = 'off'
             self.mnt_best = 0
@@ -88,9 +110,6 @@ class BaseTrainer:
 
         # setup visualization writer instance
         self.writer = TensorboardWriter(config.save_dir['log'], self.logger, tensorboard)
-
-        if config.resume is not None:
-            self._resume_checkpoint(config.resume)
 
     @abstractmethod
     def _train_epoch(self, epoch):
@@ -112,15 +131,16 @@ class BaseTrainer:
             # save logged informations into log dict
             log = {'epoch': epoch}
             log.update(result)
-            self.logger.info('\nMetric: {}'.format(log))
+            log_info = ', '.join(f"{key}: {value:.6f}" for key, value in log.items())
+            self.logger.info(f'\n{log_info}')
 
             # evaluate model performance according to configured metric, save best checkpoint as model_best
             best = False
             if self.mnt_mode != 'off':
                 try:
                     # check whether model performance improved or not, according to specified metric(mnt_metric)
-                    improved = (self.mnt_mode == 'min' and log[self.mnt_metric] <= self.mnt_best) or \
-                               (self.mnt_mode == 'max' and log[self.mnt_metric] >= self.mnt_best)
+                    improved = (self.mnt_mode == 'min' and log[self.mnt_metric] < self.mnt_best) or \
+                               (self.mnt_mode == 'max' and log[self.mnt_metric] > self.mnt_best)
                 except KeyError:
                     self.logger.warning("Warning: Metric '{}' is not found. "
                                         "Model performance monitoring is disabled.".format(self.mnt_metric))
@@ -177,13 +197,14 @@ class BaseTrainer:
             'config': self.config
         }
         if save_best:
-            filename = str(self.checkpoint_dir / 'model_best.pth')
+            self.num_best += 1
+            filename = str(self.checkpoint_dir / f'model_best{self.num_best}.pth')
         else:
             filename = str(self.checkpoint_dir / 'checkpoint-epoch{}.pth'.format(epoch))
         torch.save(state, filename)
         self.logger.info("Saving model: {} ...".format(filename))
 
-    def _resume_checkpoint(self, resume_path):
+    def _resume_checkpoint(self, resume_path, load_pretrain=False):
         """
         Resume from saved checkpoints
 
@@ -192,20 +213,21 @@ class BaseTrainer:
         resume_path = str(resume_path)
         self.logger.info("Loading checkpoint: {} ...".format(resume_path))
         checkpoint = torch.load(resume_path)
-        self.start_epoch = checkpoint['epoch'] + 1
-        self.mnt_best = checkpoint['monitor_best']
+        if not load_pretrain:
+            self.start_epoch = checkpoint['epoch'] + 1
+            self.mnt_best = checkpoint['monitor_best']
 
         # load each model params from checkpoint.
-        for key in self.models:
+        for key, value in checkpoint['models'].items():
             try:
-                self.models[key].load_state_dict(checkpoint['models'][key])
+                self.models[key].load_state_dict(value)
             except KeyError:
                 print("models not match, can not resume.")
 
         # load each optimizer from checkpoint.
-        for key in self.optimizers:
+        for key, value in checkpoint['optimizers'].items():
             try:
-                self.optimizers[key].load_state_dict(checkpoint['optimizers'][key])
+                self.optimizers[key].load_state_dict(value)
             except KeyError:
                 print("optimizers not match, can not resume.")
 

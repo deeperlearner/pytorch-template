@@ -3,43 +3,25 @@ from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 
 
-class BaseDataset:
-    """
-    Base class for all datasets
-    """
-    def __init__(self, my_dataset, data_paths: dict, mode='train'):
-        self.mode = mode
-
-        self.validset = None
-        if self.mode == 'train':
-            assert data_paths['train_dir'] is not None, "must specify train directory"
-            # train and valid load from specified directory
-            self.dataset = my_dataset(data_paths['train_dir'], data_paths['train_label'], 'train')
-            if data_paths['valid_dir'] is not None:
-                self.validset = my_dataset(data_paths['valid_dir'], data_paths['valid_label'], 'valid')
-        elif self.mode == 'test':
-            assert data_paths['test_dir'] is not None, "must specify test directory"
-            self.dataset = my_dataset(data_paths['test_dir'], data_paths['test_label'], 'test')
-        elif self.mode == 'inference':
-            self.dataset = None
-
 class BaseDataLoader(DataLoader):
     """
-    Base class for all data loaders
+    Split one dataset into train data_loader and valid data_loader
     """
-    def __init__(self, datasets, validation_split=0.0, DataLoader_args=None):
-        self.init_kwargs = DataLoader_args if DataLoader_args is not None else {}
+    def __init__(self, dataset, N_fold=1, validation_split=0.0, DataLoader_kwargs=None):
+        self.init_kwargs = DataLoader_kwargs if DataLoader_kwargs is not None else {}
 
-        self.n_samples = len(datasets.dataset)
+        self.n_samples = len(dataset)
 
-        if validation_split == 0.0:
-            super().__init__(datasets.dataset, **self.init_kwargs)
-            if datasets.validset is not None:
-                self.valid_loader = DataLoader(datasets.validset, **self.init_kwargs)
+        if N_fold > 1:
+            pass
         else:
-            sampler, valid_sampler = self._split_sampler(validation_split)
-            super().__init__(datasets.dataset, sampler=sampler, **self.init_kwargs)
-            self.valid_loader = DataLoader(datasets.dataset, sampler=valid_sampler, **self.init_kwargs)
+            if validation_split > 0.0:
+                sampler, valid_sampler = self._split_sampler(validation_split)
+                super().__init__(dataset, sampler=sampler, **self.init_kwargs)
+                self.valid_loader = DataLoader(dataset, sampler=valid_sampler, **self.init_kwargs)
+            else:
+                super().__init__(dataset, **self.init_kwargs)
+                self.valid_loader = None
 
     def _split_sampler(self, split):
         idx_full = np.arange(self.n_samples)

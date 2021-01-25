@@ -2,12 +2,12 @@ import os
 import argparse
 import logging
 from pathlib import Path
-from functools import reduce, partial
-from operator import getitem
+from functools import partial
 from datetime import datetime
+import importlib
 
 from logger import setup_logging
-from utils import ensure_dir, read_json, write_json
+from utils import ensure_dir, read_json, write_json, set_by_path, get_by_path
 
 
 class ConfigParser:
@@ -89,47 +89,56 @@ class ConfigParser:
 
         return cls(run_args, modification)
 
-    def init_obj(self, kind, name, module, *args, **kwargs):
+    def _update_kwargs(self, _config, kwargs):
+        try:
+            _kwargs = dict(_config['kwargs'])
+        except KeyError: # In case no arguments are specified
+            _kwargs = dict()
+        assert all([k not in _kwargs for k in kwargs]), 'Overwriting kwargs given in config file is not allowed'
+        _kwargs.update(kwargs)
+        return _kwargs
+
+    def init_obj(self, keys, module, *args, **kwargs):
         """
-        Returns dictionary of objects, which are specified in config.
-        'module' corresponds to the module of each instance.
-        'type' corresponds to the class name of each instance.
-        And each instance is initialized with given arguments.
-        `objects = config.init_obj('kind', 'name', module, a, b=1)`
-        is equivalent to
-        `objects = module.kind.name(a, b=1)`
+        Returns an object, which is specified in config[keys[0]]...[keys[-1]].
+        In config[keys[0]]...[keys[-1]],
+            'module' corresponds to the module of each instance.
+            'type' corresponds to the class name.
+            'kwargs' corresponds to keyword arguments of the class.
+        keys is the list of config entries.
+        module is the package module.
+        Additional *args and **kwargs would be forwarded to obj()
+        Usage: `objects = config.init_obj(['A', 'B', 'C'], module, a, b=1)`
         """
-        obj_config = self[kind][name]
+        obj_config = get_by_path(self, keys)
         try:
             module_name = obj_config['module']
-            class_name = obj_config['type']
-            obj = reduce(getattr, [module, module_name, class_name])
-        except KeyError: # In case no module specified
-            class_name = obj_config['type']
-            obj = getattr(module, class_name)
+            module_obj = importlib.import_module(module_name, package=module)
+        except KeyError: # In case no 'module' is specified
+            module_obj = module
+        class_name = obj_config['type']
+        obj = getattr(module_obj, class_name)
+        kwargs_obj = self._update_kwargs(obj_config, kwargs)
 
-        module_args = dict(obj_config['args'])
-        assert all([k not in module_args for k in kwargs]), 'Overwriting kwargs given in config file is not allowed'
-        module_args.update(kwargs)
+        return obj(*args, **kwargs_obj)
 
-        return obj(*args, **module_args)
-
-    def init_ftn(self, kind, name, module, *args, **kwargs):
+    def init_ftn(self, keys, module, *args, **kwargs):
         """
-        Finds a function handle with the name given as 'type' in config, and returns the
-        function with given arguments fixed with functools.partial.
-        `function = config.init_ftn('kind', 'name', module, a, b=1)`
-        is equivalent to
-        `function = lambda *args, **kwargs: module.kind.name(a, *args, b=1, **kwargs)`.
+        Returns an function, which is specified in config[keys[0]]...[keys[-1]].
+        In config[keys[0]]...[keys[-1]],
+            'type' corresponds to the function name.
+            'kwargs' corresponds to keyword arguments of the function.
+        keys is the list of config entries.
+        module is the package module.
+        Additional *args and **kwargs would be forwarded to ftn()
+        Usage: `function = config.init_ftn(['A', 'B', 'C'], module, a, b=1)`
         """
-        ftn_config = self[kind][name]
+        ftn_config = get_by_path(self, keys)
         class_name = ftn_config['type']
         ftn = getattr(module, class_name)
-        module_args = dict(ftn_config['args'])
-        assert all([k not in module_args for k in kwargs]), 'Overwriting kwargs given in config file is not allowed'
-        module_args.update(kwargs)
+        kwargs_ftn = self._update_kwargs(ftn_config, kwargs)
 
-        return partial(ftn, *args, **module_args)
+        return partial(ftn, *args, **kwargs_ftn)
 
     def __getitem__(self, name):
         """Access items like ordinary dict."""
@@ -155,7 +164,7 @@ def _update_config(config, modification):
 
     for key, value in modification.items():
         if value is not None:
-            _set_by_path(config, key, value)
+            set_by_path(config, key, value)
     return config
 
 def _get_opt_name(flags):
@@ -163,12 +172,3 @@ def _get_opt_name(flags):
         if flg.startswith('--'):
             return flg.replace('--', '')
     return flags[0].replace('--', '')
-
-def _set_by_path(tree, keys, value):
-    """Set a value in a nested object in tree by sequence of keys."""
-    keys = keys.split(';')
-    _get_by_path(tree, keys[:-1])[keys[-1]] = value
-
-def _get_by_path(tree, keys):
-    """Access a nested object in tree by sequence of keys."""
-    return reduce(getitem, keys, tree)

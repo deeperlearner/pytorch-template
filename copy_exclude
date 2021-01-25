@@ -4,7 +4,6 @@ data
 .git
 log
 __pycache__
-requirements.txt
 README.md
 saved
 torch_new_project.sh

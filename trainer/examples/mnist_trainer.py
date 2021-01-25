@@ -1,5 +1,4 @@
 import os
-# os._exit(0)
 
 import numpy as np
 import torch
@@ -23,15 +22,14 @@ class Trainer(BaseTrainer):
         # data_loaders
         self.train_loader = self.train_data_loaders['data']
         self.valid_loader = self.valid_data_loaders['data']
-        self.do_validation = self.valid_data_loader is not None
+        self.do_validation = self.valid_loader is not None
         if self.len_epoch is None:
             # epoch-based training
-            self.len_epoch = len(self.data_loader)
+            self.len_epoch = len(self.train_loader)
         else:
             # iteration-based training
-            self.data_loader = inf_loop(self.data_loader)
-            self.len_epoch = self.len_epoch
-        self.log_step = int(np.sqrt(self.data_loader.batch_size))
+            self.train_loader = inf_loop(self.train_loader)
+        self.log_step = int(np.sqrt(self.train_loader.batch_size))
 
         # models
         self.model = self.models['model']
@@ -59,7 +57,7 @@ class Trainer(BaseTrainer):
         """
         self.model.train()
         self.train_metrics.reset()
-        for batch_idx, (data, target) in enumerate(self.data_loader):
+        for batch_idx, (data, target) in enumerate(self.train_loader):
             data, target = data.to(self.device), target.to(self.device)
 
             self.optimizer.zero_grad()
@@ -74,10 +72,10 @@ class Trainer(BaseTrainer):
                 self.train_metrics.update(met.__name__, met(output, target))
 
             if batch_idx % self.log_step == 0:
-                self.logger.debug('Train Epoch: {} {} Loss: {:.6f}'.format(
-                    epoch,
-                    self._progress(batch_idx),
-                    loss.item()))
+                epoch_info = f"Train Epoch: {epoch} {self._progress(batch_idx)} "
+                current_metrics = self.train_metrics.current()
+                metrics_info = ', '.join(f"{key}: {value:.6f}" for key, value in current_metrics.items())
+                self.logger.debug(epoch_info + metrics_info)
                 #self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
 
             if batch_idx == self.len_epoch:
@@ -102,7 +100,7 @@ class Trainer(BaseTrainer):
         self.model.eval()
         self.valid_metrics.reset()
         with torch.no_grad():
-            for batch_idx, (data, target) in enumerate(self.valid_data_loader):
+            for batch_idx, (data, target) in enumerate(self.valid_loader):
                 data, target = data.to(self.device), target.to(self.device)
 
                 output = self.model(data)
@@ -110,9 +108,10 @@ class Trainer(BaseTrainer):
 
                 self.writer.set_step((epoch - 1) * self.len_epoch + batch_idx, 'valid')
                 self.valid_metrics.update('loss', loss.item())
-                for met in self.metrics:
-                    self.valid_metrics.update(met.__name__, met(output, target))
-                #self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
+
+            for met in self.metrics:
+                self.valid_metrics.update(met.__name__, met(output, target))
+            #self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
 
         # add histogram of model parameters to the tensorboard
         for name, param in self.model.named_parameters():

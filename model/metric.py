@@ -1,6 +1,36 @@
+import pandas as pd
 import numpy as np
 import torch
+from sklearn.metrics import roc_auc_score
 
+
+class MetricTracker:
+    def __init__(self, *keys, writer=None):
+        self.writer = writer
+        self._data = pd.DataFrame(index=keys, columns=['current', 'total', 'counts', 'average'])
+        self.reset()
+
+    def reset(self):
+        for col in self._data.columns:
+            self._data[col].values[:] = 0
+
+    def update(self, key, value, n=1):
+        if self.writer is not None:
+            self.writer.add_scalar(key, value)
+        self._data.current[key] = value
+        self._data.total[key] += value * n
+        self._data.counts[key] += n
+
+    def avg(self):
+        for key, row in self._data.iterrows():
+            self._data.average[key] = round(row['total'] / row['counts'], 5)
+
+    def current(self):
+        return dict(self._data.current)
+
+    def result(self):
+        self.avg()
+        return dict(self._data.average)
 
 def accuracy(output, target):
     with torch.no_grad():
@@ -20,6 +50,11 @@ def top_k_acc(output, target, k=3):
             correct += torch.sum(pred[:, i] == target).item()
     return correct / len(target)
 
+def auc(output, target):
+    with torch.no_grad():
+        value = roc_auc_score(target.cpu().numpy(), output.cpu().numpy())
+    return value
+
 smooth = 1e-6
 def mean_iou_score(output, labels):
     '''
@@ -38,4 +73,3 @@ def mean_iou_score(output, labels):
             mean_iou += iou / 6
 
     return mean_iou
-

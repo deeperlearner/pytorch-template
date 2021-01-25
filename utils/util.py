@@ -2,8 +2,8 @@ import json
 from pathlib import Path
 from itertools import repeat
 from collections import OrderedDict
-
-import pandas as pd
+from functools import reduce
+from operator import getitem
 
 def ensure_dir(dirname):
     dirname = Path(dirname)
@@ -25,25 +25,11 @@ def inf_loop(data_loader):
     for loader in repeat(data_loader):
         yield from loader
 
-class MetricTracker:
-    def __init__(self, *keys, writer=None):
-        self.writer = writer
-        self._data = pd.DataFrame(index=keys, columns=['total', 'counts', 'average'])
-        self.reset()
+def set_by_path(tree, keys, value):
+    '''Set a value in a nested object in tree by sequence of keys.'''
+    keys = keys.split(';')
+    get_by_path(tree, keys[:-1])[keys[-1]] = value
 
-    def reset(self):
-        for col in self._data.columns:
-            self._data[col].values[:] = 0
-
-    def update(self, key, value, n=1):
-        if self.writer is not None:
-            self.writer.add_scalar(key, value)
-        self._data.total[key] += value * n
-        self._data.counts[key] += n
-        self._data.average[key] = round(self._data.total[key] / self._data.counts[key], 5)
-
-    def avg(self, key):
-        return self._data.average[key]
-
-    def result(self):
-        return dict(self._data.average)
+def get_by_path(tree, keys):
+    '''Access a nested object in tree by sequence of keys.'''
+    return reduce(getitem, keys, tree)
