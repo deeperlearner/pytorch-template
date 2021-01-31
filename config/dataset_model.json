@@ -5,20 +5,14 @@
     "name": "dataset_model",
 
     "datasets": {
-        "train_test_split": 0.2,
-        "train_valid_merge": false,
-        "cross_validation": false,
-        "N_fold": 3,
-        "train_valid_split": 0.2,
         "train": {
             "data": {
                 "module": ".data_loader",
-                "type": "MyTrainset",
+                "type": "MyDataset",
                 "kwargs": {
-                    "data_paths": {
-                        "dir": "./data",
-                        "label": null
-                    }
+                    "data_dir": "./data",
+                    "label_path": null,
+                    "mode": "train"
                 }
             }
         },
@@ -27,43 +21,38 @@
         "test": {
             "data": {
                 "module": ".data_loader",
-                "type": "MyTestset",
+                "type": "MyDataset",
                 "kwargs": {
-                    "data_paths": {
-                        "dir": "./data",
-                        "label": null
-                    }
+                    "data_dir": "./data",
+                    "label_path": null,
+                    "mode": "test"
                 }
             }
         }
     },
     "data_loaders": {
+        "N_fold": 1,
         "train": {
             "data": {
                 "module": ".data_loader",
-                "type": "MyDataLoader",
+                "type": "BaseDataLoader",
                 "kwargs": {
-                    "batch_size": 64,
-                    "shuffle": true,
-                    "num_workers": 4
-                }
+                    "validation_split": 0.2,
+                    "DataLoader_kwargs": {
+                        "batch_size": 64,
+                        "shuffle": true,
+                        "num_workers": 4
+                    }
+                },
+                "split_valid": true
             }
         },
         "valid": {
-            "data": {
-                "module": ".data_loader",
-                "type": "MyDataLoader",
-                "kwargs": {
-                    "batch_size": 64,
-                    "shuffle": false,
-                    "num_workers": 4
-                }
-            }
         },
         "test": {
             "data": {
                 "module": ".data_loader",
-                "type": "MyDataLoader",
+                "type": "DataLoader",
                 "kwargs": {
                     "batch_size": 64,
                     "shuffle": false,
@@ -105,12 +94,14 @@
     },
     "trainer": {
         "module": ".trainer",
-        "type": "MyTrainer",
+        "type": "Trainer",
         "kwargs": {
+            "finetune": false,
             "epochs": 2,
             "len_epoch": null,
 
             "save_period": 5,
+            "save_the_best": true,
             "verbosity": 2,
 
             "monitor": "max val_accuracy",

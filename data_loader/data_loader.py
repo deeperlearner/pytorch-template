@@ -6,11 +6,11 @@ from torchvision import transforms
 from PIL import Image
 import pandas as pd
 
-from base import BaseDataset, BaseDataLoader
+from base import BaseDataLoader
 
 
-class MyTrainset(Dataset):
-    def __init__(self, data_dir, label_path=None, mode='train'):
+class MyDataset(Dataset):
+    def __init__(self, data_dir='./data', label_path=None, mode='train'):
         # read filenames
         img_files = os.path.join(data_dir, '*.png')
         self.filenames = glob.glob(img_files)
@@ -47,13 +47,3 @@ class MyTrainset(Dataset):
 
     def __len__(self):
         return len(self.filenames)
-
-class MyTestset(Dataset):
-    pass
-
-class MyDataset(BaseDataset):
-    def __init__(self, data_paths: dict, mode='train'):
-        super().__init__(ImageDataset, data_paths, mode)
-
-class MyDataLoader(BaseDataLoader):
-    pass

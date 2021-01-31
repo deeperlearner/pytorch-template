@@ -12,7 +12,10 @@ def main(config):
     trainer_class = getattr(module_trainer, class_name)
     trainer = trainer_class(config)
 
-    trainer.train()
+    n_fold = config['data_loaders']['N_fold']
+    for fold_idx in range(n_fold):
+        trainer.train()
+
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='training')

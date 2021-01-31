@@ -1,13 +1,18 @@
+from math import sqrt
+
 import pandas as pd
 import numpy as np
 import torch
 from sklearn.metrics import roc_auc_score
 
 
+smooth = 1e-6
 class MetricTracker:
     def __init__(self, *keys, writer=None):
         self.writer = writer
-        self._data = pd.DataFrame(index=keys, columns=['current', 'total', 'counts', 'average'])
+        self._data = pd.DataFrame(index=keys,
+            columns=['current', 'sum', 'square_sum', 'counts',
+                'mean', 'square_avg', 'std'])
         self.reset()
 
     def reset(self):
@@ -17,20 +22,27 @@ class MetricTracker:
     def update(self, key, value, n=1):
         if self.writer is not None:
             self.writer.add_scalar(key, value)
-        self._data.current[key] = value
-        self._data.total[key] += value * n
-        self._data.counts[key] += n
+        self._data.at[key, 'current'] = value
+        self._data.at[key, 'sum'] += value * n
+        self._data.at[key, 'square_sum'] += value * value * n
+        self._data.at[key, 'counts'] += n
+
+    def current(self):
+        return dict(self._data['current'])
 
     def avg(self):
         for key, row in self._data.iterrows():
-            self._data.average[key] = round(row['total'] / row['counts'], 5)
+            self._data.at[key, 'mean'] = row['sum'] / row['counts']
+            self._data.at[key, 'square_avg'] = row['square_sum'] / row['counts']
 
-    def current(self):
-        return dict(self._data.current)
+    def std(self):
+        for key, row in self._data.iterrows():
+            self._data.at[key, 'std'] = sqrt(row['square_avg']-row['mean']**2 + smooth)
 
     def result(self):
         self.avg()
-        return dict(self._data.average)
+        self.std()
+        return self._data[['mean', 'std']]
 
 def accuracy(output, target):
     with torch.no_grad():
@@ -55,7 +67,6 @@ def auc(output, target):
         value = roc_auc_score(target.cpu().numpy(), output.cpu().numpy())
     return value
 
-smooth = 1e-6
 def mean_iou_score(output, labels):
     '''
     Compute mean IoU score over 6 classes

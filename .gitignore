@@ -1,5 +1,7 @@
 *data/
+fig/
 log/
+output/
 __pycache__/
 saved/
 *.vim

@@ -11,6 +11,11 @@ class LeNet(nn.Module):
         self.fc1 = nn.Linear(320, 50)
         self.fc2 = nn.Linear(50, num_classes)
 
+        self.weights_init()
+
+    def weights_init(self):
+        self.apply(weights_init)
+
     def forward(self, img):
         img = F.relu(F.max_pool2d(self.conv1(img), 2))
         img = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(img)), 2))

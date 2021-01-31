@@ -45,23 +45,25 @@ class ConfigParser:
             for dir_name in ['log', 'model']:
                 dir_path = exp_dir / dir_name
                 ensure_dir(dir_path)
-                self.save_dir.update({dir_name: dir_path})
-
-            # save config file to the experiment dirctory
+                self.save_dir[dir_name] = dir_path
+            # backup config file to the experiment dirctory
             write_json(self.config, exp_dir / os.path.basename(config_json))
-
             # configure logging module
             setup_logging(self.save_dir['log'], root_dir=self.root_dir, filename=log_name)
         elif self.mode == 'test':
+            result_dir = dict()
+            dirs = ['fig', 'log', 'output']
+            for dir_name in dirs:
+                dir_path = Path(self.root_dir) / dir_name
+                ensure_dir(dir_path)
+                result_dir[dir_name] = dir_path
             # configure logging module
-            log_dir = Path(self.root_dir) / 'log'
-            ensure_dir(log_dir)
-            setup_logging(log_dir, root_dir=self.root_dir, filename=log_name)
+            setup_logging(result_dir['log'], root_dir=self.root_dir, filename=log_name)
 
         self.log_levels = {
             0: logging.WARNING,
             1: logging.INFO,
-            2: logging.DEBUG
+            2: logging.DEBUG,
         }
 
     @classmethod

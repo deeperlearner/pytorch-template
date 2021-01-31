@@ -3,7 +3,7 @@
     "disable_existing_loggers": false, 
     "formatters": {
         "simple": {"format": "%(message)s"}, 
-        "datetime": {"format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"}
+        "datetime": {"format": "%(asctime)s - %(name)s - %(levelname)s - \n%(message)s"}
     }, 
     "handlers": {
         "console": {
@@ -21,11 +21,15 @@
             "backupCount": 20, "encoding": "utf8"
         }
     }, 
+    "loggers": {
+        "model": {
+            "level": "INFO", 
+            "propagate": false,
+            "handlers": ["info_file_handler"]
+        }
+    },
     "root": {
-        "level": "INFO", 
-        "handlers": [
-            "console", 
-            "info_file_handler"
-        ]
+        "level": "DEBUG",
+        "handlers": ["console", "info_file_handler"]
     }
 }

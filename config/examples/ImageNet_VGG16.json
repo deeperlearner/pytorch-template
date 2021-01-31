@@ -8,46 +8,40 @@
         "train": {
             "data": {
                 "module": ".examples.image_loader",
-                "type": "MnistTrainset",
+                "type": "ImageNetDataset",
                 "kwargs": {
-                    "data_paths": {
-                        "dir": "./data",
-                        "label": null
-                    }
+                    "data_dir": "./data/ImageNet",
+                    "mode": "train"
                 }
             }
         },
         "valid": {
             "data": {
-                "module": ".examples.mnist_loader",
-                "type": "MyDataLoader",
+                "module": ".examples.image_loader",
+                "type": "ImageNetDataset",
                 "kwargs": {
-                    "DataLoader_kwargs": {
-                        "batch_size": 64,
-                        "shuffle": true,
-                        "num_workers": 4
-                    }
+                    "data_dir": "./data/ImageNet",
+                    "mode": "valid"
                 }
             }
         },
         "test": {
             "data": {
-                "module": ".examples.mnist_loader",
-                "type": "MnistTestset",
+                "module": ".examples.image_loader",
+                "type": "ImageNetDataset",
                 "kwargs": {
-                    "data_paths": {
-                        "dir": "./data",
-                        "label": null
-                    }
+                    "data_dir": "./data/ImageNet",
+                    "mode": "test"
                 }
             }
         }
     },
     "data_loaders": {
+        "N_fold": 1,
         "train": {
             "data": {
-                "module": ".examples.mnist_loader",
-                "type": "MyDataLoader",
+                "module": ".examples.image_loader",
+                "type": "DataLoader",
                 "kwargs": {
                     "batch_size": 64,
                     "shuffle": true,
@@ -57,8 +51,8 @@
         },
         "valid": {
             "data": {
-                "module": ".examples.mnist_loader",
-                "type": "MyDataLoader",
+                "module": ".examples.image_loader",
+                "type": "DataLoader",
                 "kwargs": {
                     "batch_size": 64,
                     "shuffle": false,
@@ -68,8 +62,8 @@
         },
         "test": {
             "data": {
-                "module": ".examples.mnist_loader",
-                "type": "MyDataLoader",
+                "module": ".examples.image_loader",
+                "type": "DataLoader",
                 "kwargs": {
                     "batch_size": 64,
                     "shuffle": false,
@@ -80,13 +74,16 @@
     },
     "models": {
         "model": {
-            "module": ".examples.LeNet",
-            "type": "LeNet"
+            "module": ".examples.VGG16",
+            "type": "VGG16",
+            "kwargs": {
+                "feature_extracting": true
+            }
         }
     },
     "losses": {
         "loss": {
-            "type": "nll_loss"
+            "type": "CELoss"
         }
     },
     "metrics": [
@@ -94,9 +91,10 @@
     ],
     "optimizers": {
         "model": {
-            "type": "Adam",
+            "type": "SGD",
             "kwargs": {
-                "lr": 0.001
+                "lr": 0.001,
+                "momentum": 0.9
             }
         }
     },
@@ -113,16 +111,18 @@
         "module": ".trainer",
         "type": "Trainer",
         "kwargs": {
+            "finetune": true,
             "epochs": 2,
             "len_epoch": null,
 
-            "save_period": 1,
+            "save_period": 5,
+            "save_the_best": true,
             "verbosity": 2,
 
             "monitor": "min val_loss",
             "early_stop": 10,
 
-            "tensorboard": true
+            "tensorboard": false
         }
     }
 }

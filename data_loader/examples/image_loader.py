@@ -1,12 +1,16 @@
 import os
 import glob
+import logging
 
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from PIL import Image
 
-class MyDataset(Dataset):
-    def __init__(self, data_dir='./data', mode=''):
+from base import BaseDataLoader
+
+
+class ImageNetDataset(Dataset):
+    def __init__(self, data_dir='./data/ImageNet', mode=''):
         self.mode = mode
         if mode == 'train':
             imgs_dir = os.path.join(data_dir, 'train_50')
@@ -59,5 +63,5 @@ class MyDataset(Dataset):
     def __len__(self):
         return len(self.filenames)
 
-class MyDataLoader(DataLoader):
-    pass
+pil_logger = logging.getLogger('PIL')
+pil_logger.setLevel(logging.INFO)

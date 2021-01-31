@@ -2,7 +2,7 @@
     "n_gpu": 1,
     "root_dir": "./",
     "save_dir": "saved/",
-    "name": "MNIST_LeNet",
+    "name": "MNIST_cv_LeNet",
 
     "datasets": {
         "train": {
@@ -27,7 +27,7 @@
         }
     },
     "data_loaders": {
-        "N_fold": 1,
+        "N_fold": 3,
         "train": {
             "data": {
                 "module": ".examples.mnist_loader",
@@ -39,7 +39,8 @@
                         "shuffle": true,
                         "num_workers": 4
                     }
-                }
+                },
+                "split_valid": true
             }
         },
         "valid": {
