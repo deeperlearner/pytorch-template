@@ -7,7 +7,7 @@
     "datasets": {
         "train": {
             "data": {
-                "module": ".examples.image_loader",
+                "module": ".examples.ImageNet_loader",
                 "type": "ImageNetDataset",
                 "kwargs": {
                     "data_dir": "./data/ImageNet",
@@ -17,7 +17,7 @@
         },
         "valid": {
             "data": {
-                "module": ".examples.image_loader",
+                "module": ".examples.ImageNet_loader",
                 "type": "ImageNetDataset",
                 "kwargs": {
                     "data_dir": "./data/ImageNet",
@@ -27,20 +27,19 @@
         },
         "test": {
             "data": {
-                "module": ".examples.image_loader",
+                "module": ".examples.ImageNet_loader",
                 "type": "ImageNetDataset",
                 "kwargs": {
                     "data_dir": "./data/ImageNet",
-                    "mode": "test"
+                    "mode": "valid"
                 }
             }
         }
     },
     "data_loaders": {
-        "N_fold": 1,
         "train": {
             "data": {
-                "module": ".examples.image_loader",
+                "module": ".examples.ImageNet_loader",
                 "type": "DataLoader",
                 "kwargs": {
                     "batch_size": 64,
@@ -51,7 +50,7 @@
         },
         "valid": {
             "data": {
-                "module": ".examples.image_loader",
+                "module": ".examples.ImageNet_loader",
                 "type": "DataLoader",
                 "kwargs": {
                     "batch_size": 64,
@@ -62,7 +61,7 @@
         },
         "test": {
             "data": {
-                "module": ".examples.image_loader",
+                "module": ".examples.ImageNet_loader",
                 "type": "DataLoader",
                 "kwargs": {
                     "batch_size": 64,
@@ -86,9 +85,10 @@
             "type": "CELoss"
         }
     },
-    "metrics": [
-        "accuracy", "top_k_acc"
-    ],
+    "metrics": {
+        "per_iteration": ["accuracy", "top_k_acc"],
+        "per_epoch": []
+    },
     "optimizers": {
         "model": {
             "type": "SGD",
@@ -114,6 +114,7 @@
             "finetune": true,
             "epochs": 2,
             "len_epoch": null,
+            "N_fold": 1,
 
             "save_period": 5,
             "save_the_best": true,

@@ -24,6 +24,7 @@ class BaseTrainer:
         self.finetune = cfg_trainer['finetune']
         self.epochs = cfg_trainer['epochs']
         self.len_epoch = cfg_trainer.get('len_epoch', None)
+        n_fold = cfg_trainer.get('N_fold', 1)
         self.save_period = cfg_trainer['save_period']
         self.save_the_best = cfg_trainer['save_the_best']
         verbosity = cfg_trainer['verbosity']
@@ -31,17 +32,19 @@ class BaseTrainer:
         self.early_stop = cfg_trainer.get('early_stop', np.inf)
         if self.early_stop <= 0 or self.early_stop is None:
             self.early_stop = np.inf
+        self.start_epoch = 1
+        self.checkpoint_dir = config.save_dir['model']
         tensorboard = cfg_trainer['tensorboard']
-
         self.logger = config.get_logger('trainer', verbosity)
+
         # datasets
         self.train_datasets = dict()
         self.valid_datasets = dict()
-        ## train
+        # - train
         keys = ['datasets', 'train']
         for name in get_by_path(config, keys):
             self.train_datasets[name] = config.init_obj([*keys, name], 'data_loader')
-        ## valid
+        # - valid
         valid = False
         keys = ['datasets', 'valid']
         for name in get_by_path(config, keys):
@@ -49,17 +52,17 @@ class BaseTrainer:
             self.valid_datasets[name] = config.init_obj([*keys, name], 'data_loader')
 
         # data_loaders
-        self.n_fold = config['data_loaders']['N_fold']
+        BaseDataLoader.N_fold = n_fold
         self.train_data_loaders = dict()
         self.valid_data_loaders = dict()
-        ## train
+        # - train
         keys = ['data_loaders', 'train']
         for name in get_by_path(config, keys):
             dataset = self.train_datasets[name]
-            self.train_data_loaders[name] = config.init_obj([*keys, name], 'data_loader', dataset, N_fold=self.n_fold)
+            self.train_data_loaders[name] = config.init_obj([*keys, name], 'data_loader', dataset)
             if not valid:
                 self.valid_data_loaders[name] = self.train_data_loaders[name].valid_loader
-        ## valid
+        # - valid
         keys = ['data_loaders', 'valid']
         for name in get_by_path(config, keys):
             dataset = self.valid_datasets[name]
@@ -84,7 +87,8 @@ class BaseTrainer:
             self.losses[name] = config.init_ftn(['losses', name], module_loss)
 
         # metrics
-        self.metrics = [getattr(module_metric, met) for met in config['metrics']]
+        self.metrics_iter = [getattr(module_metric, met) for met in config['metrics']['per_iteration']]
+        self.metrics_epoch = [getattr(module_metric, met) for met in config['metrics']['per_epoch']]
 
         # optimizers
         self.optimizers = dict()
@@ -96,9 +100,9 @@ class BaseTrainer:
         self.lr_schedulers = dict()
         for name in config['lr_schedulers']:
             self.lr_schedulers[name] = config.init_obj(['lr_schedulers', name],
-                                                        torch.optim.lr_scheduler, self.optimizers[name])
+                                                       torch.optim.lr_scheduler, self.optimizers[name])
+
         # configuration to monitor model performance and save best
-        self.mnt_bests = np.zeros(self.n_fold)
         self.num_best = 0
         if monitor == 'off':
             self.mnt_mode = 'off'
@@ -108,22 +112,19 @@ class BaseTrainer:
             assert self.mnt_mode in ['min', 'max']
             self.mnt_best = np.inf if self.mnt_mode == 'min' else -np.inf
 
-        self.start_epoch = 1
-
-        self.checkpoint_dir = config.save_dir['model']
-
         # setup visualization writer instance
         self.writer = TensorboardWriter(config.save_dir['log'], self.logger, tensorboard)
 
-    def cross_valid(self):
-        # cross validation data
+    def _next_cv(self):
+        """
+        Prepare for the next cross validation
+        """
         for name, loader in self.train_data_loaders.items():
             # reconstruct train/valid data
             if self.config['data_loaders']['train'][name]['split_valid']:
                 keys = ['data_loaders', 'train', name]
                 dataset = self.train_datasets[name]
-                self.train_data_loaders[name] = self.config.init_obj(keys, 'data_loader',
-                                                                    dataset, N_fold=self.n_fold)
+                self.train_data_loaders[name] = self.config.init_obj(keys, 'data_loader', dataset)
                 self.valid_data_loaders[name] = loader.valid_loader
         # re-initialize model weight
         for model in self.models.values():
@@ -179,17 +180,16 @@ class BaseTrainer:
                 self._save_checkpoint(epoch, save_best=best)
 
         # cross validation is enabled
-        if self.n_fold > 1:
-            fold_idx = BaseDataLoader.fold_idx
-            # record the result of each cross validation
-            self.mnt_bests[fold_idx-1] = self.mnt_best
-            if fold_idx == self.n_fold:
-                # record the average result of cross validation
-                cv_monitor = self.mnt_bests.mean()
-                self.logger.info(f'{self.n_fold}-fold cross validation of {self.mnt_metric}: {cv_monitor}')
-            # do cross validation
-            if fold_idx < self.n_fold:
-                self.cross_valid()
+        n_fold = BaseDataLoader.N_fold
+        if n_fold > 1:
+            if BaseDataLoader.cv_record(log_mean):
+                # done and print result
+                cv_result = BaseDataLoader.cv_result()
+                self.logger.info(f'{n_fold}-fold cross validation:\n{cv_result}')
+            else:
+                # next cross validation
+                self._next_cv()
+                self.train()
 
     def _prepare_device(self, n_gpu_use):
         """
@@ -224,14 +224,18 @@ class BaseTrainer:
             'monitor_best': self.mnt_best,
             'config': self.config
         }
+        n_fold = BaseDataLoader.N_fold
+        fold_idx = BaseDataLoader.fold_idx
+        fold_prefix = f'fold_{fold_idx}_' if n_fold > 1 else ''
+
         if save_best:
             if self.save_the_best:
-                filename = str(self.checkpoint_dir / 'model_best.pth')
+                filename = str(self.checkpoint_dir / f'{fold_prefix}model_best.pth')
             else:
                 self.num_best += 1
-                filename = str(self.checkpoint_dir / f'model_best{self.num_best}.pth')
+                filename = str(self.checkpoint_dir / f'{fold_prefix}model_best{self.num_best}.pth')
         else:
-            filename = str(self.checkpoint_dir / 'checkpoint-epoch{}.pth'.format(epoch))
+            filename = str(self.checkpoint_dir / f'{fold_prefix}checkpoint-epoch{epoch}.pth')
         torch.save(state, filename)
         self.logger.info("Saving model: {} ...".format(filename))
 

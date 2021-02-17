@@ -12,9 +12,7 @@ def main(config):
     trainer_class = getattr(module_trainer, class_name)
     trainer = trainer_class(config)
 
-    n_fold = config['data_loaders']['N_fold']
-    for fold_idx in range(n_fold):
-        trainer.train()
+    trainer.train()
 
 
 if __name__ == '__main__':
@@ -31,7 +29,8 @@ if __name__ == '__main__':
     CustomArgs = collections.namedtuple('CustomArgs', 'flags type target')
     options = [
         CustomArgs(['--lr', '--learning_rate'], type=float, target='optimizers;model;args;lr'),
-        CustomArgs(['--bs', '--batch_size'], type=int, target='data_loaders;train;data;args;DataLoader_args;batch_size'),
+        CustomArgs(['--bs', '--batch_size'], type=int,
+                   target='data_loaders;train;data;args;DataLoader_args;batch_size'),
     ]
     for opt in options:
         mod_args.add_argument(*opt.flags, default=None, type=opt.type)

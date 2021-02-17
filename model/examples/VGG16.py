@@ -21,7 +21,7 @@ class VGG16(nn.Module):
     def forward_nolast(self, x):
         x = self.feature_extractor.features(x)
         x = self.feature_extractor.avgpool(x)
-        x = x.view(-1, 512*7*7)
+        x = x.view(-1, 512 * 7 * 7)
         new_classifier = self.feature_extractor.classifier[:-3]
         x = new_classifier(x)
         return x

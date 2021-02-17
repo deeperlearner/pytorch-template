@@ -7,8 +7,8 @@
     "datasets": {
         "train": {
             "data": {
-                "module": ".examples.mnist_loader",
-                "type": "MnistTrainset",
+                "module": ".examples.MNIST_loader",
+                "type": "MNISTTrainset",
                 "kwargs": {
                     "data_dir": "./data/MNIST"
                 }
@@ -18,8 +18,8 @@
         },
         "test": {
             "data": {
-                "module": ".examples.mnist_loader",
-                "type": "MnistTestset",
+                "module": ".examples.MNIST_loader",
+                "type": "MNISTTestset",
                 "kwargs": {
                     "data_dir": "./data/MNIST"
                 }
@@ -27,11 +27,11 @@
         }
     },
     "data_loaders": {
-        "N_fold": 3,
         "train": {
             "data": {
-                "module": ".examples.mnist_loader",
+                "module": ".examples.MNIST_loader",
                 "type": "BaseDataLoader",
+                "split_valid": true,
                 "kwargs": {
                     "validation_split": 0.2,
                     "DataLoader_kwargs": {
@@ -39,15 +39,14 @@
                         "shuffle": true,
                         "num_workers": 4
                     }
-                },
-                "split_valid": true
+                }
             }
         },
         "valid": {
         },
         "test": {
             "data": {
-                "module": ".examples.mnist_loader",
+                "module": ".examples.MNIST_loader",
                 "type": "DataLoader",
                 "kwargs": {
                     "batch_size": 64,
@@ -68,9 +67,10 @@
             "type": "nll_loss"
         }
     },
-    "metrics": [
-        "accuracy", "top_k_acc"
-    ],
+    "metrics": {
+        "per_iteration": ["accuracy", "top_k_acc"],
+        "per_epoch": []
+    },
     "optimizers": {
         "model": {
             "type": "Adam",
@@ -95,6 +95,7 @@
             "finetune": false,
             "epochs": 2,
             "len_epoch": null,
+            "N_fold": 3,
 
             "save_period": 1,
             "save_the_best": true,

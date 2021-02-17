@@ -37,9 +37,9 @@ class ConfigParser:
         if self.mode == 'train':
             run_id = run_args.run_id
             save_dir = Path(self.root_dir) / self.config['save_dir']
-            if run_id is None: # use timestamp as default run-id
+            if run_id is None:  # use timestamp as default run-id
                 run_id = datetime.now().strftime(r'%m%d_%H%M%S')
-            exp_dir  = save_dir / self.config['name'] / run_id
+            exp_dir = save_dir / self.config['name'] / run_id
 
             self.save_dir = dict()
             for dir_name in ['log', 'model']:
@@ -58,6 +58,8 @@ class ConfigParser:
                 ensure_dir(dir_path)
                 result_dir[dir_name] = dir_path
             # configure logging module
+            if log_name is None:
+                log_name = '{}_test.log'.format(self.config['name'])
             setup_logging(result_dir['log'], root_dir=self.root_dir, filename=log_name)
 
         self.log_levels = {
@@ -91,10 +93,11 @@ class ConfigParser:
 
         return cls(run_args, modification)
 
-    def _update_kwargs(self, _config, kwargs):
+    @staticmethod
+    def _update_kwargs(_config, kwargs):
         try:
             _kwargs = dict(_config['kwargs'])
-        except KeyError: # In case no arguments are specified
+        except KeyError:  # In case no arguments are specified
             _kwargs = dict()
         assert all([k not in _kwargs for k in kwargs]), 'Overwriting kwargs given in config file is not allowed'
         _kwargs.update(kwargs)
@@ -116,7 +119,7 @@ class ConfigParser:
         try:
             module_name = obj_config['module']
             module_obj = importlib.import_module(module_name, package=module)
-        except KeyError: # In case no 'module' is specified
+        except KeyError:  # In case no 'module' is specified
             module_obj = module
         class_name = obj_config['type']
         obj = getattr(module_obj, class_name)
@@ -148,7 +151,7 @@ class ConfigParser:
 
     def get_logger(self, name, verbosity=2):
         msg_verbosity = 'verbosity option {} is invalid. Valid options are {}.'.format(verbosity,
-                                                                                    self.log_levels.keys())
+                                                                                       self.log_levels.keys())
         assert verbosity in self.log_levels, msg_verbosity
         logger = logging.getLogger(name)
         logger.setLevel(self.log_levels[verbosity])
@@ -159,6 +162,7 @@ class ConfigParser:
     def config(self):
         return self._config
 
+
 # helper functions to update config dict with custom cli options
 def _update_config(config, modification):
     if modification is None:
@@ -168,6 +172,7 @@ def _update_config(config, modification):
         if value is not None:
             set_by_path(config, key, value)
     return config
+
 
 def _get_opt_name(flags):
     for flg in flags:

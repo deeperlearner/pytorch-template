@@ -10,16 +10,17 @@ def read_masks(filepath):
     mask = scipy.misc.imread(filepath)
     mask = (mask >= 128).astype(int)
     mask = 4 * mask[:, :, 0] + 2 * mask[:, :, 1] + mask[:, :, 2]
-    masks[mask == 3] = 0  # (Cyan: 011) Urban land 
-    masks[mask == 6] = 1  # (Yellow: 110) Agriculture land 
-    masks[mask == 5] = 2  # (Purple: 101) Rangeland 
-    masks[mask == 2] = 3  # (Green: 010) Forest land 
-    masks[mask == 1] = 4  # (Blue: 001) Water 
-    masks[mask == 7] = 5  # (White: 111) Barren land 
+    masks[mask == 3] = 0  # (Cyan: 011) Urban land
+    masks[mask == 6] = 1  # (Yellow: 110) Agriculture land
+    masks[mask == 5] = 2  # (Purple: 101) Rangeland
+    masks[mask == 2] = 3  # (Green: 010) Forest land
+    masks[mask == 1] = 4  # (Blue: 001) Water
+    masks[mask == 7] = 5  # (White: 111) Barren land
     masks[mask == 0] = 6  # (Black: 000) Unknown
     masks[mask == 4] = 6  # (Red: 100) Unknown
 
     return masks
+
 
 def write_masks(model_output, output_path):
     pred_max = torch.max(model_output, dim=1)[1].squeeze()
@@ -36,4 +37,3 @@ def write_masks(model_output, output_path):
 
     img = Image.fromarray(masks.astype(np.uint8))
     img.save(output_path)
-

@@ -14,6 +14,9 @@ class LeNet(nn.Module):
         self.weights_init()
 
     def weights_init(self):
+        for layer in self.children():
+            if hasattr(layer, 'reset_parameters'):
+                layer.reset_parameters()
         self.apply(weights_init)
 
     def forward(self, img):
@@ -24,6 +27,7 @@ class LeNet(nn.Module):
         img = F.dropout(img, training=self.training)
         img = self.fc2(img)
         return F.log_softmax(img, dim=1)
+
 
 def weights_init(m):
     classname = m.__class__.__name__

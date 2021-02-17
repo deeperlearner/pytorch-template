@@ -38,11 +38,11 @@ class ImageNetDataset(Dataset):
         self.transform = transforms.Compose([
             transforms.RandomRotation(10),
             transforms.Resize(224),
-            #transforms.RandomAffine(degrees=0, translate=(0.2, 0.2), shear=0.2),
+            # transforms.RandomAffine(degrees=0, translate=(0.2, 0.2), shear=0.2),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                  std=[0.229, 0.224, 0.225]),
+                                 std=[0.229, 0.224, 0.225]),
         ])
 
     def __getitem__(self, idx):
@@ -62,6 +62,7 @@ class ImageNetDataset(Dataset):
 
     def __len__(self):
         return len(self.filenames)
+
 
 pil_logger = logging.getLogger('PIL')
 pil_logger.setLevel(logging.INFO)

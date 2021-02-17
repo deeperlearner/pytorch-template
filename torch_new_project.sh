@@ -1,5 +1,5 @@
 #!/bin/bash
-# Usage: ./torch_new_project.sh $1
+# Usage: torch_new_project.sh $1
 #
 # This script initializes new pytorch project with the template files.
 #

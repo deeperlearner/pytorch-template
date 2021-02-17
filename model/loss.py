@@ -2,12 +2,13 @@ import torch
 import torch.nn.functional as F
 from torch.nn import CrossEntropyLoss, MSELoss, BCELoss
 
+CELoss = CrossEntropyLoss()
+BCELoss = BCELoss()
+
 
 def nll_loss(output, target):
     return F.nll_loss(output, target)
 
-CELoss = CrossEntropyLoss()
-BCELoss = BCELoss()
 
 def vae_loss(recon_x, mu, logvar, x, lm=1e-4):
     loss_fn = MSELoss()

@@ -5,18 +5,19 @@ from torchvision.datasets import MNIST
 from base import BaseDataLoader
 
 
-class MnistTrainset(MNIST):
+class MNISTTrainset(MNIST):
     def __init__(self, data_dir='./data/MNIST'):
-        trsfm = transforms.Compose([
+        transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize((0.1307,), (0.3081,))
         ])
-        super().__init__(data_dir, train=True, download=True, transform=trsfm)
+        super().__init__(data_dir, train=True, download=True, transform=transform)
 
-class MnistTestset(MNIST):
+
+class MNISTTestset(MNIST):
     def __init__(self, data_dir='./data/MNIST'):
-        trsfm = transforms.Compose([
+        transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize((0.1307,), (0.3081,))
         ])
-        super().__init__(data_dir, train=False, download=True, transform=trsfm)
+        super().__init__(data_dir, train=False, download=True, transform=transform)

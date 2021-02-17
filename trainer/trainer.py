@@ -6,7 +6,7 @@ import torch
 from torchvision.utils import make_grid
 
 from base import BaseTrainer
-from model.metric import MetricTracker
+from model.metric import MetricTracker, AUROC, AUPRC
 from utils import inf_loop
 
 
@@ -39,8 +39,11 @@ class Trainer(BaseTrainer):
         self.criterion = self.losses['loss']
 
         # metrics
-        self.train_metrics = MetricTracker('loss', *[m.__name__ for m in self.metrics], writer=self.writer)
-        self.valid_metrics = MetricTracker('loss', *[m.__name__ for m in self.metrics], writer=self.writer)
+        keys_loss = ['loss']
+        keys_iter = [m.__name__ for m in self.metrics_iter]
+        keys_epoch = [m.__name__ for m in self.metrics_epoch]
+        self.train_metrics = MetricTracker(keys_loss + keys_iter, keys_epoch, writer=self.writer)
+        self.valid_metrics = MetricTracker(keys_loss + keys_iter, keys_epoch, writer=self.writer)
 
         # optimizers
         self.optimizer = self.optimizers['model']
@@ -58,29 +61,38 @@ class Trainer(BaseTrainer):
         """
         self.model.train()
         self.train_metrics.reset()
+        if len(self.metrics_epoch) > 0:
+            outputs = torch.FloatTensor().to(self.device)
+            targets = torch.FloatTensor().to(self.device)
         for batch_idx, (data, target) in enumerate(self.train_loader):
             data, target = data.to(self.device), target.to(self.device)
 
             self.optimizer.zero_grad()
             output = self.model(data)
+            if len(self.metrics_epoch) > 0:
+                outputs = torch.cat((outputs, output))
+                targets = torch.cat((targets, target))
             loss = self.criterion(output, target)
             loss.backward()
             self.optimizer.step()
 
             self.writer.set_step((epoch - 1) * self.len_epoch + batch_idx)
-            self.train_metrics.update('loss', loss.item())
-            for met in self.metrics:
-                self.train_metrics.update(met.__name__, met(output, target))
+            self.train_metrics.iter_update('loss', loss.item())
+            for met in self.metrics_iter:
+                self.train_metrics.iter_update(met.__name__, met(output, target))
 
             if batch_idx % self.log_step == 0:
                 epoch_debug = f"Train Epoch: {epoch} {self._progress(batch_idx)} "
                 current_metrics = self.train_metrics.current()
                 metrics_debug = ', '.join(f"{key}: {value:.6f}" for key, value in current_metrics.items())
                 self.logger.debug(epoch_debug + metrics_debug)
-                #self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
+                # self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
 
             if batch_idx == self.len_epoch:
                 break
+
+        for met in self.metrics_epoch:
+            self.train_metrics.epoch_update(met.__name__, met(outputs, targets))
 
         train_log = self.train_metrics.result()
 
@@ -94,7 +106,8 @@ class Trainer(BaseTrainer):
         log = pd.concat([train_log, valid_log])
         epoch_log = {'epochs': epoch, 'iterations': self.len_epoch * epoch}
         epoch_info = ', '.join(f"{key}: {value}" for key, value in epoch_log.items())
-        self.logger.info(f'{epoch_info}\n{log}')
+        logger_info = f'{epoch_info}\n{log}'
+        self.logger.info(logger_info)
 
         return log
 
@@ -108,26 +121,30 @@ class Trainer(BaseTrainer):
         self.model.eval()
         self.valid_metrics.reset()
         with torch.no_grad():
-            outputs = torch.FloatTensor().to(self.device)
-            targets = torch.FloatTensor().to(self.device)
+            if len(self.metrics_epoch) > 0:
+                outputs = torch.FloatTensor().to(self.device)
+                targets = torch.FloatTensor().to(self.device)
             for batch_idx, (data, target) in enumerate(self.valid_loader):
                 data, target = data.to(self.device), target.to(self.device)
 
                 output = self.model(data)
                 loss = self.criterion(output, target)
-                outputs = torch.cat((outputs, output))
-                targets = torch.cat((targets, target))
+                if len(self.metrics_epoch) > 0:
+                    outputs = torch.cat((outputs, output))
+                    targets = torch.cat((targets, target))
 
                 self.writer.set_step((epoch - 1) * self.len_epoch + batch_idx, 'valid')
-                self.valid_metrics.update('loss', loss.item())
+                self.valid_metrics.iter_update('loss', loss.item())
+                for met in self.metrics_iter:
+                    self.valid_metrics.iter_update(met.__name__, met(output, target))
+                # self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
 
-            for met in self.metrics:
-                self.valid_metrics.update(met.__name__, met(outputs, targets))
-            #self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
+        for met in self.metrics_epoch:
+            self.valid_metrics.epoch_update(met.__name__, met(outputs, targets))
 
-        # add histogram of model parameters to the tensorboard
-        for name, param in self.model.named_parameters():
-            self.writer.add_histogram(name, param, bins='auto')
+        # # add histogram of model parameters to the tensorboard
+        # for name, param in self.model.named_parameters():
+        #     self.writer.add_histogram(name, param, bins='auto')
 
         valid_log = self.valid_metrics.result()
 

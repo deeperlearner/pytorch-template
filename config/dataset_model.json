@@ -31,20 +31,20 @@
         }
     },
     "data_loaders": {
-        "N_fold": 1,
         "train": {
             "data": {
                 "module": ".data_loader",
                 "type": "BaseDataLoader",
+                "split_valid": true,
                 "kwargs": {
                     "validation_split": 0.2,
                     "DataLoader_kwargs": {
                         "batch_size": 64,
                         "shuffle": true,
                         "num_workers": 4
-                    }
-                },
-                "split_valid": true
+                    },
+                    "normalize": true
+                }
             }
         },
         "valid": {
@@ -57,7 +57,8 @@
                     "batch_size": 64,
                     "shuffle": false,
                     "num_workers": 4
-                }
+                },
+                "normalize": true
             }
         }
     },
@@ -72,9 +73,10 @@
             "type": "nll_loss"
         }
     },
-    "metrics": [
-        "accuracy"
-    ],
+    "metrics": {
+        "per_iteration": ["accuracy"],
+        "per_epoch": ["AUROC", "AUPRC"]
+    },
     "optimizers": {
         "model": {
             "type": "Adam",
@@ -99,6 +101,7 @@
             "finetune": false,
             "epochs": 2,
             "len_epoch": null,
+            "N_fold": 5,
 
             "save_period": 5,
             "save_the_best": true,

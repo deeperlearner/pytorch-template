@@ -3,46 +3,54 @@ from math import sqrt
 import pandas as pd
 import numpy as np
 import torch
-from sklearn.metrics import roc_auc_score
-
+from sklearn.metrics import roc_auc_score, average_precision_score
 
 smooth = 1e-6
+
+
 class MetricTracker:
-    def __init__(self, *keys, writer=None):
+    def __init__(self, keys_iter: list, keys_epoch: list, writer=None):
         self.writer = writer
-        self._data = pd.DataFrame(index=keys,
-            columns=['current', 'sum', 'square_sum', 'counts',
-                'mean', 'square_avg', 'std'])
+        self.metrics_iter = pd.DataFrame(index=keys_iter, columns=['current', 'sum', 'square_sum', 'counts',
+                                                                   'mean', 'square_avg', 'std'])
+        self.metrics_epoch = pd.DataFrame(index=keys_epoch, columns=['mean'])
         self.reset()
 
     def reset(self):
-        for col in self._data.columns:
-            self._data[col].values[:] = 0
+        for col in self.metrics_iter.columns:
+            self.metrics_iter[col].values[:] = 0
 
-    def update(self, key, value, n=1):
+    def iter_update(self, key, value, n=1):
         if self.writer is not None:
             self.writer.add_scalar(key, value)
-        self._data.at[key, 'current'] = value
-        self._data.at[key, 'sum'] += value * n
-        self._data.at[key, 'square_sum'] += value * value * n
-        self._data.at[key, 'counts'] += n
+        self.metrics_iter.at[key, 'current'] = value
+        self.metrics_iter.at[key, 'sum'] += value * n
+        self.metrics_iter.at[key, 'square_sum'] += value * value * n
+        self.metrics_iter.at[key, 'counts'] += n
+
+    def epoch_update(self, key, value):
+        self.metrics_epoch.at[key, 'mean'] = value
 
     def current(self):
-        return dict(self._data['current'])
+        return dict(self.metrics_iter['current'])
 
     def avg(self):
-        for key, row in self._data.iterrows():
-            self._data.at[key, 'mean'] = row['sum'] / row['counts']
-            self._data.at[key, 'square_avg'] = row['square_sum'] / row['counts']
+        for key, row in self.metrics_iter.iterrows():
+            self.metrics_iter.at[key, 'mean'] = row['sum'] / row['counts']
+            self.metrics_iter.at[key, 'square_avg'] = row['square_sum'] / row['counts']
 
     def std(self):
-        for key, row in self._data.iterrows():
-            self._data.at[key, 'std'] = sqrt(row['square_avg']-row['mean']**2 + smooth)
+        for key, row in self.metrics_iter.iterrows():
+            self.metrics_iter.at[key, 'std'] = sqrt(row['square_avg'] - row['mean']**2 + smooth)
 
     def result(self):
         self.avg()
         self.std()
-        return self._data[['mean', 'std']]
+        iter_result = self.metrics_iter[['mean', 'std']]
+        epoch_result = self.metrics_epoch
+
+        return pd.concat([iter_result, epoch_result])
+
 
 def accuracy(output, target):
     with torch.no_grad():
@@ -62,10 +70,25 @@ def top_k_acc(output, target, k=3):
             correct += torch.sum(pred[:, i] == target).item()
     return correct / len(target)
 
-def auc(output, target):
+
+def binary_accuracy(output, target):
+    with torch.no_grad():
+        correct = 0
+        correct += torch.sum(torch.abs(output - target) < 0.5).item()
+    return correct / len(target)
+
+
+def AUROC(output, target):
     with torch.no_grad():
         value = roc_auc_score(target.cpu().numpy(), output.cpu().numpy())
     return value
+
+
+def AUPRC(output, target):
+    with torch.no_grad():
+        value = average_precision_score(target.cpu().numpy(), output.cpu().numpy())
+    return value
+
 
 def mean_iou_score(output, labels):
     '''

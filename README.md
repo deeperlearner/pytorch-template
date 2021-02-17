@@ -113,6 +113,15 @@ And all of above can be constructed in `.json` config!
           └── *.py
   ```
 
+## Count Lines of Codes
+- wc
+`wc -l **/*.* *.*`
+- cloc
+`sudo apt install cloc`
+`cloc --by-file --exclude-dir=examples,data --exclude-list-file=copy_exclude --not-match-f *examples* .`
+`cloc --by-file --exclude-dir=data --exclude-list-file=copy_exclude .`
+`cloc --vcs=git --by-file`
+
 ## Usage
 The code in this repo is an MNIST example of the template.
 Try `python train.py -c config.json` to run code.

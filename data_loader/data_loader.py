@@ -20,14 +20,14 @@ class MyDataset(Dataset):
             self.labels = pd.read_csv(label_path, index_col=['image_name'])
 
         mean = (0.5, 0.5, 0.5)
-        std  = (0.5, 0.5, 0.5)
+        std = (0.5, 0.5, 0.5)
         # transforms
         self.transform = transforms.Compose([
-            #transforms.RandomRotation(10),
-            #transforms.Resize((32,32)),
-            #transforms.ColorJitter(0.2, 0.2, 0.2, 0.01),
-            #transforms.RandomAffine(degrees=0, translate=(0.2, 0.2), shear=0.2),
-            #transforms.RandomHorizontalFlip(),
+            # transforms.RandomRotation(10),
+            # transforms.Resize((32,32)),
+            # transforms.ColorJitter(0.2, 0.2, 0.2, 0.01),
+            # transforms.RandomAffine(degrees=0, translate=(0.2, 0.2), shear=0.2),
+            # transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize(mean, std)
         ])
