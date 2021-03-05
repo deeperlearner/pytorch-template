@@ -1,6 +1,7 @@
 import os
 import argparse
 import collections
+import time
 
 import torch
 import torch.nn as nn
@@ -88,6 +89,7 @@ def main(config):
         keys_epoch = [m.__name__ for m in metrics_epoch]
         test_metrics = MetricTracker(keys_loss + keys_iter, keys_epoch)
 
+        start = time.time()
         with torch.no_grad():
             print('testing...')
             model = models['model']
@@ -115,8 +117,12 @@ def main(config):
         for met in metrics_epoch:
             test_metrics.epoch_update(met.__name__, met(outputs, targets))
 
+        end = time.time()
+        ty_res = time.gmtime(end - start)
+        res = time.strftime("%H hours, %M minutes, %S seconds", ty_res)
+        runtime_log = f"Runtime: {res}"
         test_log = test_metrics.result()
-        logger.info(test_log)
+        logger.info(f"{runtime_log}\n{test_log}")
         # cross validation is enabled
         if n_fold > 1:
             log_mean = test_log['mean']

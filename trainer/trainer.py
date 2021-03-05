@@ -1,4 +1,5 @@
 import os
+import time
 
 import numpy as np
 import pandas as pd
@@ -59,6 +60,7 @@ class Trainer(BaseTrainer):
         :param epoch: Integer, current training epoch.
         :return: A log that contains average loss and metric in this epoch.
         """
+        start = time.time()
         self.model.train()
         self.train_metrics.reset()
         if len(self.metrics_epoch) > 0:
@@ -104,7 +106,12 @@ class Trainer(BaseTrainer):
             self.lr_scheduler.step()
 
         log = pd.concat([train_log, valid_log])
-        epoch_log = {'epochs': epoch, 'iterations': self.len_epoch * epoch}
+        end = time.time()
+        ty_res = time.gmtime(end - start)
+        res = time.strftime("%H hours, %M minutes, %S seconds", ty_res)
+        epoch_log = {'epochs': epoch,
+                     'iterations': self.len_epoch * epoch,
+                     'Runtime': res}
         epoch_info = ', '.join(f"{key}: {value}" for key, value in epoch_log.items())
         logger_info = f'{epoch_info}\n{log}'
         self.logger.info(logger_info)
