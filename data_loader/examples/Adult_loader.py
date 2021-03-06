@@ -120,7 +120,3 @@ class AdultDataset(Dataset):
                 filename = os.path.join(data_dir, os.path.basename(url))
                 with open(filename, 'wb') as file:
                     file.write(data)
-
-
-class MyDataLoader(BaseDataLoader):
-    pass

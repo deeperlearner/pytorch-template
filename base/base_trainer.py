@@ -180,7 +180,7 @@ class BaseTrainer:
                 self._save_checkpoint(epoch, save_best=best)
 
         # cross validation is enabled
-        n_fold = self.CV_manager.N_fold
+        n_fold = Cross_Valid.N_fold
         if n_fold > 1:
             if self.CV_manager.cv_record(log_mean):
                 # done and print result
@@ -224,8 +224,8 @@ class BaseTrainer:
             'monitor_best': self.mnt_best,
             'config': self.config
         }
-        n_fold = self.CV_manager.N_fold
-        fold_idx = self.CV_manager.fold_idx
+        n_fold = Cross_Valid.N_fold
+        fold_idx = Cross_Valid.fold_idx
         fold_prefix = f'fold_{fold_idx}_' if n_fold > 1 else ''
 
         if save_best:
