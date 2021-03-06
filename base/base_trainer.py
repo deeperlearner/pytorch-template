@@ -4,7 +4,7 @@ from abc import abstractmethod
 import torch
 import numpy as np
 
-from base import BaseDataLoader
+from base import Cross_Valid
 import data_loader
 from logger import TensorboardWriter
 import model as module_arch
@@ -52,7 +52,7 @@ class BaseTrainer:
             self.valid_datasets[name] = config.init_obj([*keys, name], 'data_loader')
 
         # data_loaders
-        BaseDataLoader.N_fold = n_fold
+        self.CV_manager = Cross_Valid.create_CV(N_fold=n_fold)
         self.train_data_loaders = dict()
         self.valid_data_loaders = dict()
         # - train
@@ -180,11 +180,11 @@ class BaseTrainer:
                 self._save_checkpoint(epoch, save_best=best)
 
         # cross validation is enabled
-        n_fold = BaseDataLoader.N_fold
+        n_fold = self.CV_manager.N_fold
         if n_fold > 1:
-            if BaseDataLoader.cv_record(log_mean):
+            if self.CV_manager.cv_record(log_mean):
                 # done and print result
-                cv_result = BaseDataLoader.cv_result()
+                cv_result = self.CV_manager.cv_result()
                 self.logger.info(f'{n_fold}-fold cross validation:\n{cv_result}')
             else:
                 # next cross validation
@@ -224,8 +224,8 @@ class BaseTrainer:
             'monitor_best': self.mnt_best,
             'config': self.config
         }
-        n_fold = BaseDataLoader.N_fold
-        fold_idx = BaseDataLoader.fold_idx
+        n_fold = self.CV_manager.N_fold
+        fold_idx = self.CV_manager.fold_idx
         fold_prefix = f'fold_{fold_idx}_' if n_fold > 1 else ''
 
         if save_best:

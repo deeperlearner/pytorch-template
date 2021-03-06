@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 from parse_config import ConfigParser
-from base import BaseDataLoader
+from base import Cross_Valid
 import data_loader as module_data
 import model as module_arch
 import model.loss as module_loss
@@ -42,14 +42,14 @@ def main(config):
 
     # data_loaders
     n_fold = config['trainer']['kwargs']['N_fold']
-    BaseDataLoader.N_fold = n_fold
+    CV_manager = Cross_Valid.create_CV(N_fold=n_fold)
     test_data_loaders = dict()
     keys = ['data_loaders', 'test']
     for name in get_by_path(config, keys):
         dataset = test_datasets[name]
-        do_normalize = get_by_path(config, [*keys, name]).get('normalize', False)
-        if do_normalize:
-            dataset.normalize()
+        do_transform = get_by_path(config, [*keys, name]).get('do_transform', False)
+        if do_transform:
+            dataset.transform()
         test_data_loaders[name] = config.init_obj([*keys, name], 'data_loader', dataset)
 
     # prepare model for testing
@@ -126,9 +126,9 @@ def main(config):
         # cross validation is enabled
         if n_fold > 1:
             log_mean = test_log['mean']
-            if BaseDataLoader.cv_record(log_mean):
+            if CV_manager.cv_record(log_mean):
                 # done and print result
-                cv_result = BaseDataLoader.cv_result()
+                cv_result = CV_manager.cv_result()
                 logger.info(f'{n_fold}-fold cross validation:\n{cv_result}')
 
 

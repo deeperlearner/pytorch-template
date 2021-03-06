@@ -1,6 +1,7 @@
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from torchvision.datasets import MNIST
+from sklearn.model_selection import StratifiedKFold
 
 from base import BaseDataLoader
 
@@ -12,6 +13,14 @@ class MNISTTrainset(MNIST):
             transforms.Normalize((0.1307,), (0.3081,))
         ])
         super().__init__(data_dir, train=True, download=True, transform=transform)
+
+    def split_cv_indexes(self, N):
+        kfold = StratifiedKFold(n_splits=N)
+        X, y = self.data, self.targets
+        self.indexes = kfold.split(X, y)
+
+    def get_split_idx(self):
+        return next(self.indexes)
 
 
 class MNISTTestset(MNIST):
