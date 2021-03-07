@@ -17,7 +17,6 @@ class AdultDataset(Dataset):
                  "https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.test"]
 
     def __init__(self, data_dir='./data/Adult', mode='train'):
-        self.data_dir = data_dir
         self.mode = mode
         self.download(data_dir)
 
@@ -33,16 +32,16 @@ class AdultDataset(Dataset):
         len_test = len(test_data.index)
 
         merged_data = pd.concat([train_data, test_data])
-        self.data = merged_data.drop(["income"], axis=1)
         self.label = merged_data.loc[:, "income"]
-
-        num_data = self.data.select_dtypes(include=['int'])
-        cat_data = self.data.select_dtypes(include=['object'])
+        merged_data = merged_data.drop(["income"], axis=1)
+        num_data = merged_data.select_dtypes(include=['int'])
+        cat_data = merged_data.select_dtypes(include=['object'])
         cat_data = pd.get_dummies(cat_data)
         self._preprocess()
+
         # adult.data
-        self.x_num_data = num_data.iloc[:len_data]
-        self.x_cat_data = cat_data.iloc[:len_data]
+        self.x_num_train = num_data.iloc[:len_data]
+        self.x_cat_train = cat_data.iloc[:len_data]
         self.y_data = self.label.iloc[:len_data]
         # adult.test
         self.x_num_test = num_data.iloc[len_data:]
@@ -63,7 +62,7 @@ class AdultDataset(Dataset):
 
     def split_cv_indexes(self, N):
         kfold = StratifiedKFold(n_splits=N)
-        X, y = self.x_num_data, self.y_data
+        X, y = self.x_num_train, self.y_data
         self.indexes = kfold.split(X, y)
 
     def get_split_idx(self):
@@ -75,29 +74,38 @@ class AdultDataset(Dataset):
         self.normalize()
 
     def compute_data_info(self, split_idx):
+        # compute mean, std, mode on training data only!
         if self.mode == 'train':
-            # compute mean, std, mode on training data only!
             train_idx, valid_idx = split_idx
-            self.num_mean = self.x_num_data.iloc[train_idx].mean()
-            self.num_std = self.x_num_data.iloc[train_idx].std()
-            self.cat_mode = self.x_cat_data.iloc[train_idx].mode().loc[0]
+            num_train = self.x_num_train.iloc[train_idx]
+            cat_train = self.x_cat_train.iloc[train_idx]
         elif self.mode == 'test':
-            self.num_mean = self.x_num_data.mean()
-            self.num_std = self.x_num_data.std()
-            self.cat_mode = self.x_cat_data.mode().loc[0]
+            num_train = self.x_num_train
+            cat_train = self.x_cat_train
 
-    def impute(self):
-        # Simple impute
+        self.num_mean = num_train.mean()
+        self.num_std = num_train.std()
+        self.cat_mode = cat_train.mode().loc[0]
+
+    def impute(self, impute_type='simple'):
+        # impute_type: zero, simple(mean, mode)
+        if impute_type == 'zero':
+            num_fill = 0
+            cat_fill = 0
+        elif impute_type == 'simple':
+            num_fill = self.num_mean
+            cat_fill = self.cat_mode
+
         if self.mode == 'train':
-            self.x_num_data = self.x_num_data.fillna(self.num_mean)
-            self.x_cat_data = self.x_cat_data.fillna(self.cat_mode)
+            self.x_num_train = self.x_num_train.fillna(num_fill)
+            self.x_cat_train = self.x_cat_train.fillna(cat_fill)
         elif self.mode == 'test':
-            self.x_num_test = self.x_num_test.fillna(self.num_mean)
-            self.x_cat_test = self.x_cat_test.fillna(self.cat_mode)
+            self.x_num_test = self.x_num_test.fillna(num_fill)
+            self.x_cat_test = self.x_cat_test.fillna(cat_fill)
 
     def normalize(self):
         if self.mode == 'train':
-            x_num, x_cat = self.x_num_data, self.x_cat_data
+            x_num, x_cat = self.x_num_train, self.x_cat_train
             y = self.y_data
         elif self.mode == 'test':
             x_num, x_cat = self.x_num_test, self.x_cat_test

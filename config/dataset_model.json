@@ -43,7 +43,7 @@
                         "shuffle": true,
                         "num_workers": 4
                     },
-                    "normalize": true
+                    "do_transform": true
                 }
             }
         },
@@ -58,7 +58,7 @@
                     "shuffle": false,
                     "num_workers": 4
                 },
-                "normalize": true
+                "do_transform": true
             }
         }
     },
