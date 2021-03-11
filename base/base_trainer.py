@@ -1,5 +1,6 @@
 import os
 from abc import abstractmethod
+import time
 
 import torch
 import numpy as np
@@ -10,7 +11,7 @@ from logger import TensorboardWriter
 import model as module_arch
 import model.loss as module_loss
 import model.metric as module_metric
-from utils import get_by_path
+from utils import get_by_path, msg_box
 
 
 class BaseTrainer:
@@ -24,7 +25,7 @@ class BaseTrainer:
         self.finetune = cfg_trainer['finetune']
         self.epochs = cfg_trainer['epochs']
         self.len_epoch = cfg_trainer.get('len_epoch', None)
-        n_fold = cfg_trainer.get('N_fold', 1)
+        k_fold = cfg_trainer.get('K_fold', 1)
         self.save_period = cfg_trainer['save_period']
         self.save_the_best = cfg_trainer['save_the_best']
         verbosity = cfg_trainer['verbosity']
@@ -52,7 +53,7 @@ class BaseTrainer:
             self.valid_datasets[name] = config.init_obj([*keys, name], 'data_loader')
 
         # data_loaders
-        self.CV_manager = Cross_Valid.create_CV(N_fold=n_fold)
+        self.CV_manager = Cross_Valid.create_CV(K_fold=k_fold)
         self.train_data_loaders = dict()
         self.valid_data_loaders = dict()
         # - train
@@ -114,6 +115,8 @@ class BaseTrainer:
 
         # setup visualization writer instance
         self.writer = TensorboardWriter(config.save_dir['log'], self.logger, tensorboard)
+        # starting time
+        self.start = time.time()
 
     def _next_cv(self):
         """
@@ -128,7 +131,7 @@ class BaseTrainer:
                 self.valid_data_loaders[name] = loader.valid_loader
         # re-initialize model weight
         for model in self.models.values():
-            model.weights_init()
+            model.weights_reset()
 
     @abstractmethod
     def _train_epoch(self, epoch):
@@ -176,16 +179,22 @@ class BaseTrainer:
                     break
 
             if epoch % self.save_period == 0 or best:
-                self.logger.info('Best {}: {}'.format(self.mnt_metric, self.mnt_best))
+                self.logger.info("Best {}: {:.5f}".format(self.mnt_metric, self.mnt_best))
                 self._save_checkpoint(epoch, save_best=best)
 
         # cross validation is enabled
-        n_fold = Cross_Valid.N_fold
-        if n_fold > 1:
+        k_fold = Cross_Valid.K_fold
+        if k_fold > 1:
             if self.CV_manager.cv_record(log_mean):
                 # done and print result
                 cv_result = self.CV_manager.cv_result()
-                self.logger.info(f'{n_fold}-fold cross validation:\n{cv_result}')
+                end = time.time()
+                ty_res = time.gmtime(end - self.start)
+                res = time.strftime("%H hours, %M minutes, %S seconds", ty_res)
+                k_fold_msg = msg_box(f"{k_fold}-fold cross validation result")
+                self.logger.info(f"{k_fold_msg}\n"
+                                 f"Total running time: {res}\n"
+                                 f"{cv_result}\n")
             else:
                 # next cross validation
                 self._next_cv()
@@ -224,18 +233,18 @@ class BaseTrainer:
             'monitor_best': self.mnt_best,
             'config': self.config
         }
-        n_fold = Cross_Valid.N_fold
+        k_fold = Cross_Valid.K_fold
         fold_idx = Cross_Valid.fold_idx
-        fold_prefix = f'fold_{fold_idx}_' if n_fold > 1 else ''
+        fold_prefix = f'fold_{fold_idx}_' if k_fold > 1 else ''
 
         if save_best:
             if self.save_the_best:
-                filename = str(self.checkpoint_dir / f'{fold_prefix}model_best.pth')
+                filename = str(self.checkpoint_dir / f"{fold_prefix}model_best.pth")
             else:
                 self.num_best += 1
-                filename = str(self.checkpoint_dir / f'{fold_prefix}model_best{self.num_best}.pth')
+                filename = str(self.checkpoint_dir / f"{fold_prefix}model_best{self.num_best}.pth")
         else:
-            filename = str(self.checkpoint_dir / f'{fold_prefix}checkpoint-epoch{epoch}.pth')
+            filename = str(self.checkpoint_dir / f"{fold_prefix}checkpoint-epoch{epoch}.pth")
         torch.save(state, filename)
         self.logger.info("Saving model: {} ...".format(filename))
 

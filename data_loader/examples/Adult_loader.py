@@ -42,19 +42,20 @@ class AdultDataset(Dataset):
         # adult.data
         self.x_num_train = num_data.iloc[:len_data]
         self.x_cat_train = cat_data.iloc[:len_data]
-        self.y_data = self.label.iloc[:len_data]
+        self.y_train = self.label.iloc[:len_data]
         # adult.test
         self.x_num_test = num_data.iloc[len_data:]
         self.x_cat_test = cat_data.iloc[len_data:]
         self.y_test = self.label.iloc[len_data:]
 
-    def __getitem__(self, idx):
-        return self.x[idx], self.y[idx]
-
-    def __len__(self):
-        if self.mode == 'train':
-            return len(self.y_data)
-        return len(self.y_test)
+    def download(self, data_dir):
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
+            for url in self.resources:
+                data = requests.get(url).content
+                filename = os.path.join(data_dir, os.path.basename(url))
+                with open(filename, 'wb') as file:
+                    file.write(data)
 
     def _preprocess(self):
         self.label.replace(to_replace=r'<=50K.?', value=0, regex=True, inplace=True)
@@ -62,7 +63,7 @@ class AdultDataset(Dataset):
 
     def split_cv_indexes(self, N):
         kfold = StratifiedKFold(n_splits=N)
-        X, y = self.x_num_train, self.y_data
+        X, y = self.x_num_train, self.y_train
         self.indexes = kfold.split(X, y)
 
     def get_split_idx(self):
@@ -106,7 +107,7 @@ class AdultDataset(Dataset):
     def normalize(self):
         if self.mode == 'train':
             x_num, x_cat = self.x_num_train, self.x_cat_train
-            y = self.y_data
+            y = self.y_train
         elif self.mode == 'test':
             x_num, x_cat = self.x_num_test, self.x_cat_test
             y = self.y_test
@@ -120,11 +121,10 @@ class AdultDataset(Dataset):
         self.x = torch.cat([x_num, x_cat], 1)
         self.y = torch.unsqueeze(y, 1)
 
-    def download(self, data_dir):
-        if not os.path.exists(data_dir):
-            os.makedirs(data_dir)
-            for url in self.resources:
-                data = requests.get(url).content
-                filename = os.path.join(data_dir, os.path.basename(url))
-                with open(filename, 'wb') as file:
-                    file.write(data)
+    def __getitem__(self, idx):
+        return self.x[idx], self.y[idx]
+
+    def __len__(self):
+        if self.mode == 'train':
+            return len(self.y_train)
+        return len(self.y_test)

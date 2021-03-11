@@ -31,6 +31,7 @@ class Trainer(BaseTrainer):
         else:
             # iteration-based training
             self.train_loader = inf_loop(self.train_loader)
+        self.seq_len = self.train_datasets['data'].seq_len
         self.log_step = int(np.sqrt(self.train_loader.batch_size))
 
         # models
@@ -63,7 +64,7 @@ class Trainer(BaseTrainer):
         start = time.time()
         self.model.train()
         self.train_metrics.reset()
-        hidden = self.model.init_hidden()
+        hidden = self.model.initHidden(self.seq_len)
         if len(self.metrics_epoch) > 0:
             outputs = torch.FloatTensor().to(self.device)
             targets = torch.FloatTensor().to(self.device)
@@ -114,7 +115,7 @@ class Trainer(BaseTrainer):
                      'iterations': self.len_epoch * epoch,
                      'Runtime': res}
         epoch_info = ', '.join(f"{key}: {value}" for key, value in epoch_log.items())
-        logger_info = f'{epoch_info}\n{log}'
+        logger_info = f"{epoch_info}\n{log}"
         self.logger.info(logger_info)
 
         return log
@@ -128,7 +129,7 @@ class Trainer(BaseTrainer):
         """
         self.model.eval()
         self.valid_metrics.reset()
-        hidden = self.model.init_hidden()
+        hidden = self.model.initHidden(self.seq_len)
         with torch.no_grad():
             if len(self.metrics_epoch) > 0:
                 outputs = torch.FloatTensor().to(self.device)

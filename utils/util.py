@@ -39,3 +39,10 @@ def set_by_path(tree, keys, value):
 def get_by_path(tree, keys):
     '''Access a nested object in tree by sequence of keys.'''
     return reduce(getitem, keys, tree)
+
+
+def msg_box(msg):
+    row = len(msg)
+    h = ''.join(['+'] + ['-' *row] + ['+'])
+    result = h + f"\n|{msg}|\n" + h
+    return result

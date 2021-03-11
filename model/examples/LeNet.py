@@ -11,9 +11,9 @@ class LeNet(nn.Module):
         self.fc1 = nn.Linear(320, 50)
         self.fc2 = nn.Linear(50, num_classes)
 
-        self.weights_init()
+        self.weights_reset()
 
-    def weights_init(self):
+    def weights_reset(self):
         for layer in self.children():
             if hasattr(layer, 'reset_parameters'):
                 layer.reset_parameters()
@@ -32,7 +32,4 @@ class LeNet(nn.Module):
 def weights_init(m):
     classname = m.__class__.__name__
     if classname.find('Conv') != -1:
-        nn.init.normal_(m.weight.data, 0.0, 0.02)
-    elif classname.find('BatchNorm') != -1:
-        nn.init.normal_(m.weight.data, 1.0, 0.02)
-        nn.init.constant_(m.bias.data, 0)
+        nn.init.normal_(m.weight.data)

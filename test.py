@@ -19,7 +19,7 @@ import model as module_arch
 import model.loss as module_loss
 import model.metric as module_metric
 from model.metric import MetricTracker, AUROC, AUPRC
-from utils import ensure_dir, get_by_path
+from utils import ensure_dir, get_by_path, msg_box
 
 # fix random seeds for reproducibility
 SEED = 123
@@ -41,8 +41,8 @@ def main(config):
         test_datasets[name] = config.init_obj([*keys, name], 'data_loader')
 
     # data_loaders
-    n_fold = config['trainer']['kwargs']['N_fold']
-    CV_manager = Cross_Valid.create_CV(N_fold=n_fold)
+    k_fold = config['trainer']['kwargs']['K_fold']
+    CV_manager = Cross_Valid.create_CV(K_fold=k_fold)
     test_data_loaders = dict()
     keys = ['data_loaders', 'test']
     for name in get_by_path(config, keys):
@@ -54,9 +54,10 @@ def main(config):
 
     # prepare model for testing
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    for fold_idx in range(1, n_fold + 1):
+    start = time.time()
+    for fold_idx in range(1, k_fold + 1):
         # models
-        if n_fold > 1:
+        if k_fold > 1:
             fold_prefix = f'fold_{fold_idx}_'
             dirname = os.path.dirname(config.resume)
             basename = os.path.basename(config.resume)
@@ -89,7 +90,6 @@ def main(config):
         keys_epoch = [m.__name__ for m in metrics_epoch]
         test_metrics = MetricTracker(keys_loss + keys_iter, keys_epoch)
 
-        start = time.time()
         with torch.no_grad():
             print('testing...')
             model = models['model']
@@ -117,19 +117,21 @@ def main(config):
         for met in metrics_epoch:
             test_metrics.epoch_update(met.__name__, met(outputs, targets))
 
-        end = time.time()
-        ty_res = time.gmtime(end - start)
-        res = time.strftime("%H hours, %M minutes, %S seconds", ty_res)
-        runtime_log = f"Runtime: {res}"
         test_log = test_metrics.result()
-        logger.info(f"{runtime_log}\n{test_log}")
+        logger.info(test_log)
         # cross validation is enabled
-        if n_fold > 1:
+        if k_fold > 1:
             log_mean = test_log['mean']
             if CV_manager.cv_record(log_mean):
                 # done and print result
                 cv_result = CV_manager.cv_result()
-                logger.info(f'{n_fold}-fold cross validation:\n{cv_result}')
+                end = time.time()
+                ty_res = time.gmtime(end - start)
+                res = time.strftime("%H hours, %M minutes, %S seconds", ty_res)
+                k_fold_msg = msg_box(f"{k_fold}-fold cross validation result")
+                logger.info(f"{k_fold_msg}\n"
+                            f"Total running time: {res}\n"
+                            f"{cv_result}\n")
 
 
 if __name__ == '__main__':

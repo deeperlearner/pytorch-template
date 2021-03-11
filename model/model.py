@@ -11,6 +11,14 @@ class MyModel(nn.Module):
         self.fc1 = nn.Linear(320, 50)
         self.fc2 = nn.Linear(50, num_classes)
 
+        self.weights_reset()
+
+    def weights_reset(self):
+        for layer in self.children():
+            if hasattr(layer, 'reset_parameters'):
+                layer.reset_parameters()
+        self.apply(weights_init)
+
     def forward(self, img):
         img = F.relu(F.max_pool2d(self.conv1(img), 2))
         img = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(img)), 2))
@@ -19,3 +27,12 @@ class MyModel(nn.Module):
         img = F.dropout(img, training=self.training)
         img = self.fc2(img)
         return F.log_softmax(img, dim=1)
+
+
+def weights_init(m):
+    classname = m.__class__.__name__
+    if classname.find('Conv') != -1:
+        nn.init.normal_(m.weight.data)
+    elif classname.find('BatchNorm') != -1:
+        nn.init.normal_(m.weight.data, mean=1.0, std=0.02)
+        nn.init.constant_(m.bias.data, 0)

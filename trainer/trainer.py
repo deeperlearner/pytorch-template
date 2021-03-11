@@ -74,6 +74,8 @@ class Trainer(BaseTrainer):
             if len(self.metrics_epoch) > 0:
                 outputs = torch.cat((outputs, output))
                 targets = torch.cat((targets, target))
+            #print(output.size())
+            #print(target.size())
             loss = self.criterion(output, target)
             loss.backward()
             self.optimizer.step()
@@ -113,7 +115,7 @@ class Trainer(BaseTrainer):
                      'iterations': self.len_epoch * epoch,
                      'Runtime': res}
         epoch_info = ', '.join(f"{key}: {value}" for key, value in epoch_log.items())
-        logger_info = f'{epoch_info}\n{log}'
+        logger_info = f"{epoch_info}\n{log}"
         self.logger.info(logger_info)
 
         return log

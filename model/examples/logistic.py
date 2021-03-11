@@ -8,9 +8,9 @@ class LogisticRegression(nn.Module):
         super().__init__()
         self.linear = nn.Linear(in_features, 1)
 
-        self.weights_init()
+        self.weights_reset()
 
-    def weights_init(self):
+    def weights_reset(self):
         for layer in self.children():
             if hasattr(layer, 'reset_parameters'):
                 layer.reset_parameters()
