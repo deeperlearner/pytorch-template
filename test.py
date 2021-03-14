@@ -41,8 +41,8 @@ def main(config):
         test_datasets[name] = config.init_obj([*keys, name], 'data_loader')
 
     # data_loaders
-    k_fold = config['trainer']['kwargs']['K_fold']
-    CV_manager = Cross_Valid.create_CV(K_fold=k_fold)
+    k_fold = config['trainer']['kwargs']['k_fold']
+    CV_manager = Cross_Valid.create_CV(k_fold=k_fold)
     test_data_loaders = dict()
     keys = ['data_loaders', 'test']
     for name in get_by_path(config, keys):

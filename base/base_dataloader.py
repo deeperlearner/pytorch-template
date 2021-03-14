@@ -16,9 +16,9 @@ class BaseDataLoader(DataLoader):
         self.split = validation_split
         self.init_kwargs = DataLoader_kwargs if DataLoader_kwargs is not None else {}
 
-        if Cross_Valid.K_fold > 1:
+        if Cross_Valid.k_fold > 1:
             if Cross_Valid.fold_idx == 1:
-                dataset.split_cv_indexes(Cross_Valid.K_fold)
+                dataset.split_cv_indexes(Cross_Valid.k_fold)
             split_idx = dataset.get_split_idx()
             train_sampler, valid_sampler = self._get_sampler(*split_idx)
             if do_transform:
@@ -70,16 +70,16 @@ class Cross_Valid:
         self.log_means = pd.DataFrame()
 
     @classmethod
-    def create_CV(cls, K_fold=1):
-        cls.K_fold = K_fold
+    def create_CV(cls, k_fold=1):
+        cls.k_fold = k_fold
         cls.fold_idx = 1
         return cls()
 
     def cv_record(self, log_mean):
         # record the result of each cross validation
         self.log_means = pd.concat([self.log_means, log_mean], axis=1)
-        cv_done = self.fold_idx == self.K_fold
-        self.fold_idx += 1
+        cv_done = self.fold_idx == self.k_fold
+        Cross_Valid.fold_idx += 1
         return cv_done
 
     def cv_result(self):

@@ -25,11 +25,11 @@ class BaseTrainer:
         self.finetune = cfg_trainer['finetune']
         self.epochs = cfg_trainer['epochs']
         self.len_epoch = cfg_trainer.get('len_epoch', None)
-        k_fold = cfg_trainer.get('K_fold', 1)
+        k_fold = cfg_trainer.get('k_fold', 1)
         self.save_period = cfg_trainer['save_period']
         self.save_the_best = cfg_trainer['save_the_best']
         verbosity = cfg_trainer['verbosity']
-        monitor = cfg_trainer.get('monitor', 'off')
+        self.monitor = cfg_trainer.get('monitor', 'off')
         self.early_stop = cfg_trainer.get('early_stop', np.inf)
         if self.early_stop <= 0 or self.early_stop is None:
             self.early_stop = np.inf
@@ -53,7 +53,7 @@ class BaseTrainer:
             self.valid_datasets[name] = config.init_obj([*keys, name], 'data_loader')
 
         # data_loaders
-        self.CV_manager = Cross_Valid.create_CV(K_fold=k_fold)
+        self.CV_manager = Cross_Valid.create_CV(k_fold=k_fold)
         self.train_data_loaders = dict()
         self.valid_data_loaders = dict()
         # - train
@@ -103,25 +103,31 @@ class BaseTrainer:
             self.lr_schedulers[name] = config.init_obj(['lr_schedulers', name],
                                                        torch.optim.lr_scheduler, self.optimizers[name])
 
-        # configuration to monitor model performance and save best
-        self.num_best = 0
-        if monitor == 'off':
-            self.mnt_mode = 'off'
-            self.mnt_best = 0
-        else:
-            self.mnt_mode, self.mnt_metric = monitor.split()
-            assert self.mnt_mode in ['min', 'max']
-            self.mnt_best = np.inf if self.mnt_mode == 'min' else -np.inf
+        self._reset_mnt()
 
         # setup visualization writer instance
         self.writer = TensorboardWriter(config.save_dir['log'], self.logger, tensorboard)
         # starting time
         self.start = time.time()
 
+    def _reset_mnt(self):
+        # configuration to monitor model performance and save best
+        self.num_best = 0
+        if self.monitor == 'off':
+            self.mnt_mode = 'off'
+            self.mnt_best = 0
+        else:
+            self.mnt_mode, self.mnt_metric = self.monitor.split()
+            assert self.mnt_mode in ['min', 'max']
+            self.mnt_best = np.inf if self.mnt_mode == 'min' else -np.inf
+
     def _next_cv(self):
         """
         Prepare for the next cross validation
         """
+        # reset monitor
+        self._reset_mnt()
+        # next fold
         for name, loader in self.train_data_loaders.items():
             # reconstruct train/valid data
             if self.config['data_loaders']['train'][name]['split_valid']:
@@ -183,7 +189,7 @@ class BaseTrainer:
                 self._save_checkpoint(epoch, save_best=best)
 
         # cross validation is enabled
-        k_fold = Cross_Valid.K_fold
+        k_fold = Cross_Valid.k_fold
         if k_fold > 1:
             if self.CV_manager.cv_record(log_mean):
                 # done and print result
@@ -233,7 +239,7 @@ class BaseTrainer:
             'monitor_best': self.mnt_best,
             'config': self.config
         }
-        k_fold = Cross_Valid.K_fold
+        k_fold = Cross_Valid.k_fold
         fold_idx = Cross_Valid.fold_idx
         fold_prefix = f'fold_{fold_idx}_' if k_fold > 1 else ''
 

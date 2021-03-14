@@ -102,7 +102,7 @@
             "finetune": false,
             "epochs": 2,
             "len_epoch": null,
-            "K_fold": 3,
+            "k_fold": 3,
 
             "save_period": 5,
             "save_the_best": true,
