@@ -71,7 +71,7 @@
     },
     "losses": {
         "loss": {
-            "type": "BCELoss"
+            "type": "loss_bce"
         }
     },
     "metrics": {

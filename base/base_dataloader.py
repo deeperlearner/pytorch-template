@@ -27,9 +27,10 @@ class BaseDataLoader(DataLoader):
             self.valid_loader = DataLoader(dataset, sampler=valid_sampler, **self.init_kwargs)
         else:
             if validation_split > 0.0:
-                train_sampler, valid_sampler = self._split_sampler()
+                split_idx = self._split_sampler()
+                train_sampler, valid_sampler = self._get_sampler(*split_idx)
                 if do_transform:
-                    dataset.transform()
+                    dataset.transform(split_idx)
                 super().__init__(dataset, sampler=train_sampler, **self.init_kwargs)
                 self.valid_loader = DataLoader(dataset, sampler=valid_sampler, **self.init_kwargs)
             else:
@@ -62,7 +63,7 @@ class BaseDataLoader(DataLoader):
 
         train_idx, valid_idx = idx_full[len_valid:], idx_full[:len_valid]
 
-        return self._get_sampler(train_idx, valid_idx)
+        return (train_idx, valid_idx)
 
 
 class Cross_Valid:

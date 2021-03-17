@@ -82,7 +82,7 @@
     },
     "losses": {
         "loss": {
-            "type": "CELoss"
+            "type": "loss_ce"
         }
     },
     "metrics": {
