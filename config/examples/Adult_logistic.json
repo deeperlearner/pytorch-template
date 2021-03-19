@@ -71,7 +71,10 @@
     },
     "losses": {
         "loss": {
-            "type": "loss_bce"
+            "type": "binary_focal_loss",
+            "kwargs": {
+                "alpha": 0.24
+            }
         }
     },
     "metrics": {

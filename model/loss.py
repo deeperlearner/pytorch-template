@@ -6,6 +6,35 @@ ce_loss = CrossEntropyLoss()
 bce_loss = BCELoss()
 
 
+def weighted_bce_loss(output, target, alpha=0.5):
+    device = torch.device('cuda:0')
+    weight_ratio = torch.tensor([1 - alpha, alpha], device=device)
+    alpha_t = torch.reciprocal(weight_ratio)
+    weighted_bce_loss = BCELoss(weight=alpha_t[target.long()])
+    return weighted_bce_loss(output, target)
+
+
+# ref: https://github.com/kornia/kornia/blob/master/kornia/losses/focal.py
+def binary_focal_loss(output: torch.Tensor,
+                      target: torch.Tensor,
+                      alpha: float = 0.5,
+                      gamma: float = 2.0,
+                      reduction: str = 'sum',
+                      eps: float = 1e-8) -> torch.Tensor:
+    p_t = output
+    loss_tmp = -alpha * torch.pow(1 - p_t, gamma) * target * torch.log(p_t + eps) \
+               - (1 - alpha) * torch.pow(p_t, gamma) * (1 - target) * torch.log(1 - p_t + eps)
+
+    if reduction == 'none':
+        loss = loss_tmp
+    elif reduction == 'mean':
+        loss = torch.mean(loss_tmp)
+    elif reduction == 'sum':
+        loss = torch.sum(loss_tmp)
+
+    return loss
+
+
 def nll_loss(output, target):
     return F.nll_loss(output, target)
 

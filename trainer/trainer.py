@@ -74,8 +74,6 @@ class Trainer(BaseTrainer):
             if len(self.metrics_epoch) > 0:
                 outputs = torch.cat((outputs, output))
                 targets = torch.cat((targets, target))
-            #print(output.size())
-            #print(target.size())
             loss = self.criterion(output, target)
             loss.backward()
             self.optimizer.step()

@@ -44,12 +44,10 @@ class AdultDataset(Dataset):
         self.x_num_train = num_data.iloc[:len_data]
         self.x_cat_train = cat_data.iloc[:len_data]
         self.y_train = self.label.iloc[:len_data]
-        print(self.y_train.mean())
         # adult.test
         self.x_num_test = num_data.iloc[len_data:]
         self.x_cat_test = cat_data.iloc[len_data:]
         self.y_test = self.label.iloc[len_data:]
-        print(self.y_test.mean())
 
     def download(self, data_dir):
         if not os.path.exists(data_dir):
@@ -135,3 +133,5 @@ class AdultDataset(Dataset):
 
 if __name__ == '__main__':
     data = AdultDataset()
+    print(data.y_train.mean())
+    print(data.y_test.mean())

@@ -43,6 +43,6 @@ def get_by_path(tree, keys):
 
 def msg_box(msg):
     row = len(msg)
-    h = ''.join(['+'] + ['-' *row] + ['+'])
+    h = ''.join(['+'] + ['-' * row] + ['+'])
     result = h + f"\n|{msg}|\n" + h
     return result
