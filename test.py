@@ -33,6 +33,8 @@ def main(config):
     # test_args: config.test_args
 
     logger = config.get_logger('test')
+    test_msg = msg_box("TEST")
+    logger.debug(test_msg)
 
     # datasets
     test_datasets = dict()
@@ -64,7 +66,7 @@ def main(config):
             resume = os.path.join(dirname, fold_prefix + basename)
         else:
             resume = config.resume
-        logger.info('Loading model: {} ...'.format(resume))
+        logger.info(f"Loading model: {resume} ...")
         checkpoint = torch.load(resume)
         models = dict()
         logger_model = config.get_logger('model', verbosity=1)
@@ -91,7 +93,7 @@ def main(config):
         test_metrics = MetricTracker(keys_loss + keys_iter, keys_epoch)
 
         with torch.no_grad():
-            print('testing...')
+            print("testing...")
             model = models['model']
             testloader = test_data_loaders['data']
             if len(metrics_epoch) > 0:
@@ -140,6 +142,7 @@ if __name__ == '__main__':
     run_args.add_argument('-c', '--config', default="config/examples/mnist.json", type=str)
     run_args.add_argument('--resume', default=None, type=str)
     run_args.add_argument('--mode', default='test', type=str)
+    run_args.add_argument('--run_id', default=None, type=str)
     run_args.add_argument('--log_name', default=None, type=str)
 
     # custom cli options to modify configuration from default values given in json file.

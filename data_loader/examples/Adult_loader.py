@@ -63,7 +63,7 @@ class AdultDataset(Dataset):
         self.label.replace(to_replace=r'>50K.?', value=1, regex=True, inplace=True)
 
     def split_cv_indexes(self, N):
-        kfold = StratifiedKFold(n_splits=N)
+        kfold = StratifiedKFold(n_splits=N, shuffle=True)
         X, y = self.x_num_train, self.y_train
         self.indexes = kfold.split(X, y)
 
@@ -85,8 +85,9 @@ class AdultDataset(Dataset):
             num_train = self.x_num_train
             cat_train = self.x_cat_train
 
-        self.num_mean = num_train.mean()
-        self.num_std = num_train.std()
+        des = num_train.describe()
+        self.num_mean = des.loc['mean']
+        self.num_std = des.loc['std']
         self.cat_mode = cat_train.mode().loc[0]
 
     def impute(self, impute_type='simple'):

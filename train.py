@@ -3,9 +3,14 @@ import argparse
 import collections
 
 from parse_config import ConfigParser
+from utils import msg_box
 
 
 def main(config):
+    logger = config.get_logger('train')
+    train_msg = msg_box("TRAIN")
+    logger.debug(train_msg)
+
     module_name = config['trainer']['module']
     class_name = config['trainer']['type']
     module_trainer = importlib.import_module(module_name, package='trainer')

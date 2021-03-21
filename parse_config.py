@@ -34,8 +34,8 @@ class ConfigParser:
         log_name = run_args.log_name
 
         self.root_dir = self.config['root_dir']
+        run_id = run_args.run_id
         if self.mode == 'train':
-            run_id = run_args.run_id
             save_dir = Path(self.root_dir) / self.config['save_dir']
             if run_id is None:  # use timestamp as default run-id
                 run_id = datetime.now().strftime(r'%m%d_%H%M%S')
@@ -59,7 +59,7 @@ class ConfigParser:
                 result_dir[dir_name] = dir_path
             # configure logging module
             if log_name is None:
-                log_name = '{}_test.log'.format(self.config['name'])
+                log_name = f"{self.config['name']}_{run_id}.log"
             setup_logging(result_dir['log'], root_dir=self.root_dir, filename=log_name)
 
         self.log_levels = {

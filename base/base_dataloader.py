@@ -1,15 +1,22 @@
 import os
+import logging
 
 import pandas as pd
 import numpy as np
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 
+from utils import msg_box
+
 
 class BaseDataLoader(DataLoader):
     """
     Split one dataset into train data_loader and valid data_loader
     """
+    # logger
+    logger = logging.getLogger('DataLoader')
+    logger.setLevel(logging.DEBUG)
+
     def __init__(self, dataset, validation_split=0.0, DataLoader_kwargs=None, do_transform=False):
         self.dataset = dataset
         self.n_samples = len(dataset)
@@ -17,6 +24,8 @@ class BaseDataLoader(DataLoader):
         self.init_kwargs = DataLoader_kwargs if DataLoader_kwargs is not None else {}
 
         if Cross_Valid.k_fold > 1:
+            fold_msg = msg_box(f"Fold {Cross_Valid.fold_idx}")
+            self.logger.info(fold_msg)
             if Cross_Valid.fold_idx == 1:
                 dataset.split_cv_indexes(Cross_Valid.k_fold)
             split_idx = dataset.get_split_idx()

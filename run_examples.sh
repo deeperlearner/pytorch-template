@@ -15,8 +15,8 @@
 
 # Adult_logistic
 #python3 train.py -c config/examples/Adult_logistic.json --run_id bce_loss
-#python3 test.py -c config/examples/Adult_logistic.json --resume saved/Adult_logistic/bce_loss/model/model_best.pth
+#python3 test.py -c config/examples/Adult_logistic.json --resume saved/Adult_logistic/bce_loss/model/model_best.pth --run_id bce_loss
 #python3 train.py -c config/examples/Adult_logistic.json --run_id weighted_bce_loss
-#python3 test.py -c config/examples/Adult_logistic.json --resume saved/Adult_logistic/weighted_bce_loss/model/model_best.pth
+#python3 test.py -c config/examples/Adult_logistic.json --resume saved/Adult_logistic/weighted_bce_loss/model/model_best.pth --run_id weighted_bce_loss
 python3 train.py -c config/examples/Adult_logistic.json --run_id binary_focal_loss
-python3 test.py -c config/examples/Adult_logistic.json --resume saved/Adult_logistic/binary_focal_loss/model/model_best.pth
+python3 test.py -c config/examples/Adult_logistic.json --resume saved/Adult_logistic/binary_focal_loss/model/model_best.pth --run_id binary_focal_loss

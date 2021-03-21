@@ -128,16 +128,28 @@ class BaseTrainer:
         # reset monitor
         self._reset_mnt()
         # next fold
+        # reconstruct train/valid data
         for name, loader in self.train_data_loaders.items():
-            # reconstruct train/valid data
             if self.config['data_loaders']['train'][name]['split_valid']:
                 keys = ['data_loaders', 'train', name]
                 dataset = self.train_datasets[name]
                 self.train_data_loaders[name] = self.config.init_obj(keys, 'data_loader', dataset)
                 self.valid_data_loaders[name] = loader.valid_loader
-        # re-initialize model weight
-        for model in self.models.values():
-            model.weights_reset()
+        # models
+        self.models = dict()
+        logger_model = self.config.get_logger('model', verbosity=1)
+        for name in self.config['models']:
+            model = self.config.init_obj(['models', name], 'model')
+            logger_model.info(model)
+            model = model.to(self.device)
+            if len(self.device_ids) > 1:
+                model = torch.nn.DataParallel(model, device_ids=self.device_ids)
+            self.models[name] = model
+        # optimizers
+        self.optimizers = dict()
+        for name in self.config['optimizers']:
+            trainable_params = filter(lambda p: p.requires_grad, self.models[name].parameters())
+            self.optimizers[name] = self.config.init_obj(['optimizers', name], torch.optim, trainable_params)
 
     @abstractmethod
     def _train_epoch(self, epoch):

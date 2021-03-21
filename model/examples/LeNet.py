@@ -11,12 +11,6 @@ class LeNet(nn.Module):
         self.fc1 = nn.Linear(320, 50)
         self.fc2 = nn.Linear(50, num_classes)
 
-        self.weights_reset()
-
-    def weights_reset(self):
-        for layer in self.children():
-            if hasattr(layer, 'reset_parameters'):
-                layer.reset_parameters()
         self.apply(weights_init)
 
     def forward(self, img):
