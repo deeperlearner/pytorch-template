@@ -69,7 +69,7 @@ def main(config):
         logger.info(f"Loading model: {resume} ...")
         checkpoint = torch.load(resume)
         models = dict()
-        logger_model = config.get_logger('model', verbosity=1)
+        logger_model = config.get_logger('model', verbosity=0)
         for name in config['models']:
             model = config.init_obj(['models', name], 'model')
             logger_model.info(model)

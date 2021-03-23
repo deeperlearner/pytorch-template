@@ -59,7 +59,7 @@ class ConfigParser:
                 result_dir[dir_name] = dir_path
             # configure logging module
             if log_name is None:
-                log_name = f"{self.config['name']}_{run_id}.log"
+                log_name = f"test_{self.config['name']}_{run_id}.log"
             setup_logging(result_dir['log'], root_dir=self.root_dir, filename=log_name)
 
         self.log_levels = {
