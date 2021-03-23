@@ -116,8 +116,8 @@ def main(config):
                 for met in metrics_iter:
                     test_metrics.iter_update(met.__name__, met(output, target))
 
-        for met in metrics_epoch:
-            test_metrics.epoch_update(met.__name__, met(outputs, targets))
+            for met in metrics_epoch:
+                test_metrics.epoch_update(met.__name__, met(outputs, targets))
 
         test_log = test_metrics.result()
         logger.info(test_log)

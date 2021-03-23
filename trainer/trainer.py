@@ -22,8 +22,8 @@ class Trainer(BaseTrainer):
             self._resume_checkpoint(config.resume, finetune=self.finetune)
 
         # data_loaders
-        self.train_loader = self.train_data_loaders['data']
-        self.valid_loader = self.valid_data_loaders['data']
+        #self.train_loader = self.train_data_loaders['data']
+        #self.valid_loader = self.valid_data_loaders['data']
         self.do_validation = self.valid_loader is not None
         if self.len_epoch is None:
             # epoch-based training
@@ -34,7 +34,7 @@ class Trainer(BaseTrainer):
         self.log_step = int(np.sqrt(self.train_loader.batch_size))
 
         # models
-        self.model = self.models['model']
+        #self.model = self.models['model']
 
         # losses
         self.criterion = self.losses['loss']
@@ -47,11 +47,28 @@ class Trainer(BaseTrainer):
         self.valid_metrics = MetricTracker(keys_loss + keys_iter, keys_epoch, writer=self.writer)
 
         # optimizers
-        self.optimizer = self.optimizers['model']
+        #self.optimizer = self.optimizers['model']
 
         # learning rate schedulers
         self.do_lr_scheduling = len(self.lr_schedulers) > 0
         self.lr_scheduler = self.lr_schedulers['model']
+
+    # use @property so that it would update these variables in each fold
+    @property
+    def train_loader(self):
+        return self.train_data_loaders['data']
+
+    @property
+    def valid_loader(self):
+        return self.valid_data_loaders['data']
+
+    @property
+    def model(self):
+        return self.models['model']
+
+    @property
+    def optimizer(self):
+        return self.optimizers['model']
 
     def _train_epoch(self, epoch):
         """

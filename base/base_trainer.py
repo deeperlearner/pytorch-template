@@ -129,12 +129,13 @@ class BaseTrainer:
         self._reset_mnt()
         # next fold
         # reconstruct train/valid data
-        for name, loader in self.train_data_loaders.items():
-            if self.config['data_loaders']['train'][name]['split_valid']:
-                keys = ['data_loaders', 'train', name]
+        keys = ['data_loaders', 'train']
+        for name in get_by_path(self.config, keys):
+            keys += [name]
+            if get_by_path(self.config, [*keys, 'split_valid']):
                 dataset = self.train_datasets[name]
                 self.train_data_loaders[name] = self.config.init_obj(keys, 'data_loader', dataset)
-                self.valid_data_loaders[name] = loader.valid_loader
+                self.valid_data_loaders[name] = self.train_data_loaders[name].valid_loader
         # models
         self.models = dict()
         logger_model = self.config.get_logger('model', verbosity=1)
