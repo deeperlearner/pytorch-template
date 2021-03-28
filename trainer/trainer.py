@@ -22,19 +22,14 @@ class Trainer(BaseTrainer):
             self._resume_checkpoint(config.resume, finetune=self.finetune)
 
         # data_loaders
-        #self.train_loader = self.train_data_loaders['data']
-        #self.valid_loader = self.valid_data_loaders['data']
-        self.do_validation = self.valid_loader is not None
+        self.do_validation = self.valid_data_loaders['data'] is not None
         if self.len_epoch is None:
             # epoch-based training
-            self.len_epoch = len(self.train_loader)
+            self.len_epoch = len(self.train_data_loaders['data'])
         else:
             # iteration-based training
-            self.train_loader = inf_loop(self.train_loader)
-        self.log_step = int(np.sqrt(self.train_loader.batch_size))
-
-        # models
-        #self.model = self.models['model']
+            self.train_data_loaders['data'] = inf_loop(self.train_data_loaders['data'])
+        self.log_step = int(np.sqrt(self.train_data_loaders['data'].batch_size))
 
         # losses
         self.criterion = self.losses['loss']
@@ -46,29 +41,9 @@ class Trainer(BaseTrainer):
         self.train_metrics = MetricTracker(keys_loss + keys_iter, keys_epoch, writer=self.writer)
         self.valid_metrics = MetricTracker(keys_loss + keys_iter, keys_epoch, writer=self.writer)
 
-        # optimizers
-        #self.optimizer = self.optimizers['model']
-
         # learning rate schedulers
         self.do_lr_scheduling = len(self.lr_schedulers) > 0
         self.lr_scheduler = self.lr_schedulers['model']
-
-    # use @property so that it would update these variables in each fold
-    @property
-    def train_loader(self):
-        return self.train_data_loaders['data']
-
-    @property
-    def valid_loader(self):
-        return self.valid_data_loaders['data']
-
-    @property
-    def model(self):
-        return self.models['model']
-
-    @property
-    def optimizer(self):
-        return self.optimizers['model']
 
     def _train_epoch(self, epoch):
         """
@@ -78,22 +53,22 @@ class Trainer(BaseTrainer):
         :return: A log that contains average loss and metric in this epoch.
         """
         start = time.time()
-        self.model.train()
+        self.models['model'].train()
         self.train_metrics.reset()
         if len(self.metrics_epoch) > 0:
             outputs = torch.FloatTensor().to(self.device)
             targets = torch.FloatTensor().to(self.device)
-        for batch_idx, (data, target) in enumerate(self.train_loader):
+        for batch_idx, (data, target) in enumerate(self.train_data_loaders['data']):
             data, target = data.to(self.device), target.to(self.device)
 
-            self.optimizer.zero_grad()
-            output = self.model(data)
+            self.optimizers['model'].zero_grad()
+            output = self.models['model'](data)
             if len(self.metrics_epoch) > 0:
                 outputs = torch.cat((outputs, output))
                 targets = torch.cat((targets, target))
             loss = self.criterion(output, target)
             loss.backward()
-            self.optimizer.step()
+            self.optimizers['model'].step()
 
             self.writer.set_step((epoch - 1) * self.len_epoch + batch_idx)
             self.train_metrics.iter_update('loss', loss.item())
@@ -142,16 +117,16 @@ class Trainer(BaseTrainer):
         :param epoch: Integer, current training epoch.
         :return: A log that contains information about validation
         """
-        self.model.eval()
+        self.models['model'].eval()
         self.valid_metrics.reset()
         with torch.no_grad():
             if len(self.metrics_epoch) > 0:
                 outputs = torch.FloatTensor().to(self.device)
                 targets = torch.FloatTensor().to(self.device)
-            for batch_idx, (data, target) in enumerate(self.valid_loader):
+            for batch_idx, (data, target) in enumerate(self.valid_data_loaders['data']):
                 data, target = data.to(self.device), target.to(self.device)
 
-                output = self.model(data)
+                output = self.models['model'](data)
                 loss = self.criterion(output, target)
                 if len(self.metrics_epoch) > 0:
                     outputs = torch.cat((outputs, output))
@@ -167,7 +142,7 @@ class Trainer(BaseTrainer):
             self.valid_metrics.epoch_update(met.__name__, met(outputs, targets))
 
         # # add histogram of model parameters to the tensorboard
-        # for name, param in self.model.named_parameters():
+        # for name, param in self.models['model'].named_parameters():
         #     self.writer.add_histogram(name, param, bins='auto')
 
         valid_log = self.valid_metrics.result()

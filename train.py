@@ -14,10 +14,16 @@ def main(config):
     module_name = config['trainer']['module']
     class_name = config['trainer']['type']
     module_trainer = importlib.import_module(module_name, package='trainer')
-    trainer_class = getattr(module_trainer, class_name)
-    trainer = trainer_class(config)
-
-    trainer.train()
+    
+    multi_processing = config['trainer'].get('multi_process', False)
+    if not multi_processing:
+        trainer_class = getattr(module_trainer, class_name)
+        trainer = trainer_class(config)
+        trainer.train()
+    else:
+        assert config['trainer']['k_fold'] > 1, \
+            "multi processing only work on k-fold cross validation!"
+        pass
 
 
 if __name__ == '__main__':

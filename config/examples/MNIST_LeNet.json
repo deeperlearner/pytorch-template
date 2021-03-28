@@ -91,10 +91,10 @@
         "module": ".trainer",
         "type": "Trainer",
         "kwargs": {
+            "k_fold": 1,
             "finetune": false,
             "epochs": 2,
             "len_epoch": null,
-            "k_fold": 1,
 
             "save_period": 1,
             "save_the_best": true,
