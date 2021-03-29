@@ -14,12 +14,10 @@ from tqdm import tqdm
 
 from parse_config import ConfigParser
 from base import Cross_Valid
-import data_loader as module_data
-import model as module_arch
 import model.loss as module_loss
 import model.metric as module_metric
 from model.metric import MetricTracker, AUROC, AUPRC
-from utils import ensure_dir, get_by_path, msg_box
+from utils import ensure_dir, prepare_device, get_by_path, msg_box
 
 # fix random seeds for reproducibility
 SEED = 123
@@ -32,9 +30,15 @@ np.random.seed(SEED)
 def main(config):
     # test_args: config.test_args
 
+    # starting time
+    start = time.time()
+
     logger = config.get_logger('test')
     test_msg = msg_box("TEST")
     logger.debug(test_msg)
+
+    k_fold = config['trainer']['k_fold']
+    multi_processing = config['trainer']['multi_process']
 
     # datasets
     test_datasets = dict()
@@ -43,8 +47,6 @@ def main(config):
         test_datasets[name] = config.init_obj([*keys, name], 'data_loader')
 
     # data_loaders
-    k_fold = config['trainer']['kwargs']['k_fold']
-    CV_manager = Cross_Valid.create_CV(k_fold=k_fold)
     test_data_loaders = dict()
     keys = ['data_loaders', 'test']
     for name in get_by_path(config, keys):
@@ -55,8 +57,9 @@ def main(config):
         test_data_loaders[name] = config.init_obj([*keys, name], 'data_loader', dataset)
 
     # prepare model for testing
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    start = time.time()
+    device, device_ids = prepare_device(config['n_gpu'])
+
+    CV_manager = Cross_Valid.create_CV(k_fold=k_fold)
     for fold_idx in range(1, k_fold + 1):
         # models
         if k_fold > 1:

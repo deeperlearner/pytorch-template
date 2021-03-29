@@ -15,11 +15,12 @@ class Trainer(BaseTrainer):
     """
     Trainer class
     """
-    def __init__(self, config):
-        super().__init__(config)
+    def __init__(self, torch_args: dict, save_dir, resume, device, **kwargs):
+        self.device = device
+        super().__init__(torch_args, save_dir, **kwargs)
 
-        if config.resume is not None:
-            self._resume_checkpoint(config.resume, finetune=self.finetune)
+        if resume is not None:
+            self._resume_checkpoint(resume, finetune=self.finetune)
 
         # data_loaders
         self.do_validation = self.valid_data_loaders['data'] is not None

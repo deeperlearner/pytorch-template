@@ -14,10 +14,11 @@ class BaseDataLoader(DataLoader):
     Split one dataset into train data_loader and valid data_loader
     """
     # logger
-    logger = logging.getLogger('DataLoader')
+    logger = logging.getLogger('data_loader')
     logger.setLevel(logging.DEBUG)
 
-    def __init__(self, dataset, validation_split=0.0, DataLoader_kwargs=None, do_transform=False):
+    def __init__(self, dataset, validation_split=0.0,
+                 DataLoader_kwargs=None, do_transform=False):
         self.dataset = dataset
         self.n_samples = len(dataset)
         self.split = validation_split

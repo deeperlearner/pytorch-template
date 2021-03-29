@@ -1,29 +1,130 @@
-import importlib
+import time
 import argparse
 import collections
 
+import torch
+
+from base import Cross_Valid
 from parse_config import ConfigParser
-from utils import msg_box
+import model.loss as module_loss
+import model.metric as module_metric
+from utils import prepare_device, get_by_path, msg_box
 
 
 def main(config):
+    # starting time
+    start = time.time()
+
     logger = config.get_logger('train')
     train_msg = msg_box("TRAIN")
     logger.debug(train_msg)
 
-    module_name = config['trainer']['module']
-    class_name = config['trainer']['type']
-    module_trainer = importlib.import_module(module_name, package='trainer')
-    
-    multi_processing = config['trainer'].get('multi_process', False)
+    k_fold = config['trainer']['k_fold']
+    multi_processing = config['trainer']['multi_process']
+
+    # datasets
+    train_datasets = dict()
+    valid_datasets = dict()
+    ## train
+    keys = ['datasets', 'train']
+    for name in get_by_path(config, keys):
+        train_datasets[name] = config.init_obj([*keys, name], 'data_loader')
+    ## valid
+    valid = False
+    keys = ['datasets', 'valid']
+    for name in get_by_path(config, keys):
+        valid = True
+        valid_datasets[name] = config.init_obj([*keys, name], 'data_loader')
+
+    # setup GPU device if available, move model into configured device
+    device, device_ids = prepare_device(config['n_gpu'])
+
+    # losses
+    losses = dict()
+    for name in config['losses']:
+        losses[name] = config.init_ftn(['losses', name], module_loss)
+
+    # metrics
+    metrics_iter = [getattr(module_metric, met) for met in config['metrics']['per_iteration']]
+    metrics_epoch = [getattr(module_metric, met) for met in config['metrics']['per_epoch']]
+
+    save_dir = config.save_dir
+
+    # unchanged objects in each fold
+    torch_args = {'datasets': {'train': train_datasets, 'valid': valid_datasets},
+                  'losses': losses,
+                  'metrics': {'iter': metrics_iter, 'epoch': metrics_epoch}}
+
     if not multi_processing:
-        trainer_class = getattr(module_trainer, class_name)
-        trainer = trainer_class(config)
-        trainer.train()
+        CV_manager = Cross_Valid.create_CV(k_fold=k_fold)
+        for k in range(k_fold):
+            # data_loaders
+            train_data_loaders = dict()
+            valid_data_loaders = dict()
+            ## train
+            keys = ['data_loaders', 'train']
+            for name in get_by_path(config, keys):
+                dataset = train_datasets[name]
+                train_data_loaders[name] = config.init_obj([*keys, name], 'data_loader', dataset)
+                if not valid:
+                    valid_data_loaders[name] = train_data_loaders[name].valid_loader
+            ## valid
+            keys = ['data_loaders', 'valid']
+            for name in get_by_path(config, keys):
+                dataset = valid_datasets[name]
+                valid_data_loaders[name] = config.init_obj([*keys, name], 'data_loader', dataset)
+
+            # models
+            models = dict()
+            logger_model = config.get_logger('model', verbosity=1)
+            for name in config['models']:
+                model = config.init_obj(['models', name], 'model')
+                logger_model.info(model)
+                model = model.to(device)
+                if len(device_ids) > 1:
+                    model = torch.nn.DataParallel(model, device_ids=device_ids)
+                models[name] = model
+
+            # optimizers
+            optimizers = dict()
+            for name in config['optimizers']:
+                trainable_params = filter(lambda p: p.requires_grad, models[name].parameters())
+                optimizers[name] = config.init_obj(['optimizers', name], torch.optim, trainable_params)
+
+            # learning rate schedulers
+            lr_schedulers = dict()
+            for name in config['lr_schedulers']:
+                lr_schedulers[name] = config.init_obj(['lr_schedulers', name],
+                                                      torch.optim.lr_scheduler, optimizers[name])
+
+            # update objects for each fold
+            update_args = {'data_loaders': {'train': train_data_loaders, 'valid': valid_data_loaders},
+                           'models': models,
+                           'optimizers': optimizers,
+                           'lr_schedulers': lr_schedulers}
+            torch_args.update(update_args)
+
+            trainer = config.init_obj(['trainer'], 'trainer', torch_args, save_dir, config.resume, device)
+            log_mean = trainer.train()
+
+            # cross validation is enabled
+            if k_fold > 1:
+                if CV_manager.cv_record(log_mean):
+                    # done and print result
+                    cv_result = CV_manager.cv_result()
+                    end = time.time()
+                    ty_res = time.gmtime(end - start)
+                    res = time.strftime("%H hours, %M minutes, %S seconds", ty_res)
+                    k_fold_msg = msg_box(f"{k_fold}-fold cross validation result")
+                    logger.info(f"{k_fold_msg}\n"
+                                f"Total running time: {res}\n"
+                                f"{cv_result}\n")
+            else:
+                logger.info(log_mean)
     else:
-        assert config['trainer']['k_fold'] > 1, \
+        assert k_fold > 1, \
             "multi processing only work on k-fold cross validation!"
-        pass
+        pass  # not implement currently
 
 
 if __name__ == '__main__':
