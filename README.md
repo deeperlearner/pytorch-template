@@ -121,13 +121,11 @@ And all of above can be constructed in `.json` config!
 `cloc --vcs=git --by-file`
 
 ## Usage
-There are some examples config files in `config/examples/`
-Try `bash run_examples.sh` to run code.
+There are some examples config files in `config/examples/`. Try `bash run_examples.sh` to run code.
 
 [The following is work in process, some sections haven't revised yet]
 ### Config file format
-Config files are in `.json` format:
-`dataset_model.json`:
+Config files are in `.json` format, `dataset_model.json`:
 ```javascript
 {
     "n_gpu": 1,
