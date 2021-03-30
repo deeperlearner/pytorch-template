@@ -57,27 +57,27 @@ And all of above can be constructed in `.json` config!
   Pytorch-Template/
   │
   ├── torch_new_project.py - initialize new project with template files
+  ├── copy_exclude - exclude file when create new project
+  │
+  ├── run.sh - bash script for running experiment
+  ├── run_examples.sh - bash script for running examples
   │
   ├── train.py - main script to start training
-  │
   ├── test.py - evaluation of trained model
-  ├── test_examples/
-  │   └── *_test.py
-  ├── log/ - log generated from *_test.py
-  │   └── *.log
+  │
+  ├── parse_config.py - class to handle config file and cli options
   │
   ├── base/ - abstract base classes
   │   ├── base_data_loader.py
-  │   ├── base_model.py (currently none)
   │   └── base_trainer.py
   │
   ├── config/ - configurations for training
-  │   ├── config.json
+  │   ├── dataset_model.json
   │   └── examples/
   │       └── *.json
-  ├── parse_config.py - class to handle config file and cli options
   │
   ├── data/ - default directory for storing input data
+  │
   ├── data_loader/ - anything about data loading goes here
   │   ├── data_loader.py
   │   └── examples/
@@ -100,7 +100,7 @@ And all of above can be constructed in `.json` config!
   │       └── run_id/
   │           ├── models/ - trained models are saved here
   │           ├── log/ - default logdir for tensorboard and logging output   
-  │           └── *.json - backup config file when start training
+  │           └── dataset_model.json - backup config file when start training
   │
   ├── trainer/ - trainers
   │   ├── trainer.py
@@ -118,106 +118,132 @@ And all of above can be constructed in `.json` config!
 `wc -l **/*.* *.*`
 - cloc
 `sudo apt install cloc`
-`cloc --by-file --exclude-dir=examples,data --exclude-list-file=copy_exclude --not-match-f *examples* .`
-`cloc --by-file --exclude-dir=data --exclude-list-file=copy_exclude .`
 `cloc --vcs=git --by-file`
 
 ## Usage
-The code in this repo is an MNIST example of the template.
-Try `python train.py -c config.json` to run code.
+There are some examples config files in `config/examples/`
+Try `bash run_examples.sh` to run code.
 
+[The following is work in process, some sections haven't revised yet]
 ### Config file format
 Config files are in `.json` format:
+`dataset_model.json`:
 ```javascript
 {
-    "n_gpu": 1,                                     // number of GPUs to use for training.
-    "name": "EXP_name",                             // training session name
-  
+    "n_gpu": 1,
+    "root_dir": "./",
+    "save_dir": "saved/",
+    "name": "dataset_model",
+
     "datasets": {
-        "data": {
-            "module": "data_loader",
-            "type": "MyDataset",
-            "args": {
-                "data_paths": {
-                    "train_dir": "./data",          // must be specified in train mode
-                    "valid_dir": null,
-                    "test_dir": "./data/test",      // must be specified in test mode
-                    "train_label": null,
-                    "valid_label": null,
-                    "test_label": null
+        "train": {
+            "data": {
+                "module": ".data_loader",
+                "type": "MyDataset",
+                "kwargs": {
+                    "data_dir": "./data",
+                    "label_path": null,
+                    "mode": "train"
+                }
+            }
+        },
+        "valid": {
+        },
+        "test": {
+            "data": {
+                "module": ".data_loader",
+                "type": "MyDataset",
+                "kwargs": {
+                    "data_dir": "./data",
+                    "label_path": null,
+                    "mode": "test"
                 }
             }
         }
     },
     "data_loaders": {
-        "data": {
-            "module": "data_loader",                // selecting module
-            "type": "MyDataLoader",                 // selecting class
-            "args":{
-                "validation_split": 0.2,            // size of validation dataset. float(portion) or int(number of samples)
-                "DataLoader_args": {
-                    "batch_size": 128,              // batch size
-                    "shuffle": true,                // shuffle when training
-                    "num_workers": 2                // number of cpu processes to be used for data loading
+        "train": {
+            "data": {
+                "module": ".data_loader",
+                "type": "BaseDataLoader",
+                "kwargs": {
+                    "validation_split": 0.2,
+                    "DataLoader_kwargs": {
+                        "batch_size": 64,
+                        "shuffle": true,
+                        "num_workers": 4
+                    },
+                    "do_transform": true
                 }
+            }
+        },
+        "valid": {
+        },
+        "test": {
+            "data": {
+                "module": ".data_loader",
+                "type": "DataLoader",
+                "kwargs": {
+                    "batch_size": 64,
+                    "shuffle": false,
+                    "num_workers": 4
+                },
+                "do_transform": true
             }
         }
     },
     "models": {
-        "model" : {
-            "module": "MNIST",                      // selecting module
-            "type": "MnistModel",                   // selecting class
-            "args": {
-            }
+        "model": {
+            "module": ".model",
+            "type": "MyModel"
         }
     },
     "losses": {
         "loss": {
-            "type": "nll_loss",
-            "args": {
-            }
+            "type": "nll_loss"
         }
     },
-    "metrics": [
-        "accuracy", "top_k_acc"                     // list of metrics to evaluate
-    ],                         
+    "metrics": {
+        "per_iteration": ["accuracy"],
+        "per_epoch": ["AUROC", "AUPRC"]
+    },
     "optimizers": {
         "model": {
             "type": "Adam",
-            "args":{
-                "lr": 0.001,                        // learning rate
-                "weight_decay": 0,                  // weight decay
-                "amsgrad": true
+            "kwargs": {
+                "lr": 0.001
             }
         }
     },
     "lr_schedulers": {
         "model": {
             "type": "StepLR",
-            "args": {
+            "kwargs": {
                 "step_size": 50,
                 "gamma": 0.1
             }
         }
     },
     "trainer": {
-        "module": "my_trainer",
-        "type": "My_Trainer",
-        "args": {
-            "epochs": 100,                          // number of training epochs
-            "len_epoch": null,                      // length of one training epoch
+        "module": ".trainer",
+        "type": "Trainer",
+        "k_fold": 5,
+        "fold_idx": 0,
+        "kwargs": {
+            "finetune": false,
+            "epochs": 2,
+            "len_epoch": null,
 
-            "save_period": 1,                       // save checkpoints every save_period epochs
-            "verbosity": 2,                         // 0: quiet, 1: per epoch, 2: full
+            "save_period": 5,
+            "save_the_best": true,
+            "verbosity": 2,
 
-            "monitor": "min val_loss",              // mode and metric for model performance monitoring. set 'off' to disable.
-            "early_stop": 10,                       // number of epochs to wait before early stop. set 0 to disable.
+            "monitor": "max val_accuracy",
+            "early_stop": 0,
 
-            "tensorboard": true,                    // enable tensorboard visualization
+            "tensorboard": false
         }
-    },
-    "save_dir": "saved/",                           // saved directory of model, log, and backup config file
-    "log_config": "logger/logger_config.json"       // path of log config file
+    }
 }
 ```
 

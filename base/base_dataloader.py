@@ -1,11 +1,11 @@
 import os
-import logging
 
 import pandas as pd
 import numpy as np
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 
+from logger import get_logger
 from utils import msg_box
 
 
@@ -13,9 +13,7 @@ class BaseDataLoader(DataLoader):
     """
     Split one dataset into train data_loader and valid data_loader
     """
-    # logger
-    logger = logging.getLogger('data_loader')
-    logger.setLevel(logging.DEBUG)
+    logger = get_logger('data_loader')
 
     def __init__(self, dataset, validation_split=0.0,
                  DataLoader_kwargs=None, do_transform=False):
@@ -27,9 +25,7 @@ class BaseDataLoader(DataLoader):
         if Cross_Valid.k_fold > 1:
             fold_msg = msg_box(f"Fold {Cross_Valid.fold_idx}")
             self.logger.info(fold_msg)
-            if Cross_Valid.fold_idx == 1:
-                dataset.split_cv_indexes(Cross_Valid.k_fold)
-            split_idx = dataset.get_split_idx()
+            split_idx = dataset.get_split_idx(Cross_Valid.fold_idx - 1)
             train_sampler, valid_sampler = self._get_sampler(*split_idx)
             if do_transform:
                 dataset.transform(split_idx)
@@ -81,9 +77,10 @@ class Cross_Valid:
         self.log_means = pd.DataFrame()
 
     @classmethod
-    def create_CV(cls, k_fold=1):
+    def create_CV(cls, k_fold=1, fold_idx=0):
         cls.k_fold = k_fold
-        cls.fold_idx = 1
+        #cls.single_fold = fold_idx > 0
+        cls.fold_idx = 1 if fold_idx == 0 else fold_idx
         return cls()
 
     def cv_record(self, log_mean):

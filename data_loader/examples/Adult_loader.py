@@ -65,10 +65,10 @@ class AdultDataset(Dataset):
     def split_cv_indexes(self, N):
         kfold = StratifiedKFold(n_splits=N, shuffle=True)
         X, y = self.x_num_train, self.y_train
-        self.indexes = kfold.split(X, y)
+        self.indexes = list(kfold.split(X, y))
 
-    def get_split_idx(self):
-        return next(self.indexes)
+    def get_split_idx(self, fold_idx):
+        return self.indexes[fold_idx]
 
     def transform(self, split_idx=None):
         self.compute_data_info(split_idx)

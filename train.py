@@ -5,9 +5,10 @@ import collections
 import torch
 
 from base import Cross_Valid
-from parse_config import ConfigParser
+from logger import get_logger
 import model.loss as module_loss
 import model.metric as module_metric
+from parse_config import ConfigParser
 from utils import prepare_device, get_by_path, msg_box
 
 
@@ -15,12 +16,20 @@ def main(config):
     # starting time
     start = time.time()
 
-    logger = config.get_logger('train')
+    k_fold = config['trainer'].get('k_fold', 1)
+    fold_idx = config['trainer'].get('fold_idx', 0)
+
+    if fold_idx > 0:
+        # do on fold {idx}, which is for multithreading cross validation
+        # if multithreading, turn off debug logging to avoid messing up stdout
+        assert config['trainer']['kwargs']['verbosity'] < 2, "forbidden verbosity"
+        verbosity = 1
+    else:  # fold_idx == 0
+        # do full cross validation in single thread
+        verbosity = 2
+    logger = get_logger('train', verbosity=verbosity)
     train_msg = msg_box("TRAIN")
     logger.debug(train_msg)
-
-    k_fold = config['trainer']['k_fold']
-    multi_processing = config['trainer']['multi_process']
 
     # datasets
     train_datasets = dict()
@@ -55,8 +64,11 @@ def main(config):
                   'losses': losses,
                   'metrics': {'iter': metrics_iter, 'epoch': metrics_epoch}}
 
-    if not multi_processing:
-        CV_manager = Cross_Valid.create_CV(k_fold=k_fold)
+    if k_fold > 1:
+        train_datasets['data'].split_cv_indexes(k_fold)
+    CV_manager = Cross_Valid.create_CV(k_fold=k_fold, fold_idx=fold_idx)
+    if fold_idx == 0:
+        # do full cross validation
         for k in range(k_fold):
             # data_loaders
             train_data_loaders = dict()
@@ -76,7 +88,7 @@ def main(config):
 
             # models
             models = dict()
-            logger_model = config.get_logger('model', verbosity=1)
+            logger_model = get_logger('model', verbosity=1)
             for name in config['models']:
                 model = config.init_obj(['models', name], 'model')
                 logger_model.info(model)
@@ -122,9 +134,9 @@ def main(config):
             else:
                 logger.info(log_mean)
     else:
-        assert k_fold > 1, \
-            "multi processing only work on k-fold cross validation!"
-        pass  # not implement currently
+        # train/valid only on fold_idx
+        # this is for multithreading on cross validation
+        pass
 
 
 if __name__ == '__main__':
@@ -140,6 +152,7 @@ if __name__ == '__main__':
     mod_args = args.add_argument_group('mod_args')
     CustomArgs = collections.namedtuple('CustomArgs', 'flags type target')
     options = [
+        CustomArgs(['--fold_idx'], type=int, target='trainer;fold_idx'),
         CustomArgs(['--lr', '--learning_rate'], type=float, target='optimizers;model;args;lr'),
         CustomArgs(['--bs', '--batch_size'], type=int,
                    target='data_loaders;train;data;args;DataLoader_args;batch_size'),

@@ -11,8 +11,6 @@ class LeNet(nn.Module):
         self.fc1 = nn.Linear(320, 50)
         self.fc2 = nn.Linear(50, num_classes)
 
-        self.apply(weights_init)
-
     def forward(self, img):
         img = F.relu(F.max_pool2d(self.conv1(img), 2))
         img = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(img)), 2))
@@ -21,9 +19,3 @@ class LeNet(nn.Module):
         img = F.dropout(img, training=self.training)
         img = self.fc2(img)
         return F.log_softmax(img, dim=1)
-
-
-def weights_init(m):
-    classname = m.__class__.__name__
-    if classname.find('Conv') != -1:
-        nn.init.normal_(m.weight.data)

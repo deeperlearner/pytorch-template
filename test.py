@@ -12,11 +12,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from parse_config import ConfigParser
 from base import Cross_Valid
+from logger import get_logger
 import model.loss as module_loss
 import model.metric as module_metric
 from model.metric import MetricTracker, AUROC, AUPRC
+from parse_config import ConfigParser
 from utils import ensure_dir, prepare_device, get_by_path, msg_box
 
 # fix random seeds for reproducibility
@@ -28,17 +29,15 @@ np.random.seed(SEED)
 
 
 def main(config):
-    # test_args: config.test_args
-
     # starting time
     start = time.time()
 
-    logger = config.get_logger('test')
+    k_fold = config['trainer'].get('k_fold', 1)
+    fold_idx = config['trainer'].get('fold_idx', 0)
+
+    logger = get_logger('test')
     test_msg = msg_box("TEST")
     logger.debug(test_msg)
-
-    k_fold = config['trainer']['k_fold']
-    multi_processing = config['trainer']['multi_process']
 
     # datasets
     test_datasets = dict()
@@ -72,7 +71,7 @@ def main(config):
         logger.info(f"Loading model: {resume} ...")
         checkpoint = torch.load(resume)
         models = dict()
-        logger_model = config.get_logger('model', verbosity=0)
+        logger_model = get_logger('model', verbosity=0)
         for name in config['models']:
             model = config.init_obj(['models', name], 'model')
             logger_model.info(model)

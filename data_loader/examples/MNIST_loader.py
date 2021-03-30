@@ -17,10 +17,10 @@ class MNISTTrainset(MNIST):
     def split_cv_indexes(self, N):
         kfold = StratifiedKFold(n_splits=N)
         X, y = self.data, self.targets
-        self.indexes = kfold.split(X, y)
+        self.indexes = list(kfold.split(X, y))
 
-    def get_split_idx(self):
-        return next(self.indexes)
+    def get_split_idx(self, fold_idx):
+        return self.indexes[fold_idx]
 
 
 class MNISTTestset(MNIST):

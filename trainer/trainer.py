@@ -79,7 +79,7 @@ class Trainer(BaseTrainer):
             if batch_idx % self.log_step == 0:
                 epoch_debug = f"Train Epoch: {epoch} {self._progress(batch_idx)} "
                 current_metrics = self.train_metrics.current()
-                metrics_debug = ', '.join(f"{key}: {value:.6f}" for key, value in current_metrics.items())
+                metrics_debug = ", ".join(f"{key}: {value:.6f}" for key, value in current_metrics.items())
                 self.logger.debug(epoch_debug + metrics_debug)
                 # self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
 

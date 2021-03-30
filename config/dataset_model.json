@@ -97,7 +97,7 @@
         "module": ".trainer",
         "type": "Trainer",
         "k_fold": 5,
-        "multi_process": false,
+        "fold_idx": 0,
         "kwargs": {
             "finetune": false,
             "epochs": 2,
@@ -105,6 +105,7 @@
 
             "save_period": 5,
             "save_the_best": true,
+            "verbosity": 2,
 
             "monitor": "max val_accuracy",
             "early_stop": 0,

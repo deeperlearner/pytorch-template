@@ -25,3 +25,17 @@ def setup_logging(save_dir, root_dir='./', filename=None,
     else:
         print("warning: logging configuration file is not found in {}.".format(log_config))
         logging.basicConfig(level=default_level)
+
+
+log_levels = {
+    0: logging.WARNING,
+    1: logging.INFO,
+    2: logging.DEBUG,
+}
+def get_logger(name, verbosity=2):
+    assert verbosity in log_levels, \
+        "verbosity option {verbosity} is invalid. \
+         Valid options are {log_levels.keys()}."
+    logger = logging.getLogger(name)
+    logger.setLevel(log_levels[verbosity])
+    return logger

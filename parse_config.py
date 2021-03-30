@@ -62,12 +62,6 @@ class ConfigParser:
                 log_name = f"test_{self.config['name']}_{run_id}.log"
             setup_logging(result_dir['log'], root_dir=self.root_dir, filename=log_name)
 
-        self.log_levels = {
-            0: logging.WARNING,
-            1: logging.INFO,
-            2: logging.DEBUG,
-        }
-
     @classmethod
     def from_args(cls, parser, options=''):
         """
@@ -148,14 +142,6 @@ class ConfigParser:
     def __getitem__(self, name):
         """Access items like ordinary dict."""
         return self.config[name]
-
-    def get_logger(self, name, verbosity=2):
-        msg_verbosity = 'verbosity option {} is invalid. Valid options are {}.'.format(verbosity,
-                                                                                       self.log_levels.keys())
-        assert verbosity in self.log_levels, msg_verbosity
-        logger = logging.getLogger(name)
-        logger.setLevel(self.log_levels[verbosity])
-        return logger
 
     # read-only attributes
     @property

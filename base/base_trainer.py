@@ -1,4 +1,3 @@
-import logging
 import os
 from abc import abstractmethod
 
@@ -6,7 +5,7 @@ import torch
 import numpy as np
 
 from base import Cross_Valid
-from logger import TensorboardWriter
+from logger import get_logger, TensorboardWriter
 from utils import msg_box
 
 
@@ -14,10 +13,6 @@ class BaseTrainer:
     """
     Base class for all trainers
     """
-    # logger
-    logger = logging.getLogger('trainer')
-    # logger.setLevel(logging.DEBUG)
-
     def __init__(self, torch_args: dict, save_dir, **kwargs):
         # data_loaders
         self.train_data_loaders = torch_args['data_loaders']['train']
@@ -39,6 +34,7 @@ class BaseTrainer:
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+        self.logger = get_logger('trainer', verbosity=self.verbosity)
         if self.early_stop <= 0 or self.early_stop is None:
             self.early_stop = np.inf
         self.start_epoch = 1
