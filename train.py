@@ -20,9 +20,9 @@ def main(config):
     fold_idx = config['trainer'].get('fold_idx', 0)
 
     if fold_idx > 0:
-        # do on fold {idx}, which is for multithreading cross validation
-        # if multithreading, turn off debug logging to avoid messing up stdout
-        assert config['trainer']['kwargs']['verbosity'] < 2, "forbidden verbosity"
+        # do on fold {idx}, which is for multiprocessing cross validation
+        # if multiprocessing, turn off debug logging to avoid messing up stdout
+        config['trainer']['kwargs']['verbosity'] = 1
         verbosity = 1
     else:  # fold_idx == 0
         # do full cross validation in single thread
@@ -39,14 +39,11 @@ def main(config):
     for name in get_by_path(config, keys):
         train_datasets[name] = config.init_obj([*keys, name], 'data_loader')
     ## valid
-    valid = False
+    valid_exist = False
     keys = ['datasets', 'valid']
     for name in get_by_path(config, keys):
-        valid = True
+        valid_exist = True
         valid_datasets[name] = config.init_obj([*keys, name], 'data_loader')
-
-    # setup GPU device if available, move model into configured device
-    device, device_ids = prepare_device(config['n_gpu'])
 
     # losses
     losses = dict()
@@ -57,87 +54,86 @@ def main(config):
     metrics_iter = [getattr(module_metric, met) for met in config['metrics']['per_iteration']]
     metrics_epoch = [getattr(module_metric, met) for met in config['metrics']['per_epoch']]
 
-    save_dir = config.save_dir
-
     # unchanged objects in each fold
     torch_args = {'datasets': {'train': train_datasets, 'valid': valid_datasets},
                   'losses': losses,
                   'metrics': {'iter': metrics_iter, 'epoch': metrics_epoch}}
 
-    if k_fold > 1:
+    # setup GPU device if available, move model into configured device
+    device, device_ids = prepare_device(config['n_gpu'])
+
+    if k_fold > 1:  # cross validation enabled
         train_datasets['data'].split_cv_indexes(k_fold)
     CV_manager = Cross_Valid.create_CV(k_fold=k_fold, fold_idx=fold_idx)
-    if fold_idx == 0:
-        # do full cross validation
-        for k in range(k_fold):
-            # data_loaders
-            train_data_loaders = dict()
-            valid_data_loaders = dict()
-            ## train
-            keys = ['data_loaders', 'train']
-            for name in get_by_path(config, keys):
-                dataset = train_datasets[name]
-                train_data_loaders[name] = config.init_obj([*keys, name], 'data_loader', dataset)
-                if not valid:
-                    valid_data_loaders[name] = train_data_loaders[name].valid_loader
-            ## valid
-            keys = ['data_loaders', 'valid']
-            for name in get_by_path(config, keys):
-                dataset = valid_datasets[name]
-                valid_data_loaders[name] = config.init_obj([*keys, name], 'data_loader', dataset)
+    if fold_idx > 0:  # multiprocessing cross validation
+        k_fold = 1
 
-            # models
-            models = dict()
-            logger_model = get_logger('model', verbosity=1)
-            for name in config['models']:
-                model = config.init_obj(['models', name], 'model')
-                logger_model.info(model)
-                model = model.to(device)
-                if len(device_ids) > 1:
-                    model = torch.nn.DataParallel(model, device_ids=device_ids)
-                models[name] = model
+    for k in range(k_fold):
+        # data_loaders
+        train_data_loaders = dict()
+        valid_data_loaders = dict()
+        ## train
+        keys = ['data_loaders', 'train']
+        for name in get_by_path(config, keys):
+            dataset = train_datasets[name]
+            train_data_loaders[name] = config.init_obj([*keys, name], 'data_loader', dataset)
+            if not valid_exist:
+                valid_data_loaders[name] = train_data_loaders[name].valid_loader
+        ## valid
+        keys = ['data_loaders', 'valid']
+        for name in get_by_path(config, keys):
+            dataset = valid_datasets[name]
+            valid_data_loaders[name] = config.init_obj([*keys, name], 'data_loader', dataset)
 
-            # optimizers
-            optimizers = dict()
-            for name in config['optimizers']:
-                trainable_params = filter(lambda p: p.requires_grad, models[name].parameters())
-                optimizers[name] = config.init_obj(['optimizers', name], torch.optim, trainable_params)
+        # models
+        models = dict()
+        logger_model = get_logger('model', verbosity=1)
+        for name in config['models']:
+            model = config.init_obj(['models', name], 'model')
+            logger_model.info(model)
+            model = model.to(device)
+            if len(device_ids) > 1:
+                model = torch.nn.DataParallel(model, device_ids=device_ids)
+            models[name] = model
 
-            # learning rate schedulers
-            lr_schedulers = dict()
-            for name in config['lr_schedulers']:
-                lr_schedulers[name] = config.init_obj(['lr_schedulers', name],
-                                                      torch.optim.lr_scheduler, optimizers[name])
+        # optimizers
+        optimizers = dict()
+        for name in config['optimizers']:
+            trainable_params = filter(lambda p: p.requires_grad, models[name].parameters())
+            optimizers[name] = config.init_obj(['optimizers', name], torch.optim, trainable_params)
 
-            # update objects for each fold
-            update_args = {'data_loaders': {'train': train_data_loaders, 'valid': valid_data_loaders},
-                           'models': models,
-                           'optimizers': optimizers,
-                           'lr_schedulers': lr_schedulers}
-            torch_args.update(update_args)
+        # learning rate schedulers
+        lr_schedulers = dict()
+        for name in config['lr_schedulers']:
+            lr_schedulers[name] = config.init_obj(['lr_schedulers', name],
+                                                  torch.optim.lr_scheduler, optimizers[name])
 
-            trainer = config.init_obj(['trainer'], 'trainer', torch_args, save_dir, config.resume, device)
-            log_mean = trainer.train()
+        # update objects for each fold
+        update_args = {'data_loaders': {'train': train_data_loaders, 'valid': valid_data_loaders},
+                       'models': models,
+                       'optimizers': optimizers,
+                       'lr_schedulers': lr_schedulers}
+        torch_args.update(update_args)
 
-            # cross validation is enabled
-            if k_fold > 1:
-                if CV_manager.cv_record(log_mean):
-                    # done and print result
-                    cv_result = CV_manager.cv_result()
-                    end = time.time()
-                    ty_res = time.gmtime(end - start)
-                    res = time.strftime("%H hours, %M minutes, %S seconds", ty_res)
-                    k_fold_msg = msg_box(f"{k_fold}-fold cross validation result")
-                    logger.info(f"{k_fold_msg}\n"
-                                f"Total running time: {res}\n"
-                                f"{cv_result}\n")
-            else:
-                logger.info(log_mean)
-    else:
-        # train/valid only on fold_idx
-        # this is for multithreading on cross validation
-        # [WIP]
-        pass
+        trainer = config.init_obj(['trainer'], 'trainer', torch_args, config.save_dir, config.resume, device)
+        log_best = trainer.train()
+
+        # full cross validation
+        if k_fold > 1:
+            if CV_manager.cv_record(log_best):
+                # done and print result
+                cv_result = CV_manager.cv_result()
+                end = time.time()
+                ty_res = time.gmtime(end - start)
+                res = time.strftime("%H hours, %M minutes, %S seconds", ty_res)
+                k_fold_msg = msg_box(f"{k_fold}-fold cross validation averaged result")
+                logger.info(f"{k_fold_msg}\n"
+                            f"Total running time: {res}\n"
+                            f"{cv_result}\n")
+        # one fold of cross validation or no cross validation
+        else:
+            msg = msg_box("result")
+            logger.info(f"{msg}\n{log_best}")
 
 
 if __name__ == '__main__':

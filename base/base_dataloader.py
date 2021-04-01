@@ -79,7 +79,6 @@ class Cross_Valid:
     @classmethod
     def create_CV(cls, k_fold=1, fold_idx=0):
         cls.k_fold = k_fold
-        #cls.single_fold = fold_idx > 0
         cls.fold_idx = 1 if fold_idx == 0 else fold_idx
         return cls()
 

@@ -49,7 +49,8 @@ class ConfigParser:
             # backup config file to the experiment dirctory
             write_json(self.config, exp_dir / os.path.basename(config_json))
             # configure logging module
-            setup_logging(self.save_dir['log'], root_dir=self.root_dir, filename=log_name)
+            log_config = {'log_config': 'logger/logger_config_mp.json'} if self.mp else {}
+            setup_logging(self.save_dir['log'], root_dir=self.root_dir, filename=log_name, **log_config)
         elif self.mode == 'test':
             result_dir = dict()
             dirs = ['fig', 'log', 'output']
@@ -77,6 +78,8 @@ class ConfigParser:
             if group.title == 'mod_args':
                 # parse custom cli options into dictionary
                 modification = {opt.target: getattr(args, _get_opt_name(opt.flags)) for opt in options}
+                # fold_idx is specified, which means multiprocessing is enabled.
+                cls.mp = args.fold_idx is not None
             else:
                 group_dict = {g.dest: getattr(args, g.dest, None) for g in group._group_actions}
                 arg_group = argparse.Namespace(**group_dict)

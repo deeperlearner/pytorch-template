@@ -68,7 +68,6 @@ class BaseTrainer:
 
         not_improved_count = 0
         for epoch in range(self.start_epoch, self.epochs + 1):
-
             train_log = self._train_epoch(epoch)
             log_mean = train_log['mean']
 
@@ -87,6 +86,7 @@ class BaseTrainer:
 
                 if improved:
                     self.mnt_best = log_mean[self.mnt_metric]
+                    log_best = log_mean
                     not_improved_count = 0
                     best = True
                 else:
@@ -101,7 +101,7 @@ class BaseTrainer:
                 self.logger.info("Best {}: {:.5f}".format(self.mnt_metric, self.mnt_best))
                 self._save_checkpoint(epoch, save_best=best)
 
-        return log_mean
+        return log_best
 
     def _save_checkpoint(self, epoch, save_best=False):
         """

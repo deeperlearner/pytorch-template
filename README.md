@@ -1,5 +1,5 @@
 # PyTorch Template Project
-A pytorch template files generator, which supports multi-objects for dataset, dataloader, model, optimizer, loss, optimizer and lr\_scheduler.
+A pytorch template files generator, which supports multiple instances for dataset, dataloader, model, optimizer, loss, optimizer and lr\_scheduler.
 
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
 

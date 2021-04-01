@@ -132,7 +132,7 @@ def main(config):
                 end = time.time()
                 ty_res = time.gmtime(end - start)
                 res = time.strftime("%H hours, %M minutes, %S seconds", ty_res)
-                k_fold_msg = msg_box(f"{k_fold}-fold cross validation result")
+                k_fold_msg = msg_box(f"{k_fold}-fold cross validation ensembled result")
                 logger.info(f"{k_fold_msg}\n"
                             f"Total running time: {res}\n"
                             f"{cv_result}\n")
