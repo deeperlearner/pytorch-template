@@ -119,7 +119,7 @@ class BaseTrainer:
         }
         k_fold = Cross_Valid.k_fold
         fold_idx = Cross_Valid.fold_idx
-        fold_prefix = f'fold_{fold_idx}_' if k_fold > 1 else ''
+        fold_prefix = f"fold_{fold_idx}_" if k_fold > 1 else ''
 
         if save_best:
             if self.save_the_best:

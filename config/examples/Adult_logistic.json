@@ -1,7 +1,6 @@
 {
     "n_gpu": 1,
     "root_dir": "./",
-    "save_dir": "saved/",
     "name": "Adult_logistic",
 
     "datasets": {

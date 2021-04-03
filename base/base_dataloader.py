@@ -73,25 +73,12 @@ class BaseDataLoader(DataLoader):
 
 
 class Cross_Valid:
-    def __init__(self):
-        self.log_means = pd.DataFrame()
-
     @classmethod
     def create_CV(cls, k_fold=1, fold_idx=0):
         cls.k_fold = k_fold
         cls.fold_idx = 1 if fold_idx == 0 else fold_idx
         return cls()
 
-    def cv_record(self, log_mean):
-        # record the result of each cross validation
-        self.log_means = pd.concat([self.log_means, log_mean], axis=1)
-        cv_done = self.fold_idx == self.k_fold
-        Cross_Valid.fold_idx += 1
-        return cv_done
-
-    def cv_result(self):
-        mean = self.log_means.mean(axis=1)
-        std = self.log_means.std(axis=1)
-        cv_result = pd.concat([mean, std], axis=1)
-        cv_result.columns = ['mean', 'std']
-        return cv_result
+    @classmethod
+    def next_fold(cls):
+        cls.fold_idx += 1

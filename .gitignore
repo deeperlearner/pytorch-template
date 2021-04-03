@@ -1,6 +1,5 @@
 *data/
-fig/
-log/
+log
 output/
 __pycache__/
 saved/

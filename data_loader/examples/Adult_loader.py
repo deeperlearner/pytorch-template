@@ -100,18 +100,18 @@ class AdultDataset(Dataset):
             cat_fill = self.cat_mode
 
         if self.mode == 'train':
-            self.x_num_train = self.x_num_train.fillna(num_fill)
-            self.x_cat_train = self.x_cat_train.fillna(cat_fill)
+            self.x_num_train_hat = self.x_num_train.fillna(num_fill)
+            self.x_cat_train_hat = self.x_cat_train.fillna(cat_fill)
         elif self.mode == 'test':
-            self.x_num_test = self.x_num_test.fillna(num_fill)
-            self.x_cat_test = self.x_cat_test.fillna(cat_fill)
+            self.x_num_test_hat = self.x_num_test.fillna(num_fill)
+            self.x_cat_test_hat = self.x_cat_test.fillna(cat_fill)
 
     def normalize(self):
         if self.mode == 'train':
-            x_num, x_cat = self.x_num_train, self.x_cat_train
+            x_num, x_cat = self.x_num_train_hat, self.x_cat_train_hat
             y = self.y_train
         elif self.mode == 'test':
-            x_num, x_cat = self.x_num_test, self.x_cat_test
+            x_num, x_cat = self.x_num_test_hat, self.x_cat_test_hat
             y = self.y_test
 
         # normalize on numerical data only!

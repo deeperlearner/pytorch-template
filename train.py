@@ -1,4 +1,3 @@
-import time
 import argparse
 import collections
 
@@ -9,24 +8,24 @@ from logger import get_logger
 import model.loss as module_loss
 import model.metric as module_metric
 from parse_config import ConfigParser
-from utils import prepare_device, get_by_path, msg_box
+from utils import ensure_dir, prepare_device, get_by_path, msg_box
 
 
 def main(config):
-    # starting time
-    start = time.time()
-
     k_fold = config['trainer'].get('k_fold', 1)
     fold_idx = config['trainer'].get('fold_idx', 0)
 
     if fold_idx > 0:
-        # do on fold {idx}, which is for multiprocessing cross validation
+        # do on fold_idx, which is for multiprocessing cross validation
         # if multiprocessing, turn off debug logging to avoid messing up stdout
         config['trainer']['kwargs']['verbosity'] = 1
         verbosity = 1
-    else:  # fold_idx == 0
+        k_loop = 1
+    else:
         # do full cross validation in single thread
         verbosity = 2
+        k_loop = k_fold
+
     logger = get_logger('train', verbosity=verbosity)
     train_msg = msg_box("TRAIN")
     logger.debug(train_msg)
@@ -64,11 +63,9 @@ def main(config):
 
     if k_fold > 1:  # cross validation enabled
         train_datasets['data'].split_cv_indexes(k_fold)
-    CV_manager = Cross_Valid.create_CV(k_fold=k_fold, fold_idx=fold_idx)
-    if fold_idx > 0:  # multiprocessing cross validation
-        k_fold = 1
+    Cross_Valid.create_CV(k_fold, fold_idx)
 
-    for k in range(k_fold):
+    for k in range(k_loop):
         # data_loaders
         train_data_loaders = dict()
         valid_data_loaders = dict()
@@ -115,22 +112,16 @@ def main(config):
                        'lr_schedulers': lr_schedulers}
         torch_args.update(update_args)
 
-        trainer = config.init_obj(['trainer'], 'trainer', torch_args, config.save_dir, config.resume, device)
+        trainer = config.init_obj(['trainer'], 'trainer', torch_args,
+                                  config.save_dir, config.resume, device)
         log_best = trainer.train()
 
-        # full cross validation
+        # cross validation
         if k_fold > 1:
-            if CV_manager.cv_record(log_best):
-                # done and print result
-                cv_result = CV_manager.cv_result()
-                end = time.time()
-                ty_res = time.gmtime(end - start)
-                res = time.strftime("%H hours, %M minutes, %S seconds", ty_res)
-                k_fold_msg = msg_box(f"{k_fold}-fold cross validation averaged result")
-                logger.info(f"{k_fold_msg}\n"
-                            f"Total running time: {res}\n"
-                            f"{cv_result}\n")
-        # one fold of cross validation or no cross validation
+            idx = Cross_Valid.fold_idx
+            save_path = config.save_dir['metrics_best'] / f"fold_{idx}.pkl"
+            log_best.to_pickle(save_path)
+            Cross_Valid.next_fold()
         else:
             msg = msg_box("result")
             logger.info(f"{msg}\n{log_best}")
@@ -149,7 +140,7 @@ if __name__ == '__main__':
     mod_args = args.add_argument_group('mod_args')
     CustomArgs = collections.namedtuple('CustomArgs', 'flags type target')
     options = [
-        CustomArgs(['--fold_idx'], type=int, target='trainer;fold_idx'),
+        CustomArgs(['--fold_idx'], type=int, target='trainer;fold_idx'),  # fold_idx > 0 means multiprocessing is enabled
         CustomArgs(['--lr', '--learning_rate'], type=float, target='optimizers;model;args;lr'),
         CustomArgs(['--bs', '--batch_size'], type=int,
                    target='data_loaders;train;data;args;DataLoader_args;batch_size'),

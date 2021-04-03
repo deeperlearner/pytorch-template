@@ -1,8 +1,6 @@
 import os
 import argparse
 import collections
-import time
-
 import torch
 import torch.nn as nn
 from torchvision.utils import make_grid, save_image
@@ -29,9 +27,6 @@ np.random.seed(SEED)
 
 
 def main(config):
-    # starting time
-    start = time.time()
-
     k_fold = config['trainer'].get('k_fold', 1)
     fold_idx = config['trainer'].get('fold_idx', 0)
 
@@ -58,7 +53,7 @@ def main(config):
     # prepare model for testing
     device, device_ids = prepare_device(config['n_gpu'])
 
-    CV_manager = Cross_Valid.create_CV(k_fold=k_fold)
+    Cross_Valid.create_CV(k_fold, fold_idx)
     for fold_idx in range(1, k_fold + 1):
         # models
         if k_fold > 1:
@@ -126,16 +121,10 @@ def main(config):
         # cross validation is enabled
         if k_fold > 1:
             log_mean = test_log['mean']
-            if CV_manager.cv_record(log_mean):
-                # done and print result
-                cv_result = CV_manager.cv_result()
-                end = time.time()
-                ty_res = time.gmtime(end - start)
-                res = time.strftime("%H hours, %M minutes, %S seconds", ty_res)
-                k_fold_msg = msg_box(f"{k_fold}-fold cross validation ensembled result")
-                logger.info(f"{k_fold_msg}\n"
-                            f"Total running time: {res}\n"
-                            f"{cv_result}\n")
+            idx = Cross_Valid.fold_idx
+            save_path = config.save_dir['metric'] / f"fold_{idx}.pkl"
+            log_mean.to_pickle(save_path)
+            Cross_Valid.next_fold()
 
 
 if __name__ == '__main__':

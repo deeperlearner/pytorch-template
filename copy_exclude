@@ -1,9 +1,7 @@
 copy_exclude
 data
 *examples*
-fig
 .git
-log
 output
 __pycache__
 README.md
