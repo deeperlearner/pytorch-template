@@ -1,5 +1,5 @@
 # PyTorch Template Project
-A pytorch template files generator, which supports multiple instances for dataset, dataloader, model, optimizer, loss, optimizer and lr\_scheduler.
+A pytorch template files generator, which supports multiple instances of dataset, dataloader, model, optimizer, loss, optimizer and lr\_scheduler.
 
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
 
@@ -56,7 +56,7 @@ And all of above can be constructed in `.json` config!
   ```
   Pytorch-Template/
   │
-  ├── torch_new_project.py - initialize new project with template files
+  ├── torch_new_project.sh - initialize new project with template files
   ├── copy_exclude - exclude file when create new project
   │
   ├── run.sh - bash script for running experiment
@@ -123,14 +123,12 @@ And all of above can be constructed in `.json` config!
 ## Usage
 There are some examples config files in `config/examples/`. Try `bash run_examples.sh` to run code.
 
-[The following is work in process, some sections haven't revised yet]
 ### Config file format
 Config files are in `.json` format, `dataset_model.json`:
 ```javascript
 {
     "n_gpu": 1,
     "root_dir": "./",
-    "save_dir": "saved/",
     "name": "dataset_model",
 
     "datasets": {
@@ -276,9 +274,9 @@ Specify indices of available GPUs by cuda environmental variable.
 ## Customization
 
 ### Project initialization
-Use the `new_project.py` script to make your new project directory with template files.
-`python new_project.py ../NewProject` then a new project folder named 'NewProject' will be made.
-This script will filter out unneccessary files like cache, git files or readme file. 
+Use the `torch_new_project.sh` script to make your new project directory with template files.
+`torch_new_project.sh ProjectName` then a new project folder named 'ProjectName' will be made.
+This script will filter out unneccessary files listed in `copy_exclude`.
 
 ### Custom CLI options
 
@@ -325,7 +323,7 @@ which is increased to 256 by command line options.
   ```
 * **Example**
 
-  Please refer to `data_loader/data_loaders.py` for an MNIST data loading example.
+  Please refer to `data_loader/examples/MNIST_loader.py` for an MNIST data loading example.
 
 ### Trainer
 * **Writing your own trainer**
@@ -367,7 +365,7 @@ which is increased to 256 by command line options.
 
 * **Example**
 
-  Please refer to `model/model.py` for a LeNet example.
+  Please refer to `model/examples/LeNet.py` for a LeNet example.
 
 ### Loss
 Custom loss functions can be implemented in 'model/loss.py'. Use them by changing the name given in "loss" in config file, to corresponding name.
@@ -377,7 +375,10 @@ Metric functions are located in 'model/metric.py'.
 
 You can monitor multiple metrics by providing a list in the configuration file, e.g.:
   ```json
-  "metrics": ["accuracy", "top_k_acc"],
+  "metrics": {
+      "per_iteration": ["accuracy", "top_k_acc"],
+      "per_epoch": ["AUROC", "AUPRC"]
+  }
   ```
 
 ### Additional logging
@@ -412,12 +413,10 @@ A copy of config file will be saved in the same folder.
 **Note**: checkpoints contain:
   ```python
   {
-      'arch': self.config['name'],
       'epoch': epoch,
       'models': {key: value.state_dict() for key, value in self.models.items()},
       'optimizers': {key: value.state_dict() for key, value in self.optimizers.items()},
       'monitor_best': self.mnt_best,
-      'config': self.config
   }
   ```
 
