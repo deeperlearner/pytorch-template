@@ -50,7 +50,7 @@ And all of above can be constructed in `.json` config!
   * `BaseTrainer` handles checkpoint saving/resuming, training process logging, and initialize all kinds of objects.
   * `BaseDataset` handles train, valid and test directories/label paths, and create corresponding datasets.
   * `BaseDataLoader` handles batch generation, data shuffling, and validation data splitting.
-  * `BaseModel` : currently none.
+  * `BaseModel` : currently not implemented.
 
 ## Folder Structure
   ```
