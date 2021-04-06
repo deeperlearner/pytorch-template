@@ -140,9 +140,6 @@ if __name__ == '__main__':
     mod_args = args.add_argument_group('mod_args')
     CustomArgs = collections.namedtuple('CustomArgs', 'flags default type target')
     options = [
-        # CustomArgs(['--bs', '--batch_size'], default=1, type=int,
-        #            target='data_loaders;data;args;DataLoader_args;batch_size'),
-        # CustomArgs(['--shuffle'], default=False, type=bool, target='data_loaders;data;args;DataLoader_args;shuffle'),
     ]
     for opt in options:
         mod_args.add_argument(*opt.flags, default=opt.default, type=opt.type)

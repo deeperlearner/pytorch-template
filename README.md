@@ -51,6 +51,42 @@ And all of above can be constructed in `.json` config!
   * `BaseDataset` handles train, valid and test directories/label paths, and create corresponding datasets.
   * `BaseDataLoader` handles batch generation, data shuffling, and validation data splitting.
   * `BaseModel` : currently not implemented.
+* Additional features compared with [pytorch-template](https://github.com/victoresque/pytorch-template):
+
+### Enable multiple instances in datasets, data_loaders, models, losses, optimizers, lr_schedulers
+Multiple datasets like domain adaption training will use source dataset and target dataset, so do data_loaders.
+Multiple models like GAN. Generator and Discriminator.
+Multiple losses, optimizers, lr_schedulers can be found in many ML papers.
+
+### train/valid/test
+If the path of train/valid/test is already given, then the content can directly put in the section in datasets, data_loaders.
+
+### module/type
+When there are more than one module, for example,
+- `data_loader/first_loader.py` and `data_loader/second_loader.py`.
+- `trainer/first_trainer.py` and `trainer/second_trainer.py`
+- `model/model1.py` and `model/model2.py`
+Each of them has some class.
+In `parse_config.py`, ConfigParser.init_obj() can automatically import the specified class by using importlib.
+
+### AUROC/AUPRC
+In metric part, I add two commonly used metric AUROC/AUPRC. These two metric need to compute on whole epoch, so the compute method is different from accuracy
+
+### MetricTracker
+Continue from AUROC/AUPRC, I revise the MetricTracker, which is moved to `model/metric.py`.
+The MetricTracker can record both accuracy-like metric (metirc_iter) and AUROC-like (metric_epoch) metric.
+
+### Cross validation
+cross validation are supported
+class `Cross_Valid` in `base/base_dataloader.py` can record each fold results (all metrics in MetricTracker).
+The model of each fold are saved.
+`test.py` can ensemble k-fold validation results.
+
+### Examples
+I add some example codes to use the above features.
+- MNIST dataset
+- ImageNet dataset
+- Adult dataset
 
 ## Folder Structure
   ```
