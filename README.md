@@ -77,10 +77,11 @@ Continue from AUROC/AUPRC, I revise the MetricTracker, which is moved to `model/
 The MetricTracker can record both accuracy-like metric (metirc_iter) and AUROC-like (metric_epoch) metric.
 
 ### Cross validation
-cross validation are supported
-class `Cross_Valid` in `base/base_dataloader.py` can record each fold results (all metrics in MetricTracker).
-The model of each fold are saved.
-`test.py` can ensemble k-fold validation results.
+Cross validation are supported.
+Class `Cross_Valid` in `base/base_dataloader.py` record the index of cross validation.
+The models and metric results of each fold are saved.
+`ensemble.py` can ensemble k-fold validation results.
+Also, multi-process cross validation is supported, which allow you to run many folds simultaneously in the background.
 
 ### Examples
 I add some example codes to use the above features.
