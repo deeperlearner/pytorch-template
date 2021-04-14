@@ -9,4 +9,6 @@ class LogisticRegression(nn.Module):
         self.linear = nn.Linear(in_features, 1)
 
     def forward(self, x):
-        return torch.sigmoid(self.linear(x))
+        output = self.linear(x)
+        output = torch.sigmoid(output)
+        return output

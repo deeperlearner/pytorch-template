@@ -81,7 +81,7 @@
     },
     "losses": {
         "loss": {
-            "type": "ce_loss"
+            "type": "CrossEntropyLoss"
         }
     },
     "metrics": {

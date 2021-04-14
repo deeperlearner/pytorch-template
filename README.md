@@ -1,5 +1,5 @@
 # PyTorch Template Project
-A pytorch template files generator, which supports multiple instances of dataset, dataloader, model, optimizer, loss, optimizer and lr\_scheduler.
+A pytorch template files generator, which supports multiple instances of dataset, dataloader, model, optimizer, loss, optimizer and lr_scheduler.
 
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
 
@@ -59,34 +59,33 @@ Multiple models like GAN. Generator and Discriminator.
 Multiple losses, optimizers, lr_schedulers can be found in many ML papers.
 
 ### train/valid/test
-If the path of train/valid/test is already given, then the content can directly put in the section in datasets, data_loaders.
+If the paths of train/valid/test are already given, they can be directly put in the section in datasets, data_loaders.
 
 ### module/type
 When there are more than one module, for example,
-- `data_loader/first_loader.py` and `data_loader/second_loader.py`.
+- `data_loader/first_loader.py` and `data_loader/second_loader.py`
 - `trainer/first_trainer.py` and `trainer/second_trainer.py`
-- `model/model1.py` and `model/model2.py`
-Each of them has some class.
-In `parse_config.py`, ConfigParser.init_obj() can automatically import the specified class by using importlib.
+- `model/model1.py` and `model/model2.py` \\
+Each of them has some classes. In `parse_config.py`, ConfigParser.init_obj() can automatically import the specified class by using importlib.
 
 ### AUROC/AUPRC
-In metric part, I add two commonly used metric AUROC/AUPRC. These two metric need to compute on whole epoch, so the compute method is different from accuracy
+In metric part, I add two commonly used metrics AUROC/AUPRC. These two metrics need to be computed on whole epoch, so the compute method is different from accuracy.
 
 ### MetricTracker
 Continue from AUROC/AUPRC, I revise the MetricTracker, which is moved to `model/metric.py`.
-The MetricTracker can record both accuracy-like metric (metirc_iter) and AUROC-like (metric_epoch) metric.
+The MetricTracker can record both accuracy-like metric (metrics_iter) and AUROC-like (metrics_epoch) metric.
 
 ### Cross validation
 Cross validation are supported.
-Class `Cross_Valid` in `base/base_dataloader.py` record the index of cross validation.
+Class `Cross_Valid` in `base/base_dataloader.py` records the index of cross validation.
 The models and metric results of each fold are saved.
 `ensemble.py` can ensemble k-fold validation results.
-Also, multi-process cross validation is supported, which allow you to run many folds simultaneously in the background.
+Also, multi-process cross validation is supported, which allows you to run many folds simultaneously in the background.
 
 ### Examples
 I add some example codes to use the above features.
 - MNIST dataset
-- ImageNet dataset
+- ImageNet dataset (The data need to be downloaded by yourself)
 - Adult dataset
 
 ## Folder Structure

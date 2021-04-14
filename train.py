@@ -1,7 +1,9 @@
+import os
 import argparse
 import collections
 
 import torch
+from sklearn.utils.class_weight import compute_class_weight
 
 from base import Cross_Valid
 from logger import get_logger
@@ -30,6 +32,9 @@ def main(config):
     train_msg = msg_box("TRAIN")
     logger.debug(train_msg)
 
+    # setup GPU device if available, move model into configured device
+    device, device_ids = prepare_device(config['n_gpu'])
+
     # datasets
     train_datasets = dict()
     valid_datasets = dict()
@@ -47,7 +52,16 @@ def main(config):
     # losses
     losses = dict()
     for name in config['losses']:
-        losses[name] = config.init_ftn(['losses', name], module_loss)
+        kwargs = {}
+        # weight_ratio of weighted_bce_loss
+        if config['losses'][name].get('balanced', False):
+            target = train_datasets['data'].y_train  # TODO
+            weights = compute_class_weight(class_weight='balanced',
+                                           classes=target.unique(),
+                                           y=target)
+            class_weights = torch.FloatTensor(weights).to(device)
+            kwargs.update(class_weights=class_weights)
+        losses[name] = config.init_obj(['losses', name], module_loss, **kwargs)
 
     # metrics
     metrics_iter = [getattr(module_metric, met) for met in config['metrics']['per_iteration']]
@@ -57,9 +71,6 @@ def main(config):
     torch_args = {'datasets': {'train': train_datasets, 'valid': valid_datasets},
                   'losses': losses,
                   'metrics': {'iter': metrics_iter, 'epoch': metrics_epoch}}
-
-    # setup GPU device if available, move model into configured device
-    device, device_ids = prepare_device(config['n_gpu'])
 
     if k_fold > 1:  # cross validation enabled
         train_datasets['data'].split_cv_indexes(k_fold)

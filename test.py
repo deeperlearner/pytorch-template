@@ -1,11 +1,13 @@
 import os
 import argparse
 import collections
+
 import torch
 import torch.nn as nn
 from torchvision.utils import make_grid, save_image
 import pandas as pd
 from sklearn.manifold import TSNE
+from sklearn.utils.class_weight import compute_class_weight
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
@@ -78,8 +80,17 @@ def main(config):
             model.eval()
             models[name] = model
 
-        # loss
-        loss_fn = config.init_ftn(['losses', 'loss'], module_loss)
+        # losses
+        kwargs = {}
+        # weight_ratio of weighted_bce_loss
+        if config['losses']['loss'].get('balanced', False):
+            target = test_datasets['data'].y_test  # TODO
+            weights = compute_class_weight(class_weight='balanced',
+                                           classes=target.unique(),
+                                           y=target)
+            class_weights = torch.FloatTensor(weights).to(device)
+            kwargs.update(class_weights=class_weights)
+        loss_fn = config.init_obj(['losses', 'loss'], module_loss, **kwargs)
 
         # metrics
         metrics_iter = [getattr(module_metric, met) for met in config['metrics']['per_iteration']]

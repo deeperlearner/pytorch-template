@@ -2,15 +2,9 @@ import torch
 import torch.nn.functional as F
 from torch.nn import CrossEntropyLoss, MSELoss, BCELoss
 
-ce_loss = CrossEntropyLoss()
-bce_loss = BCELoss()
 
-
-def weighted_bce_loss(output, target, alpha=0.5):
-    device = torch.device('cuda:0')
-    weight_ratio = torch.tensor([1 - alpha, alpha], device=device)
-    alpha_t = torch.reciprocal(weight_ratio)
-    weighted_bce_loss = BCELoss(weight=alpha_t[target.long()])
+def weighted_bce_loss(output, target, class_weights: torch.Tensor=None):
+    weighted_bce_loss = BCELoss(weight=class_weights[target.long()])
     return weighted_bce_loss(output, target)
 
 
@@ -35,6 +29,7 @@ def binary_focal_loss(output: torch.Tensor,
     return loss
 
 
+# model output with log_softmax
 def nll_loss(output, target):
     return F.nll_loss(output, target)
 

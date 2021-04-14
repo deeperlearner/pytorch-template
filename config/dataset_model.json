@@ -68,7 +68,11 @@
     },
     "losses": {
         "loss": {
+            "is_ftn": true,
             "type": "nll_loss"
+        },
+        "balanced": {
+            "type": "CrossEntropyLoss"
         }
     },
     "metrics": {

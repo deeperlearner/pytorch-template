@@ -99,11 +99,12 @@ class ConfigParser:
 
     def init_obj(self, keys, module, *args, **kwargs):
         """
-        Returns an object, which is specified in config[keys[0]]...[keys[-1]].
+        Returns an object or a function, which is specified in config[keys[0]]...[keys[-1]].
         In config[keys[0]]...[keys[-1]],
-            'module' corresponds to the module of each instance.
-            'type' corresponds to the class name.
-            'kwargs' corresponds to keyword arguments of the class.
+            'is_ftn': If True, return a function. If False, return an object.
+            'module': The module of each instance.
+            'type': Class name.
+            'kwargs': Keyword arguments for the class initialization.
         keys is the list of config entries.
         module is the package module.
         Additional *args and **kwargs would be forwarded to obj()
@@ -119,25 +120,9 @@ class ConfigParser:
         obj = getattr(module_obj, class_name)
         kwargs_obj = self._update_kwargs(obj_config, kwargs)
 
+        if obj_config.get('is_ftn', False):
+            return partial(obj, *args, **kwargs_obj)
         return obj(*args, **kwargs_obj)
-
-    def init_ftn(self, keys, module, *args, **kwargs):
-        """
-        Returns an function, which is specified in config[keys[0]]...[keys[-1]].
-        In config[keys[0]]...[keys[-1]],
-            'type' corresponds to the function name.
-            'kwargs' corresponds to keyword arguments of the function.
-        keys is the list of config entries.
-        module is the package module.
-        Additional *args and **kwargs would be forwarded to ftn()
-        Usage: `function = config.init_ftn(['A', 'B', 'C'], module, a, b=1)`
-        """
-        ftn_config = get_by_path(self, keys)
-        class_name = ftn_config['type']
-        ftn = getattr(module, class_name)
-        kwargs_ftn = self._update_kwargs(ftn_config, kwargs)
-
-        return partial(ftn, *args, **kwargs_ftn)
 
     def __getitem__(self, name):
         """Access items like ordinary dict."""

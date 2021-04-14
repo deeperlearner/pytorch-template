@@ -69,10 +69,9 @@
     },
     "losses": {
         "loss": {
-            "type": "binary_focal_loss",
-            "kwargs": {
-                "alpha": 0.24
-            }
+            "is_ftn": true,
+            "balanced": true,
+            "type": "weighted_bce_loss"
         }
     },
     "metrics": {
