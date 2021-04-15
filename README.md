@@ -292,7 +292,6 @@ Modify the configurations in `.json` config files, then run:
 
 ### Resuming from checkpoints
 You can resume from a previously saved checkpoint by:
-
   ```
   python train.py --resume path/to/checkpoint
   ```
