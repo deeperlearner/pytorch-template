@@ -7,8 +7,8 @@ from sklearn.utils.class_weight import compute_class_weight
 
 from base import Cross_Valid
 from logger import get_logger
-import model.loss as module_loss
-import model.metric as module_metric
+import models.loss as module_loss
+import models.metric as module_metric
 from parse_config import ConfigParser
 from utils import ensure_dir, prepare_device, get_by_path, msg_box
 
@@ -41,13 +41,13 @@ def main(config):
     ## train
     keys = ['datasets', 'train']
     for name in get_by_path(config, keys):
-        train_datasets[name] = config.init_obj([*keys, name], 'data_loader')
+        train_datasets[name] = config.init_obj([*keys, name], 'data_loaders')
     ## valid
     valid_exist = False
     keys = ['datasets', 'valid']
     for name in get_by_path(config, keys):
         valid_exist = True
-        valid_datasets[name] = config.init_obj([*keys, name], 'data_loader')
+        valid_datasets[name] = config.init_obj([*keys, name], 'data_loaders')
 
     # losses
     losses = dict()
@@ -84,20 +84,20 @@ def main(config):
         keys = ['data_loaders', 'train']
         for name in get_by_path(config, keys):
             dataset = train_datasets[name]
-            train_data_loaders[name] = config.init_obj([*keys, name], 'data_loader', dataset)
+            train_data_loaders[name] = config.init_obj([*keys, name], 'data_loaders', dataset)
             if not valid_exist:
                 valid_data_loaders[name] = train_data_loaders[name].valid_loader
         ## valid
         keys = ['data_loaders', 'valid']
         for name in get_by_path(config, keys):
             dataset = valid_datasets[name]
-            valid_data_loaders[name] = config.init_obj([*keys, name], 'data_loader', dataset)
+            valid_data_loaders[name] = config.init_obj([*keys, name], 'data_loaders', dataset)
 
         # models
         models = dict()
         logger_model = get_logger('model', verbosity=1)
         for name in config['models']:
-            model = config.init_obj(['models', name], 'model')
+            model = config.init_obj(['models', name], 'models')
             logger_model.info(model)
             model = model.to(device)
             if len(device_ids) > 1:
@@ -123,7 +123,7 @@ def main(config):
                        'lr_schedulers': lr_schedulers}
         torch_args.update(update_args)
 
-        trainer = config.init_obj(['trainer'], 'trainer', torch_args,
+        trainer = config.init_obj(['trainer'], 'trainers', torch_args,
                                   config.save_dir, config.resume, device)
         log_best = trainer.train()
 

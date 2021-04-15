@@ -14,9 +14,9 @@ from tqdm import tqdm
 
 from base import Cross_Valid
 from logger import get_logger
-import model.loss as module_loss
-import model.metric as module_metric
-from model.metric import MetricTracker, AUROC, AUPRC
+import models.loss as module_loss
+import models.metric as module_metric
+from models.metric import MetricTracker
 from parse_config import ConfigParser
 from utils import ensure_dir, prepare_device, get_by_path, msg_box
 
@@ -40,7 +40,7 @@ def main(config):
     test_datasets = dict()
     keys = ['datasets', 'test']
     for name in get_by_path(config, keys):
-        test_datasets[name] = config.init_obj([*keys, name], 'data_loader')
+        test_datasets[name] = config.init_obj([*keys, name], 'data_loaders')
 
     # data_loaders
     test_data_loaders = dict()
@@ -50,7 +50,7 @@ def main(config):
         do_transform = get_by_path(config, [*keys, name]).get('do_transform', False)
         if do_transform:
             dataset.transform()
-        test_data_loaders[name] = config.init_obj([*keys, name], 'data_loader', dataset)
+        test_data_loaders[name] = config.init_obj([*keys, name], 'data_loaders', dataset)
 
     # prepare model for testing
     device, device_ids = prepare_device(config['n_gpu'])
@@ -70,7 +70,7 @@ def main(config):
         models = dict()
         logger_model = get_logger('model', verbosity=0)
         for name in config['models']:
-            model = config.init_obj(['models', name], 'model')
+            model = config.init_obj(['models', name], 'models')
             logger_model.info(model)
             state_dict = checkpoint['models'][name]
             if config['n_gpu'] > 1:
