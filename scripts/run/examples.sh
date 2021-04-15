@@ -1,5 +1,5 @@
 # This script run train and test for examples
-# bash run_examples.sh
+# bash scripts/run/examples.sh
 
 # cross validation by single-process
 # $1: CONFIG

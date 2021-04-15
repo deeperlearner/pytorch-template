@@ -1,4 +1,3 @@
-copy_exclude
 data
 *examples*
 .git
@@ -6,5 +5,5 @@ output
 __pycache__
 README.md
 saved
-torch_new_project.sh
+scripts/new_project
 Session.vim
