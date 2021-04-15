@@ -141,7 +141,7 @@ def main(config):
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='testing')
     run_args = args.add_argument_group('run_args')
-    run_args.add_argument('-c', '--config', default="config/examples/mnist.json", type=str)
+    run_args.add_argument('-c', '--config', default="configs/examples/mnist.json", type=str)
     run_args.add_argument('--resume', default=None, type=str)
     run_args.add_argument('--mode', default='test', type=str)
     run_args.add_argument('--run_id', default=None, type=str)
@@ -149,7 +149,7 @@ if __name__ == '__main__':
 
     # custom cli options to modify configuration from default values given in json file.
     mod_args = args.add_argument_group('mod_args')
-    CustomArgs = collections.namedtuple('CustomArgs', 'flags default type target')
+    CustomArgs = collections.namedtuple('CustomArgs', "flags default type target")
     options = [
     ]
     for opt in options:

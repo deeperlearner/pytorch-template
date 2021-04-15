@@ -43,12 +43,11 @@ A pytorch template files generator, which supports multiple instances of dataset
 * `.json` config file support for convenient parameter tuning.
 * Support multi-dataset, multi-dataloader, multi-model, multi-optimizer, multi-loss, multi-optimizer and multi-lr\_scheduler.
 And all of above can be constructed in `.json` config!
-* By adding PATH in .bashrc, you can execute `torch_new_project.py` under all paths.
+* By adding symbolic to /usr/local/bin, you can execute `torch_new_project.py` under all paths.
 * Customizable command line options for more convenient parameter tuning.
 * Checkpoint saving and resuming.
 * Abstract base classes for faster development:
   * `BaseTrainer` handles checkpoint saving/resuming, training process logging, and initialize all kinds of objects.
-  * `BaseDataset` handles train, valid and test directories/label paths, and create corresponding datasets.
   * `BaseDataLoader` handles batch generation, data shuffling, and validation data splitting.
   * `BaseModel` : currently not implemented.
 * Additional features compared with [pytorch-template](https://github.com/victoresque/pytorch-template):
@@ -63,16 +62,16 @@ If the paths of train/valid/test are already given, they can be directly put in 
 
 ### module/type
 When there are more than one module, for example,
-- `data_loader/first_loader.py` and `data_loader/second_loader.py`
-- `trainer/first_trainer.py` and `trainer/second_trainer.py`
-- `model/model1.py` and `model/model2.py` \\
+- `data_loaders/first_loader.py` and `data_loaders/second_loader.py`
+- `trainers/first_trainer.py` and `trainers/second_trainer.py`
+- `models/model1.py` and `models/model2.py` \\
 Each of them has some classes. In `parse_config.py`, ConfigParser.init_obj() can automatically import the specified class by using importlib.
 
 ### AUROC/AUPRC
 In metric part, I add two commonly used metrics AUROC/AUPRC. These two metrics need to be computed on whole epoch, so the compute method is different from accuracy.
 
 ### MetricTracker
-Continue from AUROC/AUPRC, I revise the MetricTracker, which is moved to `model/metric.py`.
+Continue from AUROC/AUPRC, I revise the MetricTracker, which is moved to `models/metric.py`.
 The MetricTracker can record both accuracy-like metric (metrics_iter) and AUROC-like (metrics_epoch) metric.
 
 ### Cross validation
@@ -95,6 +94,9 @@ I add some example codes to use the above features.
   ├── torch_new_project.sh - initialize new project with template files
   ├── copy_exclude - exclude file when create new project
   │
+  ├── version_update.sh - transfer old version files to new version directory
+  ├── file_list - files to preserve between update
+  │
   ├── run.sh - bash script for running experiment
   ├── run_examples.sh - bash script for running examples
   │
@@ -107,14 +109,14 @@ I add some example codes to use the above features.
   │   ├── base_data_loader.py
   │   └── base_trainer.py
   │
-  ├── config/ - configurations for training
+  ├── configs/ - configurations for training
   │   ├── dataset_model.json
   │   └── examples/
   │       └── *.json
   │
   ├── data/ - default directory for storing input data
   │
-  ├── data_loader/ - anything about data loading goes here
+  ├── data_loaders/ - anything about data loading goes here
   │   ├── data_loader.py
   │   └── examples/
   │       └── *_loader.py
@@ -124,7 +126,7 @@ I add some example codes to use the above features.
   │   ├── logger.py
   │   └── logger_config.json
   │
-  ├── model/ - models, losses, and metrics
+  ├── models/ - models, losses, and metrics
   │   ├── model.py
   │   ├── metric.py
   │   ├── loss.py
@@ -138,7 +140,7 @@ I add some example codes to use the above features.
   │           ├── log/ - default logdir for tensorboard and logging output   
   │           └── dataset_model.json - backup config file when start training
   │
-  ├── trainer/ - trainers
+  ├── trainers/ - trainers
   │   ├── trainer.py
   │   └── examples/
   │       └── *_trainer.py
@@ -311,7 +313,13 @@ Specify indices of available GPUs by cuda environmental variable.
 
 ### Project initialization
 Use the `torch_new_project.sh` script to make your new project directory with template files.
-`torch_new_project.sh ProjectName` then a new project folder named 'ProjectName' will be made.
+
+Add this line to ~/.bashrc:
+`export Pytorch_Template=/path/to/Pytorch_Template`
+Add symbolic link at /usr/local/bin so that you can run this script everywhere.
+`sudo ln -s $Pytorch_Template/torch_new_project.sh /usr/local/bin/torch_new_project`
+
+`torch_new_project ProjectName` produces a new project folder named 'ProjectName' will be made.
 This script will filter out unneccessary files listed in `copy_exclude`.
 
 ### Custom CLI options
@@ -326,13 +334,13 @@ you can change some of them using CLI flags.
   # simple class-like object having 3 attributes, `flags`, `type`, `target`.
   CustomArgs = collections.namedtuple('CustomArgs', 'flags type target')
   options = [
-      CustomArgs(['--lr', '--learning_rate'], type=float, target=('optimizer', 'args', 'lr')),
-      CustomArgs(['--bs', '--batch_size'], type=int, target=('data_loader', 'args', 'batch_size'))
+      CustomArgs(['--lr', '--learning_rate'], type=float, target="optimizer;args;lr"),
+      CustomArgs(['--bs', '--batch_size'], type=int, target="data_loader;args;batch_size")
       # options added here can be modified by command line flags.
   ]
   ```
 `target` argument should be sequence of keys, which are used to access that option in the config dict. In this example, `target` 
-for the learning rate option is `('optimizer', 'args', 'lr')` because `config['optimizer']['args']['lr']` points to the learning rate.
+for the learning rate option is `"optimizer;args;lr"` because `config['optimizer']['args']['lr']` points to the learning rate.
 `python train.py -c config.json --bs 256` runs training with options given in `config.json` except for the `batch size`
 which is increased to 256 by command line options.
 
@@ -359,7 +367,7 @@ which is increased to 256 by command line options.
   ```
 * **Example**
 
-  Please refer to `data_loader/examples/MNIST_loader.py` for an MNIST data loading example.
+  Please refer to `data_loaders/examples/MNIST_loader.py` for an MNIST data loading example.
 
 ### Trainer
 * **Writing your own trainer**
@@ -380,7 +388,7 @@ which is increased to 256 by command line options.
 
 * **Example**
 
-  Please refer to `trainer/trainer.py` for MNIST training.
+  Please refer to `trainers/trainer.py` for MNIST training.
 
 * **Iteration-based training**
 
@@ -401,7 +409,7 @@ which is increased to 256 by command line options.
 
 * **Example**
 
-  Please refer to `model/examples/LeNet.py` for a LeNet example.
+  Please refer to `models/examples/LeNet.py` for a LeNet example.
 
 ### Loss
 Custom loss functions can be implemented in 'model/loss.py'. Use them by changing the name given in "loss" in config file, to corresponding name.
@@ -442,7 +450,7 @@ You can specify the name of the training session in config files:
   name: MNIST_LeNet,
   ```
 
-The checkpoints will be saved in `save_dir/name/timestamp/checkpoint_epoch_n`, with timestamp in mmdd\_HHMMSS format.
+The checkpoints will be saved in `saved/name/timestamp/checkpoint_epoch_n`, with timestamp in mmdd\_HHMMSS format.
 
 A copy of config file will be saved in the same folder.
 
