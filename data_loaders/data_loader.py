@@ -1,5 +1,6 @@
 import os
 import glob
+import logging
 
 from torch.utils.data import Dataset
 from torchvision import transforms
@@ -19,8 +20,6 @@ class MyDataset(Dataset):
         if label_path is not None:
             self.labels = pd.read_csv(label_path, index_col=['image_name'])
 
-        mean = (0.5, 0.5, 0.5)
-        std = (0.5, 0.5, 0.5)
         # transforms
         self.transform = transforms.Compose([
             # transforms.RandomRotation(10),
@@ -29,7 +28,8 @@ class MyDataset(Dataset):
             # transforms.RandomAffine(degrees=0, translate=(0.2, 0.2), shear=0.2),
             # transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
-            transforms.Normalize(mean, std)
+            transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                  std=[0.229, 0.224, 0.225]),
         ])
 
     def __getitem__(self, idx):
@@ -47,3 +47,7 @@ class MyDataset(Dataset):
 
     def __len__(self):
         return len(self.filenames)
+
+
+pil_logger = logging.getLogger('PIL')
+pil_logger.setLevel(logging.INFO)

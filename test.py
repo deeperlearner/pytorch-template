@@ -82,14 +82,14 @@ def main(config):
 
         # losses
         kwargs = {}
-        # weight_ratio of weighted_bce_loss
+        # TODO
         if config['losses']['loss'].get('balanced', False):
-            target = test_datasets['data'].y_test  # TODO
-            weights = compute_class_weight(class_weight='balanced',
-                                           classes=target.unique(),
-                                           y=target)
-            class_weights = torch.FloatTensor(weights).to(device)
-            kwargs.update(class_weights=class_weights)
+            target = test_datasets['data'].y_test
+            weight = compute_class_weight(class_weight='balanced',
+                                          classes=target.unique(),
+                                          y=target)
+            weight = torch.FloatTensor(weight).to(device)
+            kwargs.update(pos_weight=weight[1])
         loss_fn = config.init_obj(['losses', 'loss'], module_loss, **kwargs)
 
         # metrics

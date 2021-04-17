@@ -67,11 +67,16 @@
         }
     },
     "losses": {
-        "loss": {
+        "nll": {
             "is_ftn": true,
             "type": "nll_loss"
         },
-        "balanced": {
+        "bce_logits": {
+            "balanced": true,
+            "type": "BCEWithLogitsLoss"
+        },
+        "ce": {
+            "balanced": true,
             "type": "CrossEntropyLoss"
         }
     },

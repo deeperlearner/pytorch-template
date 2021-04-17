@@ -91,19 +91,12 @@ I add some example codes to use the above features.
   ```
   Pytorch-Template/
   │
-  ├── torch_new_project.sh - initialize new project with template files
-  ├── copy_exclude - exclude file when create new project
-  │
-  ├── version_update.sh - transfer old version files to new version directory
-  ├── file_list - files to preserve between update
-  │
-  ├── run.sh - bash script for running experiment
-  ├── run_examples.sh - bash script for running examples
+  ├── parse_config.py - class to handle config file and cli options
   │
   ├── train.py - main script to start training
   ├── test.py - evaluation of trained model
   │
-  ├── parse_config.py - class to handle config file and cli options
+  ├── ensemble.py - ensemble k-fold results
   │
   ├── base/ - abstract base classes
   │   ├── base_data_loader.py
@@ -139,6 +132,17 @@ I add some example codes to use the above features.
   │           ├── models/ - trained models are saved here
   │           ├── log/ - default logdir for tensorboard and logging output   
   │           └── dataset_model.json - backup config file when start training
+  │
+  ├── scripts/ - scripts for *.sh
+  │   ├── new_project/
+  │   │   ├── copy_exclude - exclude file when create new project
+  │   │   └── torch_new_project.sh - initialize new project with template files
+  │   ├── run/
+  │   │   ├── examples.sh - bash script for running examples
+  │   │   └── run.sh - bash script for running experiment
+  │   └── version_update/
+  │       ├── file_list - files to preserve between update
+  │       └── version_update.sh - transfer old version files to new version directory
   │
   ├── trainers/ - trainers
   │   ├── trainer.py
@@ -316,7 +320,7 @@ Use the `torch_new_project.sh` script to make your new project directory with te
 Add this line to ~/.bashrc:
 `export Pytorch_Template=/path/to/Pytorch_Template`
 Add symbolic link at /usr/local/bin so that you can run this script everywhere.
-`sudo ln -s $Pytorch_Template/torch_new_project.sh /usr/local/bin/torch_new_project`
+`sudo ln -s $Pytorch_Template/scripts/new_project/torch_new_project.sh /usr/local/bin/torch_new_project`
 
 `torch_new_project ProjectName` produces a new project folder named 'ProjectName' will be made.
 This script will filter out unneccessary files listed in `copy_exclude`.
@@ -449,7 +453,7 @@ You can specify the name of the training session in config files:
   name: MNIST_LeNet,
   ```
 
-The checkpoints will be saved in `saved/name/timestamp/checkpoint_epoch_n`, with timestamp in mmdd\_HHMMSS format.
+The checkpoints will be saved in `saved/name/run_id/model/checkpoint_epoch_n`, with timestamp in mmdd\_HHMMSS format.
 
 A copy of config file will be saved in the same folder.
 

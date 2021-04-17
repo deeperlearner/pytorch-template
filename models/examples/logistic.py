@@ -10,5 +10,5 @@ class LogisticRegression(nn.Module):
 
     def forward(self, x):
         output = self.linear(x)
-        output = torch.sigmoid(output)
+        # output = torch.sigmoid(output)
         return output

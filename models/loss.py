@@ -1,10 +1,10 @@
 import torch
 import torch.nn.functional as F
-from torch.nn import CrossEntropyLoss, MSELoss, BCELoss
+from torch.nn import CrossEntropyLoss, MSELoss, BCELoss, BCEWithLogitsLoss
 
 
-def weighted_bce_loss(output, target, class_weights: torch.Tensor=None):
-    weighted_bce_loss = BCELoss(weight=class_weights[target.long()])
+def weighted_bce_loss(output, target, weight: torch.Tensor=None):
+    weighted_bce_loss = BCELoss(weight=weight[target.long()])
     return weighted_bce_loss(output, target)
 
 

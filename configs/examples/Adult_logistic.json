@@ -69,9 +69,8 @@
     },
     "losses": {
         "loss": {
-            "is_ftn": true,
             "balanced": true,
-            "type": "weighted_bce_loss"
+            "type": "BCEWithLogitsLoss"
         }
     },
     "metrics": {
