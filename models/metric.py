@@ -29,6 +29,8 @@ class MetricTracker:
         self.metrics_iter.at[key, 'counts'] += n
 
     def epoch_update(self, key, value):
+        if self.writer is not None:
+            self.writer.add_scalar(key, value)
         self.metrics_epoch.at[key, 'mean'] = value
 
     def current(self):

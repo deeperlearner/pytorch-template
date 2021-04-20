@@ -39,8 +39,10 @@ if [ "$MODE" = "debug" ]; then
     CONFIG="examples/Adult_logistic"
     EXP="Adult_logistic"
     RUN_ID="debug"
-    cv_single $CONFIG $EXP $RUN_ID
-else
+    # cv_single $CONFIG $EXP $RUN_ID
+    python3 train.py -c "configs/$CONFIG.json" --run_id $RUN_ID
+    python3 test.py -c "configs/$CONFIG.json" --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID
+else  # "$MODE" = "run_all"
     # MNIST_LeNet
     CONFIG="examples/MNIST_LeNet"
     EXP="MNIST_LeNet"

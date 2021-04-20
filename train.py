@@ -158,7 +158,7 @@ if __name__ == '__main__':
                    target="data_loaders;train;data;args;DataLoader_kwargs;batch_size"),
     ]
     for opt in options:
-        mod_args.add_argument(*opt.flags, default=None, type=opt.type)
+        mod_args.add_argument(*opt.flags, type=opt.type)
 
     cfg = ConfigParser.from_args(args, options)
     main(cfg)

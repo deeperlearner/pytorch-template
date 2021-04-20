@@ -64,7 +64,8 @@ If the paths of train/valid/test are already given, they can be directly put in 
 When there are more than one module, for example,
 - `data_loaders/first_loader.py` and `data_loaders/second_loader.py`
 - `trainers/first_trainer.py` and `trainers/second_trainer.py`
-- `models/model1.py` and `models/model2.py` \\
+- `models/model1.py` and `models/model2.py`
+
 Each of them has some classes. In `parse_config.py`, ConfigParser.init_obj() can automatically import the specified class by using importlib.
 
 ### AUROC/AUPRC

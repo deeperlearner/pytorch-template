@@ -31,6 +31,7 @@ class Trainer(BaseTrainer):
             # iteration-based training
             self.train_data_loaders['data'] = inf_loop(self.train_data_loaders['data'])
         self.log_step = int(np.sqrt(self.train_data_loaders['data'].batch_size))
+        self.train_step, self.valid_step = 0, 0
 
         # losses
         self.criterion = self.losses['loss']
@@ -64,6 +65,9 @@ class Trainer(BaseTrainer):
 
             self.optimizers['model'].zero_grad()
             output = self.models['model'](data)
+            # print(output.size())
+            # print(target.size())
+            # os._exit(0)
             if len(self.metrics_epoch) > 0:
                 outputs = torch.cat((outputs, output))
                 targets = torch.cat((targets, target))
@@ -71,7 +75,8 @@ class Trainer(BaseTrainer):
             loss.backward()
             self.optimizers['model'].step()
 
-            self.writer.set_step((epoch - 1) * self.len_epoch + batch_idx)
+            self.writer.set_step(self.train_step)
+            self.train_step += 1
             self.train_metrics.iter_update('loss', loss.item())
             for met in self.metrics_iter:
                 self.train_metrics.iter_update(met.__name__, met(output, target))
@@ -133,7 +138,8 @@ class Trainer(BaseTrainer):
                     outputs = torch.cat((outputs, output))
                     targets = torch.cat((targets, target))
 
-                self.writer.set_step((epoch - 1) * self.len_epoch + batch_idx, 'valid')
+                self.writer.set_step(self.valid_step, 'valid')
+                self.valid_step += 1
                 self.valid_metrics.iter_update('loss', loss.item())
                 for met in self.metrics_iter:
                     self.valid_metrics.iter_update(met.__name__, met(output, target))

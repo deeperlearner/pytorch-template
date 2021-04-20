@@ -149,11 +149,11 @@ if __name__ == '__main__':
 
     # custom cli options to modify configuration from default values given in json file.
     mod_args = args.add_argument_group('mod_args')
-    CustomArgs = collections.namedtuple('CustomArgs', "flags default type target")
+    CustomArgs = collections.namedtuple('CustomArgs', "flags type target")
     options = [
     ]
     for opt in options:
-        mod_args.add_argument(*opt.flags, default=opt.default, type=opt.type)
+        mod_args.add_argument(*opt.flags, type=opt.type)
 
     # additional arguments for testing
     test_args = args.add_argument_group('test_args')

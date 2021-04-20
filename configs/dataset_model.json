@@ -78,6 +78,10 @@
         "ce": {
             "balanced": true,
             "type": "CrossEntropyLoss"
+        },
+        "focal": {
+            "is_ftn": true,
+            "type": "binary_focal_loss"
         }
     },
     "metrics": {
@@ -115,10 +119,10 @@
             "save_the_best": true,
             "verbosity": 2,
 
-            "monitor": "max val_accuracy",
-            "early_stop": 0,
+            "monitor": "min val_loss",
+            "early_stop": 10,
 
-            "tensorboard": false
+            "tensorboard": true
         }
     }
 }
