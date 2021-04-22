@@ -45,6 +45,7 @@ class Trainer(BaseTrainer):
 
         # learning rate schedulers
         self.do_lr_scheduling = len(self.lr_schedulers) > 0
+        self.do_lr_scheduling = False  # delete this line if you want to do lr_scheduling
         self.lr_scheduler = self.lr_schedulers['model']
 
     def _train_epoch(self, epoch):
@@ -75,8 +76,8 @@ class Trainer(BaseTrainer):
             loss.backward()
             self.optimizers['model'].step()
 
-            self.writer.set_step(self.train_step)
             self.train_step += 1
+            self.writer.set_step(self.train_step)
             self.train_metrics.iter_update('loss', loss.item())
             for met in self.metrics_iter:
                 self.train_metrics.iter_update(met.__name__, met(output, target))
@@ -138,8 +139,8 @@ class Trainer(BaseTrainer):
                     outputs = torch.cat((outputs, output))
                     targets = torch.cat((targets, target))
 
-                self.writer.set_step(self.valid_step, 'valid')
                 self.valid_step += 1
+                self.writer.set_step(self.valid_step, 'valid')
                 self.valid_metrics.iter_update('loss', loss.item())
                 for met in self.metrics_iter:
                     self.valid_metrics.iter_update(met.__name__, met(output, target))

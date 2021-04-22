@@ -71,14 +71,14 @@ class AdultDataset(Dataset):
         return self.indexes[fold_idx]
 
     def transform(self, split_idx=None):
-        self.compute_data_info(split_idx)
+        self.split_idx = split_idx
         self.impute()
         self.normalize()
 
-    def compute_data_info(self, split_idx):
+    def compute_mean_std_mode(self):
         # compute mean, std, mode on training data only!
         if self.mode == 'train':
-            train_idx, valid_idx = split_idx
+            train_idx, valid_idx = self.split_idx
             num_train = self.x_num_train.iloc[train_idx]
             cat_train = self.x_cat_train.iloc[train_idx]
         elif self.mode == 'test':
@@ -86,18 +86,21 @@ class AdultDataset(Dataset):
             cat_train = self.x_cat_train
 
         des = num_train.describe()
-        self.num_mean = des.loc['mean']
-        self.num_std = des.loc['std']
-        self.cat_mode = cat_train.mode().loc[0]
+        num_mean = des.loc['mean']
+        num_std = des.loc['std']
+        cat_mode = cat_train.mode().loc[0]
 
-    def impute(self, impute_type='simple'):
-        # impute_type: zero, simple(mean, mode)
-        if impute_type == 'zero':
-            num_fill = 0
-            cat_fill = 0
-        elif impute_type == 'simple':
-            num_fill = self.num_mean
-            cat_fill = self.cat_mode
+        return num_mean, num_std, cat_mode
+
+    def impute(self, method='simple'):
+        # method:
+        #   zero: 0
+        #   simple: mean/mode
+        if method == 'zero':
+            num_fill, cat_fill = 0, 0
+        elif method == 'simple':
+            num_mean, num_std, cat_mode = self.compute_mean_std_mode()
+            num_fill, cat_fill = num_mean, cat_mode
 
         if self.mode == 'train':
             self.x_num_train_hat = self.x_num_train.fillna(num_fill)
@@ -114,8 +117,9 @@ class AdultDataset(Dataset):
             x_num, x_cat = self.x_num_test_hat, self.x_cat_test_hat
             y = self.y_test
 
+        num_mean, num_std, cat_mode = self.compute_mean_std_mode()
         # normalize on numerical data only!
-        x_num = (x_num - self.num_mean) / self.num_std
+        x_num = (x_num - num_mean) / num_std
         # DataFrame to Tensor
         x_num = torch.from_numpy(x_num.values.astype(np.float32))
         x_cat = torch.from_numpy(x_cat.values.astype(np.float32))

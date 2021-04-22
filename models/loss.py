@@ -11,11 +11,12 @@ def weighted_bce_loss(output, target, weight: torch.Tensor=None):
 # ref: https://github.com/kornia/kornia/blob/master/kornia/losses/focal.py
 def binary_focal_loss(output: torch.Tensor,
                       target: torch.Tensor,
+                      sigmoid = True,
                       alpha: float = 0.5,
                       gamma: float = 2.0,
                       reduction: str = 'sum',
                       eps: float = 1e-8) -> torch.Tensor:
-    p_t = output
+    p_t = torch.sigmoid(output) if sigmoid else output
     loss_tmp = -alpha * torch.pow(1 - p_t, gamma) * target * torch.log(p_t + eps) \
                - (1 - alpha) * torch.pow(p_t, gamma) * (1 - target) * torch.log(1 - p_t + eps)
 

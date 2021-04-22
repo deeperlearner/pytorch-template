@@ -69,8 +69,8 @@
     },
     "losses": {
         "loss": {
-            "balanced": true,
-            "type": "BCEWithLogitsLoss"
+            "is_ftn": true,
+            "type": "binary_focal_loss"
         }
     },
     "metrics": {
@@ -108,7 +108,7 @@
             "save_the_best": true,
             "verbosity": 2,
 
-            "monitor": "min val_loss",
+            "monitor": "max val_binary_accuracy",
             "early_stop": 10,
 
             "tensorboard": true

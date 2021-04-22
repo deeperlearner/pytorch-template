@@ -155,7 +155,7 @@ if __name__ == '__main__':
     for opt in options:
         mod_args.add_argument(*opt.flags, type=opt.type)
 
-    # additional arguments for testing
+    # config.test_args: additional arguments for testing
     test_args = args.add_argument_group('test_args')
     test_args.add_argument('--output_path', default=None, type=str)
 

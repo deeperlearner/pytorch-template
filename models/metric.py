@@ -73,7 +73,9 @@ def top_k_acc(output, target, k=3):
     return correct / len(target)
 
 
-def binary_accuracy(output, target):
+def binary_accuracy(output, target, sigmoid=True):
+    if sigmoid:
+        output = torch.sigmoid(output)
     with torch.no_grad():
         correct = 0
         correct += torch.sum(torch.abs(output - target) < 0.5).item()
