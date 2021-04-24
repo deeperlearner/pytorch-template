@@ -239,6 +239,8 @@ Config files are in `.json` format, `dataset_model.json`:
     },
     "losses": {
         "loss": {
+            "is_ftn": true,
+            "balanced": false,
             "type": "nll_loss"
         }
     },
@@ -320,7 +322,9 @@ Use the `torch_new_project.sh` script to make your new project directory with te
 
 Add this line to ~/.bashrc:
 `export Pytorch_Template=/path/to/Pytorch_Template`
+
 Add symbolic link at /usr/local/bin so that you can run this script everywhere.
+
 `sudo ln -s $Pytorch_Template/scripts/new_project/torch_new_project.sh /usr/local/bin/torch_new_project`
 
 `torch_new_project ProjectName` produces a new project folder named 'ProjectName' will be made.

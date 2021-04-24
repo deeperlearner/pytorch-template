@@ -17,8 +17,10 @@ class AdultDataset(Dataset):
                  "https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.names",
                  "https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.test"]
 
-    def __init__(self, data_dir='./data/Adult', mode='train'):
+    def __init__(self, impute_method='simple', data_dir='./data/Adult', mode='train'):
+        self.impute_method = impute_method
         self.mode = mode
+
         self.download(data_dir)
 
         columns = ["age", "workclass", "fnlwgt", "education", "education-num",
@@ -92,10 +94,14 @@ class AdultDataset(Dataset):
 
         return num_mean, num_std, cat_mode
 
-    def impute(self, method='simple'):
-        # method:
-        #   zero: 0
-        #   simple: mean/mode
+    def impute(self):
+        """
+        method:
+            zero: 0
+            simple: mean/mode
+        """
+        method = self.impute_method
+
         if method == 'zero':
             num_fill, cat_fill = 0, 0
         elif method == 'simple':
