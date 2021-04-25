@@ -43,7 +43,7 @@ A pytorch template files generator, which supports multiple instances of dataset
 * `.json` config file support for convenient parameter tuning.
 * Support multi-dataset, multi-dataloader, multi-model, multi-optimizer, multi-loss, multi-optimizer and multi-lr\_scheduler.
 And all of above can be constructed in `.json` config!
-* By adding symbolic to /usr/local/bin, you can execute `torch_new_project.sh` under all paths.
+* By adding symbolic to /usr/local/bin, you can execute `torch_new_project` under all paths.
 * Customizable command line options for more convenient parameter tuning.
 * Checkpoint saving and resuming.
 * Abstract base classes for faster development:
@@ -127,12 +127,20 @@ I add some example codes to use the above features.
   │   └── examples/
   │       └── *.py
   │
-  ├── saved/
+  ├── saved/ - train information
   │   └── EXP_name/
   │       └── run_id/
+  │           ├── log/ - training log and logdir for tensorboard
+  │           ├── metrics_best/ - training best metric results
   │           ├── models/ - trained models are saved here
-  │           ├── log/ - default logdir for tensorboard and logging output   
   │           └── dataset_model.json - backup config file when start training
+  │
+  ├── output/ - test information
+  │   └── EXP_name/
+  │       └── run_id/
+  │           ├── fig/ - figures
+  │           ├── log/ - testing log
+  │           └── metric/ - testing metric results
   │
   ├── scripts/ - scripts for *.sh
   │   ├── new_project/
