@@ -1,6 +1,6 @@
-*data/
+__pycache__/
 log
 output/
-__pycache__/
 saved/
+*data/
 *.vim

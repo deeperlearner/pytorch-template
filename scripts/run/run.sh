@@ -1,6 +1,8 @@
 # This script run train and test
-# bash scripts/run/run.sh
+# bash scripts/run/run.sh $1
+# $1: debug or run_all
 
+MODE=$1
 # cross validation by single-process
 # $1: CONFIG
 # $2: EXP

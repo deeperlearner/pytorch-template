@@ -88,6 +88,8 @@ I add some example codes to use the above features.
 - ImageNet dataset (The data need to be downloaded by yourself)
 - Adult dataset
 
+try `bash scripts/run/examples.sh run_all` to run all examples.
+
 ## Folder Structure
   ```
   Pytorch-Template/
