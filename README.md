@@ -37,6 +37,7 @@ A pytorch template files generator, which supports multiple instances of dataset
 * Bash (Linux)
 * Python >= 3.6
 * requirements.txt
+* [Apex](https://github.com/NVIDIA/apex#quick-start)
 
 ## Features
 * Clear folder structure which is suitable for many deep learning projects.
@@ -85,6 +86,12 @@ The multi-processing is handled by `scripts/run/run.sh`. You can decide how many
 
 :warning: Caveat: If your dataset is large, running many processes may cost a lot of RAM.
 Be careful to adjust the number of processes and the number of workers in the `data_loaders` part of config.
+
+### [Apex](https://github.com/NVIDIA/apex)
+RTX GPU can use apex to do automatic mixed precision training.
+
+### [Optuna](https://github.com/optuna/optuna)
+Use optuna to find hyperparameters.
 
 ### Examples
 I add some example codes to use the above features.

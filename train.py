@@ -4,6 +4,10 @@ import collections
 
 import torch
 from sklearn.utils.class_weight import compute_class_weight
+try:    
+    from apex import amp
+except ImportError:
+    raise ImportError("Please install apex from https://www.github.com/NVIDIA/apex.")
 
 from base import Cross_Valid
 from logger import get_logger
@@ -120,9 +124,17 @@ def main(config):
         update_args = {'data_loaders': {'train': train_data_loaders, 'valid': valid_data_loaders},
                        'models': models,
                        'optimizers': optimizers,
-                       'lr_schedulers': lr_schedulers}
-        torch_args.update(update_args)
+                       'lr_schedulers': lr_schedulers,
+                       'amp': None}
 
+        # amp
+        if config['trainer']['kwargs'].get('apex', False):
+            # TODO: revise here if multiple models and optimizers
+            models['model'], optimizers['model'] = amp.initialize(
+                models['model'], optimizers['model'], opt_level=config.run_args.opt_level)
+            update_args['amp'] = amp
+
+        torch_args.update(update_args)
         trainer = config.init_obj(['trainer'], 'trainers', torch_args,
                                   config.save_dir, config.resume, device)
         log_best = trainer.train()
@@ -146,6 +158,7 @@ if __name__ == '__main__':
     run_args.add_argument('--mode', default='train', type=str)
     run_args.add_argument('--run_id', default=None, type=str)
     run_args.add_argument('--log_name', default=None, type=str)
+    run_args.add_argument('--opt_level', default='O1', type=str, help="amp opt_level")
 
     # custom cli options to modify configuration from default values given in json file.
     mod_args = args.add_argument_group('mod_args')

@@ -3,6 +3,10 @@ from abc import abstractmethod
 
 import torch
 import numpy as np
+try:    
+    from apex import amp
+except ImportError:
+    raise ImportError("Please install apex from https://www.github.com/NVIDIA/apex.")
 
 from base import Cross_Valid
 from logger import get_logger, TensorboardWriter
@@ -28,6 +32,8 @@ class BaseTrainer:
         self.optimizers = torch_args['optimizers']
         # lr_schedulers
         self.lr_schedulers = torch_args['lr_schedulers']
+        # amp
+        self.amp = torch_args['amp']
 
         self.model_dir = save_dir['model']
         # set json kwargs to self.{kwargs}
@@ -115,8 +121,10 @@ class BaseTrainer:
             'epoch': epoch,
             'models': {key: value.state_dict() for key, value in self.models.items()},
             'optimizers': {key: value.state_dict() for key, value in self.optimizers.items()},
-            'monitor_best': self.mnt_best,
+            'monitor_best': self.mnt_best
         }
+        state['apex'] = self.amp.state_dict() if self.apex else None
+
         k_fold = Cross_Valid.k_fold
         fold_idx = Cross_Valid.fold_idx
         fold_prefix = f"fold_{fold_idx}_" if k_fold > 1 else ''
@@ -160,4 +168,5 @@ class BaseTrainer:
             except KeyError:
                 print("optimizers not match, can not resume.")
 
+        self.amp = amp.load_state_dict(checkpoint['amp'])
         self.logger.info("Checkpoint loaded. Resume training from epoch {}".format(self.start_epoch))

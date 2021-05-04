@@ -111,6 +111,9 @@
         "k_fold": 5,
         "fold_idx": 0,
         "kwargs": {
+            "apex": false,
+            "optuna": false,
+
             "finetune": false,
             "epochs": 2,
             "len_epoch": null,

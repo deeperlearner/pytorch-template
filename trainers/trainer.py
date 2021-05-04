@@ -73,7 +73,11 @@ class Trainer(BaseTrainer):
                 outputs = torch.cat((outputs, output))
                 targets = torch.cat((targets, target))
             loss = self.criterion(output, target)
-            loss.backward()
+            if self.apex:
+                with self.amp.scale_loss(loss, self.optimizers['model']) as loss_scaled:
+                    loss_scaled.backward()
+            else:
+                loss.backward()
             self.optimizers['model'].step()
 
             self.train_step += 1
