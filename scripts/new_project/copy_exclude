@@ -1,9 +1,10 @@
-data
-*examples*
-.git
-output
-__pycache__
+.git/
+__pycache__/
+data/
+*examples*/
+output/
+saved/
+scripts/new_project/
+LICENSE
 README.md
-saved
-scripts/new_project
 Session.vim

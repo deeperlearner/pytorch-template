@@ -1,5 +1,6 @@
+#!/bin/bash
 # This script run train and test
-# bash scripts/run/run.sh $1
+# bash ./scripts/run/run.sh $1
 # $1: debug or run_all
 
 MODE=$1
@@ -35,12 +36,21 @@ cv_multi () {
     python3 ensemble.py --k_fold 3 --metric_dir "output/$2/$3/metric" --log_dir "output/$2/$3/log"
 }
 
-CONFIG="dataset_model"
-EXP="dataset_model"
-RUN_ID=0
-cv_single $CONFIG $EXP $RUN_ID
+if [ "$MODE" = "debug" ]; then
+    CONFIG="dataset_model"
+    EXP="dataset_model"
+    RUN_ID="debug"
+    python3 data_loaders/data_loader.py
+    python3 train.py -c "configs/$CONFIG.json" --run_id $RUN_ID
+    python3 test.py -c "configs/$CONFIG.json" --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID
+else
+    CONFIG="dataset_model"
+    EXP="dataset_model"
+    RUN_ID=0
+    cv_single $CONFIG $EXP $RUN_ID
 
-CONFIG="dataset_model"
-EXP="dataset_model"
-RUN_ID=0
-cv_multi $CONFIG $EXP $RUN_ID
+    CONFIG="dataset_model"
+    EXP="dataset_model"
+    RUN_ID=0
+    cv_multi $CONFIG $EXP $RUN_ID
+fi

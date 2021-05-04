@@ -1,6 +1,7 @@
+.ipynb_checkpoints/
 __pycache__/
-log
+data/
+log/
 output/
 saved/
-*data/
-*.vim
+Session.vim

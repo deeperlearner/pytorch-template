@@ -1,5 +1,6 @@
+#!/bin/bash
 # This script run train and test for examples
-# bash scripts/run/examples.sh $1
+# bash ./scripts/run/examples.sh $1
 # $1: debug or run_all
 
 MODE=$1

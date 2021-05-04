@@ -81,6 +81,10 @@ Class `Cross_Valid` in `base/base_dataloader.py` records the index of cross vali
 The models and metric results of each fold are saved.
 `ensemble.py` can ensemble k-fold validation results.
 Also, multi-process cross validation is supported, which allows you to run many folds simultaneously in the background.
+The multi-processing is handled by `scripts/run/run.sh`. You can decide how many processes you want to run at a time by edit the shell script.
+
+:warning: Caveat: If your dataset is large, running many processes may cost a lot of RAM.
+Be careful to adjust the number of processes and the number of workers in the `data_loaders` part of config.
 
 ### Examples
 I add some example codes to use the above features.
