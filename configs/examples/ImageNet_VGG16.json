@@ -2,6 +2,7 @@
     "n_gpu": 1,
     "root_dir": "./",
     "name": "ImageNet_VGG16",
+    "optuna": false,
 
     "datasets": {
         "train": {
@@ -110,6 +111,8 @@
         "module": ".trainer",
         "type": "Trainer",
         "kwargs": {
+            "apex": false,
+
             "finetune": true,
             "epochs": 2,
             "len_epoch": null,

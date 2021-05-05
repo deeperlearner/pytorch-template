@@ -28,7 +28,7 @@ torch.backends.cudnn.benchmark = False
 np.random.seed(SEED)
 
 
-def main(config):
+def main():
     k_fold = config['trainer'].get('k_fold', 1)
     fold_idx = config['trainer'].get('fold_idx', 0)
 
@@ -159,5 +159,5 @@ if __name__ == '__main__':
     test_args = args.add_argument_group('test_args')
     test_args.add_argument('--output_path', default=None, type=str)
 
-    cfg = ConfigParser.from_args(args, options)
-    main(cfg)
+    config = ConfigParser.from_args(args, options)
+    main()

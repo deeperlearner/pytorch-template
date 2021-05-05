@@ -2,6 +2,7 @@
     "n_gpu": 1,
     "root_dir": "./",
     "name": "MNIST_LeNet",
+    "optuna": false,
 
     "datasets": {
         "train": {
@@ -91,6 +92,8 @@
         "module": ".trainer",
         "type": "Trainer",
         "kwargs": {
+            "apex": false,
+
             "finetune": false,
             "epochs": 2,
             "len_epoch": null,

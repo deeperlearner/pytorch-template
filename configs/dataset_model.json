@@ -2,6 +2,7 @@
     "n_gpu": 1,
     "root_dir": "./",
     "name": "dataset_model",
+    "optuna": false,
 
     "datasets": {
         "train": {
@@ -112,7 +113,6 @@
         "fold_idx": 0,
         "kwargs": {
             "apex": false,
-            "optuna": false,
 
             "finetune": false,
             "epochs": 2,

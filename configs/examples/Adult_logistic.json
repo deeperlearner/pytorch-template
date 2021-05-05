@@ -2,6 +2,7 @@
     "n_gpu": 1,
     "root_dir": "./",
     "name": "Adult_logistic",
+    "optuna": true,
 
     "datasets": {
         "train": {
@@ -101,7 +102,6 @@
         "fold_idx": 0,
         "kwargs": {
             "apex": true,
-            "optuna": false,
 
             "finetune": false,
             "epochs": 2,

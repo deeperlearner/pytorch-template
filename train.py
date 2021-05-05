@@ -8,16 +8,17 @@ try:
     from apex import amp
 except ImportError:
     raise ImportError("Please install apex from https://www.github.com/NVIDIA/apex.")
+import optuna
 
 from base import Cross_Valid
 from logger import get_logger
 import models.loss as module_loss
 import models.metric as module_metric
 from parse_config import ConfigParser
-from utils import ensure_dir, prepare_device, get_by_path, msg_box
+from utils import ensure_dir, prepare_device, set_by_path, get_by_path, msg_box
 
 
-def main(config):
+def main():
     k_fold = config['trainer'].get('k_fold', 1)
     fold_idx = config['trainer'].get('fold_idx', 0)
 
@@ -131,7 +132,7 @@ def main(config):
         if config['trainer']['kwargs'].get('apex', False):
             # TODO: revise here if multiple models and optimizers
             models['model'], optimizers['model'] = amp.initialize(
-                models['model'], optimizers['model'], opt_level=config.run_args.opt_level)
+                models['model'], optimizers['model'], opt_level='O1')
             update_args['amp'] = amp
 
         torch_args.update(update_args)
@@ -149,6 +150,19 @@ def main(config):
             msg = msg_box("result")
             logger.info(f"{msg}\n{log_best}")
 
+    return log_best[mnt_metric]
+
+
+def objective(trial):
+    # TODO: hyperparameters search spaces
+    search_opt_type = trial.suggest_categorical("optimizer", ['Adam', 'RMSprop', 'SGD'])
+    set_by_path(config, "optimizers;model;type", search_opt_type)
+    search_lr = trial.suggest_float("lr", 1e-4, 1e-3, log=True)
+    set_by_path(config, "optimizers;model;kwargs;lr", search_lr)
+
+    result = main()
+    return result
+
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='training')
@@ -158,7 +172,6 @@ if __name__ == '__main__':
     run_args.add_argument('--mode', default='train', type=str)
     run_args.add_argument('--run_id', default=None, type=str)
     run_args.add_argument('--log_name', default=None, type=str)
-    run_args.add_argument('--opt_level', default='O1', type=str, help="amp opt_level")
 
     # custom cli options to modify configuration from default values given in json file.
     mod_args = args.add_argument_group('mod_args')
@@ -173,5 +186,11 @@ if __name__ == '__main__':
     for opt in options:
         mod_args.add_argument(*opt.flags, type=opt.type)
 
-    cfg = ConfigParser.from_args(args, options)
-    main(cfg)
+    config = ConfigParser.from_args(args, options)
+
+    if config['optuna']:
+        max_min, mnt_metric = config['trainer']['kwargs']['monitor'].split()
+        study = optuna.create_study(direction='maximize' if max_min == 'max' else 'minimize')
+        study.optimize(objective, n_trials=10)
+    else:
+        main()

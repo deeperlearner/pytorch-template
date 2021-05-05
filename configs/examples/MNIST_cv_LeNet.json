@@ -2,6 +2,7 @@
     "n_gpu": 1,
     "root_dir": "./",
     "name": "MNIST_cv_LeNet",
+    "optuna": false,
 
     "datasets": {
         "train": {
@@ -93,6 +94,8 @@
         "k_fold": 3,
         "fold_idx": 0,
         "kwargs": {
+            "apex": false,
+
             "finetune": false,
             "epochs": 2,
             "len_epoch": null,
