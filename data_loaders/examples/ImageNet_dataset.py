@@ -6,8 +6,6 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from PIL import Image
 
-from base import BaseDataLoader
-
 
 class ImageNetDataset(Dataset):
     def __init__(self, data_dir='./data/ImageNet', mode=''):

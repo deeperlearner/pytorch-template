@@ -53,19 +53,26 @@ def main():
     for name in get_by_path(config, keys):
         valid_exist = True
         valid_datasets[name] = config.init_obj([*keys, name], 'data_loaders')
+    ## compute inverse class frequency as class weight
+    if config['datasets'].get('imbalanced', False):
+        target = train_datasets['data'].y_train  # TODO
+        class_weight = compute_class_weight(class_weight='balanced',
+                                            classes=target.unique(),
+                                            y=target)
+        class_weight = torch.FloatTensor(class_weight).to(device)
+    else:
+        class_weight = None
 
     # losses
     losses = dict()
     for name in config['losses']:
         kwargs = {}
-        # TODO
         if config['losses'][name].get('balanced', False):
-            target = train_datasets['data'].y_train
-            weight = compute_class_weight(class_weight='balanced',
-                                          classes=target.unique(),
-                                          y=target)
-            weight = torch.FloatTensor(weight).to(device)
-            kwargs.update(pos_weight=weight[1])
+            loss_type = config['losses'][name]['type']
+            if loss_type == 'BCEWithLogitsLoss':
+                kwargs.update(pos_weight=class_weight[1])
+            elif loss_type == 'CrossEntropyLoss':
+                kwargs.update(weight=class_weight)
         losses[name] = config.init_obj(['losses', name], module_loss, **kwargs)
 
     # metrics
@@ -79,7 +86,7 @@ def main():
 
     if k_fold > 1:  # cross validation enabled
         train_datasets['data'].split_cv_indexes(k_fold)
-    Cross_Valid.create_CV(k_fold, fold_idx)
+        Cross_Valid.create_CV(k_fold, fold_idx)
 
     for k in range(k_loop):
         # data_loaders
@@ -88,15 +95,22 @@ def main():
         ## train
         keys = ['data_loaders', 'train']
         for name in get_by_path(config, keys):
+            kwargs = {}
+            if 'balanced' in get_by_path(config, [*keys, name, 'module']):
+                kwargs.update(
+                    class_weight=class_weight.cpu().detach().numpy(),
+                    target=target)
             dataset = train_datasets[name]
-            train_data_loaders[name] = config.init_obj([*keys, name], 'data_loaders', dataset)
+            loaders = config.init_obj([*keys, name], 'data_loaders', dataset, **kwargs)
+            train_data_loaders[name] = loaders.train_loader
             if not valid_exist:
-                valid_data_loaders[name] = train_data_loaders[name].valid_loader
+                valid_data_loaders[name] = loaders.valid_loader
         ## valid
         keys = ['data_loaders', 'valid']
         for name in get_by_path(config, keys):
             dataset = valid_datasets[name]
-            valid_data_loaders[name] = config.init_obj([*keys, name], 'data_loaders', dataset)
+            loaders = config.init_obj([*keys, name], 'data_loaders', dataset)
+            valid_data_loaders[name] = loaders.valid_loader
 
         # models
         models = dict()
@@ -129,7 +143,7 @@ def main():
                        'amp': None}
 
         # amp
-        if config['trainer']['kwargs'].get('apex', False):
+        if config['trainer']['kwargs']['apex']:
             # TODO: revise here if multiple models and optimizers
             models['model'], optimizers['model'] = amp.initialize(
                 models['model'], optimizers['model'], opt_level='O1')
@@ -188,8 +202,8 @@ if __name__ == '__main__':
 
     config = ConfigParser.from_args(args, options)
 
+    max_min, mnt_metric = config['trainer']['kwargs']['monitor'].split()
     if config['optuna']:
-        max_min, mnt_metric = config['trainer']['kwargs']['monitor'].split()
         study = optuna.create_study(direction='maximize' if max_min == 'max' else 'minimize')
         study.optimize(objective, n_trials=10)
     else:

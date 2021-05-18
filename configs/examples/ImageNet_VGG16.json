@@ -7,7 +7,7 @@
     "datasets": {
         "train": {
             "data": {
-                "module": ".examples.ImageNet_loader",
+                "module": ".examples.ImageNet_dataset",
                 "type": "ImageNetDataset",
                 "kwargs": {
                     "data_dir": "./data/ImageNet",
@@ -17,7 +17,7 @@
         },
         "valid": {
             "data": {
-                "module": ".examples.ImageNet_loader",
+                "module": ".examples.ImageNet_dataset",
                 "type": "ImageNetDataset",
                 "kwargs": {
                     "data_dir": "./data/ImageNet",
@@ -27,7 +27,7 @@
         },
         "test": {
             "data": {
-                "module": ".examples.ImageNet_loader",
+                "module": ".examples.ImageNet_dataset",
                 "type": "ImageNetDataset",
                 "kwargs": {
                     "data_dir": "./data/ImageNet",
@@ -39,7 +39,7 @@
     "data_loaders": {
         "train": {
             "data": {
-                "module": ".examples.ImageNet_loader",
+                "module": ".valid_loader",
                 "type": "DataLoader",
                 "kwargs": {
                     "batch_size": 64,
@@ -50,7 +50,7 @@
         },
         "valid": {
             "data": {
-                "module": ".examples.ImageNet_loader",
+                "module": ".valid_loader",
                 "type": "DataLoader",
                 "kwargs": {
                     "batch_size": 64,
@@ -61,7 +61,7 @@
         },
         "test": {
             "data": {
-                "module": ".examples.ImageNet_loader",
+                "module": ".valid_loader",
                 "type": "DataLoader",
                 "kwargs": {
                     "batch_size": 64,

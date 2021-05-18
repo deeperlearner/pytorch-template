@@ -36,11 +36,21 @@ def main():
     test_msg = msg_box("TEST")
     logger.debug(test_msg)
 
+    # setup GPU device if available, move model into configured device
+    device, device_ids = prepare_device(config['n_gpu'])
+
     # datasets
     test_datasets = dict()
     keys = ['datasets', 'test']
     for name in get_by_path(config, keys):
         test_datasets[name] = config.init_obj([*keys, name], 'data_loaders')
+    ## compute inverse class frequency as class weight
+    if config['datasets'].get('imbalanced', False):
+        target = test_datasets['data'].y_test  # TODO
+        class_weight = compute_class_weight(class_weight='balanced',
+                                            classes=target.unique(),
+                                            y=target)
+        class_weight = torch.FloatTensor(class_weight).to(device)
 
     # data_loaders
     test_data_loaders = dict()
@@ -51,9 +61,6 @@ def main():
         if do_transform:
             dataset.transform()
         test_data_loaders[name] = config.init_obj([*keys, name], 'data_loaders', dataset)
-
-    # prepare model for testing
-    device, device_ids = prepare_device(config['n_gpu'])
 
     Cross_Valid.create_CV(k_fold, fold_idx)
     for fold_idx in range(1, k_fold + 1):
@@ -82,14 +89,12 @@ def main():
 
         # losses
         kwargs = {}
-        # TODO
         if config['losses']['loss'].get('balanced', False):
-            target = test_datasets['data'].y_test
-            weight = compute_class_weight(class_weight='balanced',
-                                          classes=target.unique(),
-                                          y=target)
-            weight = torch.FloatTensor(weight).to(device)
-            kwargs.update(pos_weight=weight[1])
+            loss_type = config['losses'][name]['type']
+            if loss_type == 'BCEWithLogitsLoss':
+                kwargs.update(pos_weight=class_weight[1])
+            elif loss_type == 'CrossEntropyLoss':
+                kwargs.update(weight=class_weight)
         loss_fn = config.init_obj(['losses', 'loss'], module_loss, **kwargs)
 
         # metrics

@@ -2,12 +2,13 @@
     "n_gpu": 1,
     "root_dir": "./",
     "name": "Adult_logistic",
-    "optuna": true,
+    "optuna": false,
 
     "datasets": {
+        "imbalanced": true,
         "train": {
             "data": {
-                "module": ".examples.Adult_loader",
+                "module": ".examples.Adult_dataset",
                 "type": "AdultDataset",
                 "kwargs": {
                     "data_dir": "./data/Adult",
@@ -19,7 +20,7 @@
         },
         "test": {
             "data": {
-                "module": ".examples.Adult_loader",
+                "module": ".examples.Adult_dataset",
                 "type": "AdultDataset",
                 "kwargs": {
                     "data_dir": "./data/Adult",
@@ -31,16 +32,15 @@
     "data_loaders": {
         "train": {
             "data": {
-                "module": ".examples.Adult_loader",
-                "type": "BaseDataLoader",
+                "module": ".imbalanced_loader",
+                "type": "ImbalancedDataLoader",
                 "kwargs": {
                     "validation_split": 0.2,
                     "DataLoader_kwargs": {
                         "batch_size": 64,
                         "shuffle": true,
                         "num_workers": 4
-                    },
-                    "do_transform": true
+                    }
                 }
             }
         },
@@ -48,7 +48,7 @@
         },
         "test": {
             "data": {
-                "module": ".examples.Adult_loader",
+                "module": ".imbalanced_loader",
                 "type": "DataLoader",
                 "kwargs": {
                     "batch_size": 64,

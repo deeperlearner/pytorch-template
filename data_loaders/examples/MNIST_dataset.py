@@ -3,8 +3,6 @@ from torchvision import transforms
 from torchvision.datasets import MNIST
 from sklearn.model_selection import StratifiedKFold
 
-from base import BaseDataLoader
-
 
 class MNISTTrainset(MNIST):
     def __init__(self, data_dir='./data/MNIST'):

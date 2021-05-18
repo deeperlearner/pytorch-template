@@ -5,10 +5,11 @@
     "optuna": false,
 
     "datasets": {
+        "imbalanced": false,
         "train": {
             "data": {
-                "module": ".data_loader",
-                "type": "MyDataset",
+                "module": ".*_dataset",
+                "type": "*Dataset",
                 "kwargs": {
                     "data_dir": "./data",
                     "label_path": null,
@@ -20,8 +21,8 @@
         },
         "test": {
             "data": {
-                "module": ".data_loader",
-                "type": "MyDataset",
+                "module": ".*_dataset",
+                "type": "*Dataset",
                 "kwargs": {
                     "data_dir": "./data",
                     "label_path": null,
@@ -33,16 +34,15 @@
     "data_loaders": {
         "train": {
             "data": {
-                "module": ".data_loader",
-                "type": "BaseDataLoader",
+                "module": ".valid_loader",
+                "type": "ValidDataLoader",
                 "kwargs": {
                     "validation_split": 0.2,
                     "DataLoader_kwargs": {
                         "batch_size": 64,
                         "shuffle": true,
                         "num_workers": 4
-                    },
-                    "do_transform": true
+                    }
                 }
             }
         },
@@ -50,14 +50,13 @@
         },
         "test": {
             "data": {
-                "module": ".data_loader",
+                "module": ".valid_loader",
                 "type": "DataLoader",
                 "kwargs": {
                     "batch_size": 64,
                     "shuffle": false,
                     "num_workers": 4
-                },
-                "do_transform": true
+                }
             }
         }
     },
@@ -73,12 +72,12 @@
             "type": "nll_loss"
         },
         "bce_logits": {
-            "balanced": true,
-            "type": "BCEWithLogitsLoss"
+            "type": "BCEWithLogitsLoss",
+            "balanced": true
         },
         "ce": {
-            "balanced": true,
-            "type": "CrossEntropyLoss"
+            "type": "CrossEntropyLoss",
+            "balanced": true
         },
         "focal": {
             "is_ftn": true,

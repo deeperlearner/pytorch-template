@@ -1,5 +1,5 @@
 # PyTorch Template Project
-A pytorch template files generator, which supports multiple instances of dataset, dataloader, model, optimizer, loss, optimizer and lr_scheduler.
+A pytorch template files generator, which supports multiple instances of dataset, dataloader, model, loss, optimizer and lr_scheduler.
 
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
 
@@ -114,7 +114,8 @@ try `bash scripts/run/examples.sh run_all` to run all examples.
   │
   ├── base/ - abstract base classes
   │   ├── base_data_loader.py
-  │   └── base_trainer.py
+  │   ├── base_trainer.py
+  │   └── cross_validation.py
   │
   ├── configs/ - configurations for training
   │   ├── dataset_model.json
@@ -124,7 +125,8 @@ try `bash scripts/run/examples.sh run_all` to run all examples.
   ├── data/ - default directory for storing input data
   │
   ├── data_loaders/ - anything about data loading goes here
-  │   ├── data_loader.py
+  │   ├── *_dataset.py
+  │   ├── *_loader.py
   │   └── examples/
   │       └── *_loader.py
   │

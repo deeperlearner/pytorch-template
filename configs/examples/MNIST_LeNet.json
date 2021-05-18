@@ -7,7 +7,7 @@
     "datasets": {
         "train": {
             "data": {
-                "module": ".examples.MNIST_loader",
+                "module": ".examples.MNIST_dataset",
                 "type": "MNISTTrainset",
                 "kwargs": {
                     "data_dir": "./data/MNIST"
@@ -18,7 +18,7 @@
         },
         "test": {
             "data": {
-                "module": ".examples.MNIST_loader",
+                "module": ".examples.MNIST_dataset",
                 "type": "MNISTTestset",
                 "kwargs": {
                     "data_dir": "./data/MNIST"
@@ -29,8 +29,8 @@
     "data_loaders": {
         "train": {
             "data": {
-                "module": ".examples.MNIST_loader",
-                "type": "BaseDataLoader",
+                "module": ".valid_loader",
+                "type": "ValidDataLoader",
                 "kwargs": {
                     "validation_split": 0.2,
                     "DataLoader_kwargs": {
@@ -45,7 +45,7 @@
         },
         "test": {
             "data": {
-                "module": ".examples.MNIST_loader",
+                "module": ".valid_loader",
                 "type": "DataLoader",
                 "kwargs": {
                     "batch_size": 64,

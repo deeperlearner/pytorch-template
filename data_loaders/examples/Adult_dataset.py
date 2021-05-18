@@ -7,9 +7,6 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import StratifiedKFold
 
-if __name__ != '__main__':
-    from base import BaseDataLoader
-
 
 class AdultDataset(Dataset):
 
@@ -77,7 +74,7 @@ class AdultDataset(Dataset):
         self.impute()
         self.normalize()
 
-    def compute_mean_std_mode(self):
+    def compute_info(self):
         # compute mean, std, mode on training data only!
         if self.mode == 'train':
             train_idx, valid_idx = self.split_idx
@@ -105,7 +102,7 @@ class AdultDataset(Dataset):
         if method == 'zero':
             num_fill, cat_fill = 0, 0
         elif method == 'simple':
-            num_mean, num_std, cat_mode = self.compute_mean_std_mode()
+            num_mean, num_std, cat_mode = self.compute_info()
             num_fill, cat_fill = num_mean, cat_mode
 
         if self.mode == 'train':
@@ -123,7 +120,7 @@ class AdultDataset(Dataset):
             x_num, x_cat = self.x_num_test_hat, self.x_cat_test_hat
             y = self.y_test
 
-        num_mean, num_std, cat_mode = self.compute_mean_std_mode()
+        num_mean, num_std, cat_mode = self.compute_info()
         # normalize on numerical data only!
         x_num = (x_num - num_mean) / num_std
         # DataFrame to Tensor
