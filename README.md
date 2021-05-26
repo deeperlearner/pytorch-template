@@ -128,7 +128,7 @@ try `bash scripts/run/examples.sh run_all` to run all examples.
   │   ├── *_dataset.py
   │   ├── *_loader.py
   │   └── examples/
-  │       └── *_loader.py
+  │       └── *_dataset.py
   │
   ├── logger/ - module for tensorboard visualization and logging
   │   ├── visualization.py

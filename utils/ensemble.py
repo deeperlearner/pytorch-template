@@ -8,13 +8,10 @@ from logger import setup_logging, get_logger
 from utils import msg_box
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='ensemble')
-    parser.add_argument('--k_fold', default=3, type=int)
-    parser.add_argument('--metric_dir', default="saved/dataset_model/0/metrics_best", type=str)
-    parser.add_argument('--log_dir', default="saved/dataset_model/0/log", type=str)
-    parser.add_argument('--log_name', default="info.log", type=str)
-    args = parser.parse_args()
+def average(k_fold=3,
+            metric_dir="saved/dataset_model/0/metrics_best",
+            log_dir="saved/dataset_model/0/log",
+            log_name="info.log"):
 
     log_means = pd.DataFrame()
     for k in range(1, args.k_fold + 1):
@@ -32,3 +29,16 @@ if __name__ == '__main__':
     logger = get_logger('ensemble')
     k_fold_msg = msg_box(f"{args.k_fold}-fold cross validation averaged result")
     logger.info(f"{k_fold_msg}\n{result}")
+
+    return result.mean
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='ensemble')
+    parser.add_argument('--k_fold', default=3, type=int)
+    parser.add_argument('--metric_dir', default="saved/dataset_model/0/metrics_best", type=str)
+    parser.add_argument('--log_dir', default="saved/dataset_model/0/log", type=str)
+    parser.add_argument('--log_name', default="info.log", type=str)
+    args = parser.parse_args()
+
+    average(args.k_fold, args.metric_dir, args.log_dir, args.log_name)

@@ -1,10 +1,10 @@
 .git/
 __pycache__/
 data/
-*examples*/
 output/
 saved/
 scripts/new_project/
+*examples*
 LICENSE
 README.md
 Session.vim

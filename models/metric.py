@@ -3,6 +3,7 @@ from math import sqrt
 import pandas as pd
 import numpy as np
 import torch
+from sklearn.metrics import recall_score, precision_score
 from sklearn.metrics import roc_auc_score, average_precision_score
 
 smooth = 1e-6
@@ -50,64 +51,82 @@ class MetricTracker:
         self.std()
         iter_result = self.metrics_iter[['mean', 'std']]
         epoch_result = self.metrics_epoch
-
         return pd.concat([iter_result, epoch_result])
 
 
-def accuracy(output, target):
+# for multi-class classification
+def accuracy(target, output):
     with torch.no_grad():
-        pred = torch.argmax(output, dim=1)
-        assert pred.shape[0] == len(target)
+        predict = torch.argmax(output, dim=1)
+        assert predict.shape[0] == len(target)
         correct = 0
-        correct += torch.sum(pred == target).item()
+        correct += torch.sum(predict == target).item()
     return correct / len(target)
 
 
-def top_k_acc(output, target, k=3):
+def top_k_acc(target, output, k=3):
     with torch.no_grad():
-        pred = torch.topk(output, k, dim=1)[1]
-        assert pred.shape[0] == len(target)
+        predict = torch.topk(output, k, dim=1)[1]
+        assert predict.shape[0] == len(target)
         correct = 0
         for i in range(k):
-            correct += torch.sum(pred[:, i] == target).item()
+            correct += torch.sum(predict[:, i] == target).item()
     return correct / len(target)
 
 
-def binary_accuracy(output, target, sigmoid=True):
-    if sigmoid:
-        output = torch.sigmoid(output)
+# for binary classification
+threshold = 0.5
+def binary_accuracy(target, output):
     with torch.no_grad():
+        predict = (output > threshold).type(torch.uint8)
         correct = 0
-        correct += torch.sum(torch.abs(output - target) < 0.5).item()
+        correct += torch.sum(predict == target).item()
     return correct / len(target)
 
 
-def AUROC(output, target):
+# recall
+def TPR(target, output):
     with torch.no_grad():
-        value = roc_auc_score(target.cpu().numpy(), output.cpu().numpy())
+        predict = (output > threshold).type(torch.uint8)
+        value = recall_score(target.cpu().numpy(), predict.cpu().numpy())
     return value
 
 
-def AUPRC(output, target):
+# precision
+def PPV(target, output):
     with torch.no_grad():
-        value = average_precision_score(target.cpu().numpy(), output.cpu().numpy())
+        predict = (output > threshold).type(torch.uint8)
+        value = precision_score(target.cpu().numpy(), predict.cpu().numpy())
     return value
 
 
-def mean_iou_score(output, labels):
+def AUROC(target, output):
+    with torch.no_grad():
+        predict = (output > threshold).type(torch.uint8)
+        value = roc_auc_score(target.cpu().numpy(), predict.cpu().numpy())
+    return value
+
+
+def AUPRC(target, output):
+    with torch.no_grad():
+        predict = (output > threshold).type(torch.uint8)
+        value = average_precision_score(target.cpu().numpy(), predict.cpu().numpy())
+    return value
+
+
+def mean_iou_score(target, output):
     '''
     Compute mean IoU score over 6 classes
     '''
     with torch.no_grad():
-        pred = torch.argmax(output, dim=1)
-        pred = pred.data.cpu().numpy()
-        labels = labels.data.cpu().numpy()
+        predict = torch.argmax(output, dim=1)
+        predict = predict.cpu().numpy()
+        target = target.cpu().numpy()
         mean_iou = 0
         for i in range(6):
-            tp_fp = np.sum(pred == i)
-            tp_fn = np.sum(labels == i)
-            tp = np.sum((pred == i) * (labels == i))
+            tp_fp = np.sum(predict == i)
+            tp_fn = np.sum(target == i)
+            tp = np.sum((predict == i) * (target == i))
             iou = (tp + smooth) / (tp_fp + tp_fn - tp + smooth)
             mean_iou += iou / 6
-
     return mean_iou
