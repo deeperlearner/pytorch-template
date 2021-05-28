@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from sklearn.metrics import recall_score, precision_score
 from sklearn.metrics import roc_auc_score, average_precision_score
+from sklearn.metrics import roc_curve
 
 smooth = 1e-6
 
@@ -54,7 +55,55 @@ class MetricTracker:
         return pd.concat([iter_result, epoch_result])
 
 
-# for multi-class classification
+# for binary classification
+THRESHOLD = 0.5
+def Youden_J(target, output):
+    global THRESHOLD
+    with torch.no_grad():
+        fpr, tpr, thresholds = roc_curve(target.cpu().numpy(), output.cpu().numpy())
+        THRESHOLD = thresholds[np.argmax(tpr - fpr)]
+    return THRESHOLD
+
+
+def binary_accuracy(target, output):
+    with torch.no_grad():
+        predict = (output > THRESHOLD).type(torch.uint8)
+        correct = 0
+        correct += torch.sum(predict == target).item()
+    return correct / len(target)
+
+
+# recall
+def TPR(target, output):
+    with torch.no_grad():
+        predict = (output > THRESHOLD).type(torch.uint8)
+        value = recall_score(target.cpu().numpy(), predict.cpu().numpy())
+    return value
+
+
+# precision
+def PPV(target, output):
+    with torch.no_grad():
+        predict = (output > THRESHOLD).type(torch.uint8)
+        value = precision_score(target.cpu().numpy(), predict.cpu().numpy())
+    return value
+
+
+def AUROC(target, output):
+    with torch.no_grad():
+        predict = (output > THRESHOLD).type(torch.uint8)
+        value = roc_auc_score(target.cpu().numpy(), predict.cpu().numpy())
+    return value
+
+
+def AUPRC(target, output):
+    with torch.no_grad():
+        predict = (output > THRESHOLD).type(torch.uint8)
+        value = average_precision_score(target.cpu().numpy(), predict.cpu().numpy())
+    return value
+
+
+# for multiclass classification
 def accuracy(target, output):
     with torch.no_grad():
         predict = torch.argmax(output, dim=1)
@@ -72,46 +121,6 @@ def top_k_acc(target, output, k=3):
         for i in range(k):
             correct += torch.sum(predict[:, i] == target).item()
     return correct / len(target)
-
-
-# for binary classification
-threshold = 0.5
-def binary_accuracy(target, output):
-    with torch.no_grad():
-        predict = (output > threshold).type(torch.uint8)
-        correct = 0
-        correct += torch.sum(predict == target).item()
-    return correct / len(target)
-
-
-# recall
-def TPR(target, output):
-    with torch.no_grad():
-        predict = (output > threshold).type(torch.uint8)
-        value = recall_score(target.cpu().numpy(), predict.cpu().numpy())
-    return value
-
-
-# precision
-def PPV(target, output):
-    with torch.no_grad():
-        predict = (output > threshold).type(torch.uint8)
-        value = precision_score(target.cpu().numpy(), predict.cpu().numpy())
-    return value
-
-
-def AUROC(target, output):
-    with torch.no_grad():
-        predict = (output > threshold).type(torch.uint8)
-        value = roc_auc_score(target.cpu().numpy(), predict.cpu().numpy())
-    return value
-
-
-def AUPRC(target, output):
-    with torch.no_grad():
-        predict = (output > threshold).type(torch.uint8)
-        value = average_precision_score(target.cpu().numpy(), predict.cpu().numpy())
-    return value
 
 
 def mean_iou_score(target, output):

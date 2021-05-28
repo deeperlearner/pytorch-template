@@ -79,8 +79,8 @@
         }
     },
     "metrics": {
-        "per_iteration": ["binary_accuracy", "TPR", "PPV"],
-        "per_epoch": ["AUROC", "AUPRC"]
+        "per_iteration": ["binary_accuracy"],
+        "per_epoch": ["TPR", "PPV", "AUROC", "AUPRC"]
     },
     "optimizers": {
         "model": {
@@ -106,6 +106,7 @@
         "fold_idx": 0,
         "kwargs": {
             "apex": true,
+            "opt_J": true,
 
             "finetune": false,
             "epochs": 2,

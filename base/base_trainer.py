@@ -17,23 +17,23 @@ class BaseTrainer:
     """
     Base class for all trainers
     """
-    def __init__(self, torch_args: dict, save_dir, **kwargs):
+    def __init__(self, torch_objs: dict, save_dir, **kwargs):
         # data_loaders
-        self.train_data_loaders = torch_args['data_loaders']['train']
-        self.valid_data_loaders = torch_args['data_loaders']['valid']
+        self.train_data_loaders = torch_objs['data_loaders']['train']
+        self.valid_data_loaders = torch_objs['data_loaders']['valid']
         # models
-        self.models = torch_args['models']
+        self.models = torch_objs['models']
         # losses
-        self.losses = torch_args['losses']
+        self.losses = torch_objs['losses']
         # metrics
-        self.metrics_iter = torch_args['metrics']['iter']
-        self.metrics_epoch = torch_args['metrics']['epoch']
+        self.metrics_iter = torch_objs['metrics']['iter']
+        self.metrics_epoch = torch_objs['metrics']['epoch']
         # optimizers
-        self.optimizers = torch_args['optimizers']
+        self.optimizers = torch_objs['optimizers']
         # lr_schedulers
-        self.lr_schedulers = torch_args['lr_schedulers']
+        self.lr_schedulers = torch_objs['lr_schedulers']
         # amp
-        self.amp = torch_args['amp']
+        self.amp = torch_objs['amp']
 
         self.model_dir = save_dir['model']
         # set json kwargs to self.{kwargs}
@@ -57,6 +57,11 @@ class BaseTrainer:
 
         # setup visualization writer instance
         self.writer = TensorboardWriter(save_dir['log'], self.logger, self.tensorboard)
+
+        if hasattr(self, 'opt_J'):
+            self.threshold = 0.5
+        else:
+            self.opt_J = False
 
     @abstractmethod
     def _train_epoch(self, epoch):
@@ -123,7 +128,10 @@ class BaseTrainer:
             'optimizers': {key: value.state_dict() for key, value in self.optimizers.items()},
             'monitor_best': self.mnt_best
         }
-        state['apex'] = self.amp.state_dict() if self.apex else None
+        if self.apex:
+            state['apex'] = self.amp.state_dict()
+        if self.opt_J:
+            state['threshold'] = self.threshold
 
         k_fold = Cross_Valid.k_fold
         fold_idx = Cross_Valid.fold_idx
@@ -168,5 +176,8 @@ class BaseTrainer:
             except KeyError:
                 print("optimizers not match, can not resume.")
 
-        self.amp = amp.load_state_dict(checkpoint['amp'])
+        if self.apex:
+            self.amp = amp.load_state_dict(checkpoint['amp'])
+        if self.opt_J:
+            self.threshold = checkpoint['threshold']
         self.logger.info("Checkpoint loaded. Resume training from epoch {}".format(self.start_epoch))

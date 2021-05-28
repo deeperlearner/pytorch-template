@@ -43,14 +43,14 @@ if [ "$MODE" = "debug" ]; then
     RUN_ID="debug"
     # cv_single $CONFIG $EXP $RUN_ID
     python3 train.py -c "configs/$CONFIG.json" --run_id $RUN_ID
-    # python3 test.py -c "configs/$CONFIG.json" --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID
+    # python3 test.py -c "saved/$EXP/$RUN_ID/$CONFIG.json" --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID
 else  # "$MODE" = "run_all"
     # MNIST_LeNet
     CONFIG="examples/MNIST_LeNet"
     EXP="MNIST_LeNet"
     RUN_ID="0"
     python3 train.py -c "configs/$CONFIG.json" --run_id $RUN_ID
-    python3 test.py -c "configs/$CONFIG.json" --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID
+    python3 test.py -c "saved/$EXP/$RUN_ID/$CONFIG.json" --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID
 
     # MNIST_LeNet (cv)
     CONFIG="examples/MNIST_cv_LeNet"
@@ -71,7 +71,7 @@ else  # "$MODE" = "run_all"
     RUN_ID="0"
     cv_single $CONFIG $EXP $RUN_ID
 
-    # Adult_logistic (cv) use multiprocessing
+    # Adult_logistic (cv) use multithreading
     CONFIG="examples/Adult_logistic"
     EXP="Adult_logistic"
     RUN_ID="1"

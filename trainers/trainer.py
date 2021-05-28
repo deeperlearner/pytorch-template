@@ -7,8 +7,7 @@ import torch
 from torchvision.utils import make_grid
 
 from base import BaseTrainer
-import models.metric
-from models.metric import MetricTracker
+from models.metric import MetricTracker, Youden_J
 from utils import inf_loop
 
 
@@ -16,9 +15,9 @@ class Trainer(BaseTrainer):
     """
     Trainer class
     """
-    def __init__(self, torch_args: dict, save_dir, resume, device, **kwargs):
+    def __init__(self, torch_objs: dict, save_dir, resume, device, **kwargs):
         self.device = device
-        super().__init__(torch_args, save_dir, **kwargs)
+        super().__init__(torch_objs, save_dir, **kwargs)
 
         if resume is not None:
             self._resume_checkpoint(resume, finetune=self.finetune)
@@ -34,6 +33,9 @@ class Trainer(BaseTrainer):
         self.log_step = int(np.sqrt(self.train_data_loaders['data'].batch_size))
         self.train_step, self.valid_step = 0, 0
 
+        # models
+        self.model = self.models['model']
+
         # losses
         self.criterion = self.losses['loss']
 
@@ -43,6 +45,9 @@ class Trainer(BaseTrainer):
         keys_epoch = [m.__name__ for m in self.metrics_epoch]
         self.train_metrics = MetricTracker(keys_loss + keys_iter, keys_epoch, writer=self.writer)
         self.valid_metrics = MetricTracker(keys_loss + keys_iter, keys_epoch, writer=self.writer)
+
+        # optimizers
+        self.optimizer = self.optimizers['model']
 
         # learning rate schedulers
         self.do_lr_scheduling = len(self.lr_schedulers) > 0
@@ -56,27 +61,29 @@ class Trainer(BaseTrainer):
         :return: A log that contains average loss and metric in this epoch.
         """
         start = time.time()
-        self.models['model'].train()
+        train_loader = self.train_data_loaders['data']
+
+        self.model.train()
         self.train_metrics.reset()
         if len(self.metrics_epoch) > 0:
             outputs = torch.FloatTensor().to(self.device)
             targets = torch.FloatTensor().to(self.device)
 
-        for batch_idx, (data, target) in enumerate(self.train_data_loaders['data']):
+        for batch_idx, (data, target) in enumerate(train_loader):
             data, target = data.to(self.device), target.to(self.device)
 
-            self.optimizers['model'].zero_grad()
-            output = self.models['model'](data)
+            self.optimizer.zero_grad()
+            output = self.model(data)
             if len(self.metrics_epoch) > 0:
                 outputs = torch.cat((outputs, output))
                 targets = torch.cat((targets, target))
             loss = self.criterion(output, target)
             if self.apex:
-                with self.amp.scale_loss(loss, self.optimizers['model']) as loss_scaled:
+                with self.amp.scale_loss(loss, self.optimizer) as loss_scaled:
                     loss_scaled.backward()
             else:
                 loss.backward()
-            self.optimizers['model'].step()
+            self.optimizer.step()
 
             self.train_step += 1
             self.writer.set_step(self.train_step)
@@ -127,17 +134,19 @@ class Trainer(BaseTrainer):
         :param epoch: Integer, current training epoch.
         :return: A log that contains information about validation
         """
-        self.models['model'].eval()
+        valid_loader = self.train_data_loaders['data']
+
+        self.model.eval()
         self.valid_metrics.reset()
         with torch.no_grad():
             if len(self.metrics_epoch) > 0:
                 outputs = torch.FloatTensor().to(self.device)
                 targets = torch.FloatTensor().to(self.device)
 
-            for batch_idx, (data, target) in enumerate(self.valid_data_loaders['data']):
+            for batch_idx, (data, target) in enumerate(valid_loader):
                 data, target = data.to(self.device), target.to(self.device)
 
-                output = self.models['model'](data)
+                output = self.model(data)
                 loss = self.criterion(output, target)
                 if len(self.metrics_epoch) > 0:
                     outputs = torch.cat((outputs, output))
@@ -152,8 +161,9 @@ class Trainer(BaseTrainer):
 
             for met in self.metrics_epoch:
                 self.valid_metrics.epoch_update(met.__name__, met(targets, outputs))
-            # Youden's J
-            models.metric.threshold = 0.5
+
+            if self.opt_J:
+                self.threshold = Youden_J(targets, outputs)
 
         # # add histogram of model parameters to the tensorboard
         # for name, param in self.models['model'].named_parameters():
