@@ -2,15 +2,15 @@
     "n_gpu": 1,
     "root_dir": "./",
     "name": "MNIST_LeNet",
-    "optuna": false,
 
     "datasets": {
         "train": {
             "data": {
                 "module": ".examples.MNIST_dataset",
-                "type": "MNISTTrainset",
+                "type": "MNISTDataset",
                 "kwargs": {
-                    "data_dir": "./data/MNIST"
+                    "data_dir": "./data/MNIST",
+                    "mode": "train"
                 }
             }
         },
@@ -19,9 +19,10 @@
         "test": {
             "data": {
                 "module": ".examples.MNIST_dataset",
-                "type": "MNISTTestset",
+                "type": "MNISTDataset",
                 "kwargs": {
-                    "data_dir": "./data/MNIST"
+                    "data_dir": "./data/MNIST",
+                    "mode": "test"
                 }
             }
         }
@@ -46,11 +47,14 @@
         "test": {
             "data": {
                 "module": ".valid_loader",
-                "type": "DataLoader",
+                "type": "ValidDataLoader",
                 "kwargs": {
-                    "batch_size": 64,
-                    "shuffle": false,
-                    "num_workers": 4
+                    "validation_split": 0,
+                    "DataLoader_kwargs": {
+                        "batch_size": 64,
+                        "shuffle": false,
+                        "num_workers": 4
+                    }
                 }
             }
         }
@@ -107,5 +111,10 @@
 
             "tensorboard": false
         }
+    },
+    "train": {
+        "optuna": false,
+        "k_fold": 1,
+        "multiprocessing": false
     }
 }

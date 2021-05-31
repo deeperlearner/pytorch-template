@@ -3,13 +3,10 @@ from abc import abstractmethod
 
 import torch
 import numpy as np
-try:    
-    from apex import amp
-except ImportError:
-    raise ImportError("Please install apex from https://www.github.com/NVIDIA/apex.")
+from apex import amp
 
-from base import Cross_Valid
 from logger import get_logger, TensorboardWriter
+from mains import Cross_Valid
 from utils import msg_box
 
 
@@ -28,6 +25,7 @@ class BaseTrainer:
         # metrics
         self.metrics_iter = torch_objs['metrics']['iter']
         self.metrics_epoch = torch_objs['metrics']['epoch']
+        self.metrics_threshold = torch_objs['metrics']['threshold']
         # optimizers
         self.optimizers = torch_objs['optimizers']
         # lr_schedulers
@@ -58,10 +56,8 @@ class BaseTrainer:
         # setup visualization writer instance
         self.writer = TensorboardWriter(save_dir['log'], self.logger, self.tensorboard)
 
-        if hasattr(self, 'opt_J'):
+        if self.metrics_threshold is not None:
             self.threshold = 0.5
-        else:
-            self.opt_J = False
 
     @abstractmethod
     def _train_epoch(self, epoch):
@@ -130,7 +126,7 @@ class BaseTrainer:
         }
         if self.apex:
             state['apex'] = self.amp.state_dict()
-        if self.opt_J:
+        if self.metrics_threshold is not None:
             state['threshold'] = self.threshold
 
         k_fold = Cross_Valid.k_fold
@@ -178,6 +174,6 @@ class BaseTrainer:
 
         if self.apex:
             self.amp = amp.load_state_dict(checkpoint['amp'])
-        if self.opt_J:
+        if self.metrics_threshold is not None:
             self.threshold = checkpoint['threshold']
         self.logger.info("Checkpoint loaded. Resume training from epoch {}".format(self.start_epoch))

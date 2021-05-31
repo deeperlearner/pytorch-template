@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from sklearn.metrics import recall_score, precision_score
 from sklearn.metrics import roc_auc_score, average_precision_score
-from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_curve, precision_recall_curve
 
 smooth = 1e-6
 
@@ -13,9 +13,12 @@ smooth = 1e-6
 class MetricTracker:
     def __init__(self, keys_iter: list, keys_epoch: list, writer=None):
         self.writer = writer
-        self.metrics_iter = pd.DataFrame(index=keys_iter, columns=['current', 'sum', 'square_sum', 'counts',
-                                                                   'mean', 'square_avg', 'std'])
-        self.metrics_epoch = pd.DataFrame(index=keys_epoch, columns=['mean'])
+        self.metrics_iter = pd.DataFrame(index=keys_iter,
+                                         columns=['current', 'sum', 'square_sum',
+                                                  'counts', 'mean', 'square_avg', 'std'],
+                                         dtype=np.float64)
+        self.metrics_epoch = pd.DataFrame(index=keys_epoch, columns=['mean'],
+                                          dtype=np.float64)
         self.reset()
 
     def reset(self):
@@ -55,16 +58,32 @@ class MetricTracker:
         return pd.concat([iter_result, epoch_result])
 
 
-# for binary classification
+###################
+# pick thresholds #
+###################
 THRESHOLD = 0.5
-def Youden_J(target, output):
+def Youden_J(target, output, beta=1.):
     global THRESHOLD
     with torch.no_grad():
-        fpr, tpr, thresholds = roc_curve(target.cpu().numpy(), output.cpu().numpy())
-        THRESHOLD = thresholds[np.argmax(tpr - fpr)]
+        y_true = target.cpu().numpy()
+        y_score = output.cpu().numpy()
+        fpr, tpr, thresholds = roc_curve(y_true, y_score)
+        THRESHOLD = thresholds[np.argmax(beta * tpr - fpr)]
     return THRESHOLD
 
 
+def F_beta(target, output, beta=1.):
+    global THRESHOLD
+    with torch.no_grad():
+        y_true = target.cpu().numpy()
+        probas_pred = output.cpu().numpy()
+        ppv, tpr, thresholds = precision_recall_curve(y_true, probas_pred)
+        THRESHOLD = thresholds[np.argmax(beta * tpr - fpr)]
+    return THRESHOLD
+
+#############################
+# for binary classification #
+#############################
 def binary_accuracy(target, output):
     with torch.no_grad():
         predict = (output > THRESHOLD).type(torch.uint8)
@@ -77,7 +96,9 @@ def binary_accuracy(target, output):
 def TPR(target, output):
     with torch.no_grad():
         predict = (output > THRESHOLD).type(torch.uint8)
-        value = recall_score(target.cpu().numpy(), predict.cpu().numpy())
+        y_true = target.cpu().numpy()
+        y_pred = predict.cpu().numpy()
+        value = recall_score(y_true, y_pred)
     return value
 
 
@@ -85,25 +106,38 @@ def TPR(target, output):
 def PPV(target, output):
     with torch.no_grad():
         predict = (output > THRESHOLD).type(torch.uint8)
-        value = precision_score(target.cpu().numpy(), predict.cpu().numpy())
+        y_true = target.cpu().numpy()
+        y_pred = predict.cpu().numpy()
+        value = precision_score(y_true, y_pred)
     return value
+
+
+def F_beta_score(target, output, beta=1.):
+    recall = TPR(target, output)
+    precision = PPV(target, output)
+    F_beta = (precision * recall) / (beta**2 * precision + recall)
+    return F_beta
 
 
 def AUROC(target, output):
     with torch.no_grad():
-        predict = (output > THRESHOLD).type(torch.uint8)
-        value = roc_auc_score(target.cpu().numpy(), predict.cpu().numpy())
+        y_true = target.cpu().numpy()
+        y_score = output.cpu().numpy()
+        value = roc_auc_score(y_true, y_score)
     return value
 
 
 def AUPRC(target, output):
     with torch.no_grad():
-        predict = (output > THRESHOLD).type(torch.uint8)
-        value = average_precision_score(target.cpu().numpy(), predict.cpu().numpy())
+        y_true = target.cpu().numpy()
+        y_score = output.cpu().numpy()
+        value = average_precision_score(y_true, y_score)
     return value
 
 
-# for multiclass classification
+#################################
+# for multiclass classification #
+#################################
 def accuracy(target, output):
     with torch.no_grad():
         predict = torch.argmax(output, dim=1)

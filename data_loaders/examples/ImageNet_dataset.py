@@ -8,7 +8,7 @@ from PIL import Image
 
 
 class ImageNetDataset(Dataset):
-    def __init__(self, data_dir='./data/ImageNet', mode=''):
+    def __init__(self, data_dir='./data/ImageNet', mode='train'):
         self.mode = mode
         if mode == 'train':
             imgs_dir = os.path.join(data_dir, 'train_50')
@@ -20,7 +20,7 @@ class ImageNetDataset(Dataset):
             imgs_dir = data_dir
 
         # read filenames
-        if mode != 'test':
+        if mode in ('train', 'valid'):
             self.filenames = []
             self.labels = []
             for i in range(50):
@@ -28,7 +28,7 @@ class ImageNetDataset(Dataset):
                     img_file = os.path.join(imgs_dir, f"{i}_{j}.png")
                     self.filenames.append(img_file)
                     self.labels.append(i)
-        else:
+        else:  # test
             img_file = os.path.join(imgs_dir, '*.png')
             self.filenames = glob.glob(img_file)
 

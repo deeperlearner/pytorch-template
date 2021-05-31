@@ -5,15 +5,12 @@ import argparse
 import collections
 
 import torch
+from apex import amp
 from sklearn.utils.class_weight import compute_class_weight
-try:    
-    from apex import amp
-except ImportError:
-    raise ImportError("Please install apex from https://www.github.com/NVIDIA/apex.")
 import optuna
 
-from base import Cross_Valid
 from logger import get_logger
+from mains import Cross_Valid
 import models.loss as module_loss
 import models.metric as module_metric
 from parse_config import ConfigParser
@@ -21,21 +18,7 @@ from utils import ensure_dir, prepare_device, set_by_path, get_by_path, msg_box
 
 
 def main():
-    k_fold = config['trainer'].get('k_fold', 1)
-    fold_idx = config['trainer'].get('fold_idx', 0)
-
-    if fold_idx > 0:
-        # do on fold_idx, which is for multiprocessing cross validation
-        # if multiprocessing, turn off debug logging to avoid messing up stdout
-        config['trainer']['kwargs']['verbosity'] = 1
-        verbosity = 1
-        k_loop = 1
-    else:
-        # do full cross validation in single thread
-        verbosity = 2
-        k_loop = k_fold
-
-    logger = get_logger('train', verbosity=verbosity)
+    logger = get_logger('train')
     train_msg = msg_box("TRAIN")
     logger.debug(train_msg)
 
@@ -69,28 +52,30 @@ def main():
     losses = dict()
     for name in config['losses']:
         kwargs = {}
-        if config['losses'][name].get('balanced', False):
-            loss_type = config['losses'][name]['type']
-            if loss_type == 'BCEWithLogitsLoss':
-                kwargs.update(pos_weight=class_weight[1])
-            elif loss_type == 'CrossEntropyLoss':
-                kwargs.update(weight=class_weight)
+        if 'balanced' in get_by_path(config, ['losses', name, 'type']):
+            kwargs.update(class_weight=class_weight)
         losses[name] = config.init_obj(['losses', name], module_loss, **kwargs)
 
     # metrics
     metrics_iter = [getattr(module_metric, met) for met in config['metrics']['per_iteration']]
     metrics_epoch = [getattr(module_metric, met) for met in config['metrics']['per_epoch']]
+    if 'pick_threshold' in config['metrics']:
+        metrics_threshold = config.init_obj(['metrics', 'pick_threshold'], module_metric)
+    else:
+        metrics_threshold = None
 
-    # unchanged objects in each fold
     torch_objs = {'datasets': {'train': train_datasets, 'valid': valid_datasets},
                   'losses': losses,
-                  'metrics': {'iter': metrics_iter, 'epoch': metrics_epoch}}
+                  'metrics': {'iter': metrics_iter, 'epoch': metrics_epoch,
+                              'threshold': metrics_threshold}
+                 }
 
-    if k_fold > 1:  # cross validation enabled
-        train_datasets['data'].split_cv_indexes(k_fold)
-        Cross_Valid.create_CV(k_fold, fold_idx)
+    if K_FOLD > 1:  # cross validation enabled
+        train_datasets['data'].split_cv_indexes(K_FOLD)
 
-    for k in range(k_loop):
+    results = []
+    Cross_Valid.create_CV(K_FOLD)
+    for k in range(K_FOLD):
         # data_loaders
         train_data_loaders = dict()
         valid_data_loaders = dict()
@@ -98,7 +83,7 @@ def main():
         keys = ['data_loaders', 'train']
         for name in get_by_path(config, keys):
             kwargs = {}
-            if 'balanced' in get_by_path(config, [*keys, name, 'module']):
+            if 'imbalanced' in get_by_path(config, [*keys, name, 'module']):
                 kwargs.update(
                     class_weight=class_weight.cpu().detach().numpy(),
                     target=target)
@@ -137,36 +122,36 @@ def main():
             lr_schedulers[name] = config.init_obj(['lr_schedulers', name],
                                                   torch.optim.lr_scheduler, optimizers[name])
 
-        # update objects for each fold
-        update_args = {'data_loaders': {'train': train_data_loaders, 'valid': valid_data_loaders},
-                       'models': models,
-                       'optimizers': optimizers,
-                       'lr_schedulers': lr_schedulers,
-                       'amp': None}
+        torch_objs.update(
+            {'data_loaders': {'train': train_data_loaders,
+                              'valid': valid_data_loaders},
+             'models': models,
+             'optimizers': optimizers,
+             'lr_schedulers': lr_schedulers,
+             'amp': None}
+        )
 
         # amp
         if config['trainer']['kwargs']['apex']:
             # TODO: revise here if multiple models and optimizers
             models['model'], optimizers['model'] = amp.initialize(
                 models['model'], optimizers['model'], opt_level='O1')
-            update_args['amp'] = amp
+            torch_objs['amp'] = amp
 
-        torch_objs.update(update_args)
         trainer = config.init_obj(['trainer'], 'trainers', torch_objs,
                                   config.save_dir, config.resume, device)
         log_best = trainer.train()
+        results.append(log_best[MNT_METRIC])
 
         # cross validation
-        if k_fold > 1:
-            idx = Cross_Valid.fold_idx
-            save_path = config.save_dir['metrics_best'] / f"fold_{idx}.pkl"
-            log_best.to_pickle(save_path)
+        if K_FOLD > 1:
             Cross_Valid.next_fold()
-        else:
-            msg = msg_box("result")
-            logger.info(f"{msg}\n{log_best}")
 
-    return log_best[mnt_metric]
+    # result
+    msg = msg_box("result")
+    avg_result = sum(results) / len(results)
+    logger.info(f"{msg}\n{MNT_METRIC}: {avg_result}")
+    return avg_result
 
 
 def objective(trial):
@@ -204,10 +189,12 @@ if __name__ == '__main__':
         mod_args.add_argument(*opt.flags, type=opt.type)
 
     config = ConfigParser.from_args(args, options)
+    K_FOLD = config['train']['k_fold']
+    optuna_search = config['train']['optuna']
 
-    max_min, mnt_metric = config['trainer']['kwargs']['monitor'].split()
-    if config['optuna']:
-        study = optuna.create_study(direction='maximize' if max_min == 'max' else 'minimize')
+    MAX_MIN, MNT_METRIC = config['trainer']['kwargs']['monitor'].split()
+    if optuna_search:
+        study = optuna.create_study(direction='maximize' if MAX_MIN == 'max' else 'minimize')
         study.optimize(objective, n_trials=10)
     else:
         main()

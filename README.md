@@ -107,76 +107,29 @@ try `bash scripts/run/examples.sh run_all` to run all examples.
   │
   ├── parse_config.py - class to handle config file and cli options
   │
-  ├── train.py - main script to start training
-  ├── test.py - evaluation of trained model
-  │
-  ├── ensemble.py - ensemble k-fold results
-  │
   ├── base/ - abstract base classes
-  │   ├── base_data_loader.py
-  │   ├── base_trainer.py
-  │   └── cross_validation.py
   │
   ├── configs/ - configurations for training
-  │   ├── dataset_model.json
-  │   └── examples/
-  │       └── *.json
   │
   ├── data/ - default directory for storing input data
   │
   ├── data_loaders/ - anything about data loading goes here
-  │   ├── *_dataset.py
-  │   ├── *_loader.py
-  │   └── examples/
-  │       └── *_dataset.py
   │
   ├── logger/ - module for tensorboard visualization and logging
-  │   ├── visualization.py
-  │   ├── logger.py
-  │   └── logger_config.json
   │
   ├── models/ - models, losses, and metrics
-  │   ├── model.py
-  │   ├── metric.py
-  │   ├── loss.py
-  │   └── examples/
-  │       └── *.py
   │
   ├── saved/ - train information
-  │   └── EXP_name/
-  │       └── run_id/
-  │           ├── log/ - training log and logdir for tensorboard
-  │           ├── metrics_best/ - training best metric results
-  │           ├── models/ - trained models are saved here
-  │           └── dataset_model.json - backup config file when start training
   │
   ├── output/ - test information
-  │   └── EXP_name/
-  │       └── run_id/
-  │           ├── fig/ - figures
-  │           ├── log/ - testing log
-  │           └── metric/ - testing metric results
   │
   ├── scripts/ - scripts for *.sh
-  │   ├── new_project/
-  │   │   ├── copy_exclude - exclude file when create new project
-  │   │   └── torch_new_project.sh - initialize new project with template files
-  │   ├── run/
-  │   │   ├── examples.sh - bash script for running examples
-  │   │   └── run.sh - bash script for running experiment
-  │   └── version_update/
-  │       ├── file_list - files to preserve between update
-  │       └── version_update.sh - transfer old version files to new version directory
+  │
+  ├── train_test/ - different kinds of train & test
   │
   ├── trainers/ - trainers
-  │   ├── trainer.py
-  │   └── examples/
-  │       └── *_trainer.py
   │  
   └── utils/ - small utility functions
-      ├── util.py
-      └── examples/
-          └── *.py
   ```
 
 ## Count Lines of Codes

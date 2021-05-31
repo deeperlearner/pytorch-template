@@ -6,17 +6,14 @@ import collections
 
 import torch
 import torch.nn as nn
-from torchvision.utils import make_grid, save_image
 import pandas as pd
-from sklearn.manifold import TSNE
 from sklearn.utils.class_weight import compute_class_weight
-from sklearn.utils import resample
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from base import Cross_Valid
 from logger import get_logger
+from mains import Cross_Valid
 import models.loss as module_loss
 import models.metric as module_metric
 from models.metric import MetricTracker
@@ -32,9 +29,6 @@ np.random.seed(SEED)
 
 
 def main():
-    k_fold = config['trainer'].get('k_fold', 1)
-    fold_idx = config['trainer'].get('fold_idx', 0)
-
     logger = get_logger('test')
     test_msg = msg_box("TEST")
     logger.debug(test_msg)
@@ -55,19 +49,20 @@ def main():
                                             y=target)
         class_weight = torch.FloatTensor(class_weight).to(device)
 
-    # data_loaders
-    test_data_loaders = dict()
-    keys = ['data_loaders', 'test']
-    for name in get_by_path(config, keys):
-        dataset = test_datasets[name]
-        loaders = config.init_obj([*keys, name], 'data_loaders', dataset)
-        test_data_loaders[name] = loaders.test_loader
+    results = pd.DataFrame()
+    Cross_Valid.create_CV(K_FOLD)
+    for k in range(K_FOLD):
+        # data_loaders
+        test_data_loaders = dict()
+        keys = ['data_loaders', 'test']
+        for name in get_by_path(config, keys):
+            dataset = test_datasets[name]
+            loaders = config.init_obj([*keys, name], 'data_loaders', dataset)
+            test_data_loaders[name] = loaders.test_loader
 
-    Cross_Valid.create_CV(k_fold, fold_idx)
-    for fold_idx in range(1, k_fold + 1):
         # models
-        if k_fold > 1:
-            fold_prefix = f'fold_{fold_idx}_'
+        if K_FOLD > 1:
+            fold_prefix = f'fold_{k}_'
             dirname = os.path.dirname(config.resume)
             basename = os.path.basename(config.resume)
             resume = os.path.join(dirname, fold_prefix + basename)
@@ -87,15 +82,12 @@ def main():
             model = model.to(device)
             model.eval()
             models[name] = model
+        model = models['model']
 
         # losses
         kwargs = {}
-        if config['losses']['loss'].get('balanced', False):
-            loss_type = config['losses'][name]['type']
-            if loss_type == 'BCEWithLogitsLoss':
-                kwargs.update(pos_weight=class_weight[1])
-            elif loss_type == 'CrossEntropyLoss':
-                kwargs.update(weight=class_weight)
+        if 'balanced' in get_by_path(config, ['losses', 'loss', 'type']):
+            kwargs.update(class_weight=class_weight)
         loss_fn = config.init_obj(['losses', 'loss'], module_loss, **kwargs)
 
         # metrics
@@ -108,7 +100,6 @@ def main():
 
         with torch.no_grad():
             print("testing...")
-            model = models['model']
             test_loader = test_data_loaders['data']
 
             if len(metrics_epoch) > 0:
@@ -136,14 +127,18 @@ def main():
                 test_metrics.epoch_update(met.__name__, met(targets, outputs))
 
         test_log = test_metrics.result()
+        results = pd.concat((results, test_log))
         logger.info(test_log)
-        # cross validation is enabled
-        if k_fold > 1:
-            log_mean = test_log['mean']
-            idx = Cross_Valid.fold_idx
-            save_path = config.save_dir['metric'] / f"fold_{idx}.pkl"
-            log_mean.to_pickle(save_path)
+
+        # cross validation
+        if K_FOLD > 1:
             Cross_Valid.next_fold()
+
+    # result
+    msg = msg_box("result")
+    sum_result = results.groupby(results.index)
+    avg_result = sum_result.mean(numeric_only=False)
+    logger.info(f"{msg}\n{avg_result}")
 
 
 if __name__ == '__main__':
@@ -168,4 +163,6 @@ if __name__ == '__main__':
     test_args.add_argument('--output_path', default=None, type=str)
 
     config = ConfigParser.from_args(args, options)
+    K_FOLD = config['train']['k_fold']
+
     main()

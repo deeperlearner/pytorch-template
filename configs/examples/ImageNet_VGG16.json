@@ -2,7 +2,6 @@
     "n_gpu": 1,
     "root_dir": "./",
     "name": "ImageNet_VGG16",
-    "optuna": false,
 
     "datasets": {
         "train": {
@@ -31,7 +30,7 @@
                 "type": "ImageNetDataset",
                 "kwargs": {
                     "data_dir": "./data/ImageNet",
-                    "mode": "valid"
+                    "mode": "test"
                 }
             }
         }
@@ -40,33 +39,39 @@
         "train": {
             "data": {
                 "module": ".valid_loader",
-                "type": "DataLoader",
+                "type": "ValidDataLoader",
                 "kwargs": {
-                    "batch_size": 64,
-                    "shuffle": true,
-                    "num_workers": 4
+                    "DataLoader_kwargs": {
+                        "batch_size": 64,
+                        "shuffle": true,
+                        "num_workers": 4
+                    }
                 }
             }
         },
         "valid": {
             "data": {
                 "module": ".valid_loader",
-                "type": "DataLoader",
+                "type": "ValidDataLoader",
                 "kwargs": {
-                    "batch_size": 64,
-                    "shuffle": false,
-                    "num_workers": 4
+                    "DataLoader_kwargs": {
+                        "batch_size": 64,
+                        "shuffle": true,
+                        "num_workers": 4
+                    }
                 }
             }
         },
         "test": {
             "data": {
                 "module": ".valid_loader",
-                "type": "DataLoader",
+                "type": "ValidDataLoader",
                 "kwargs": {
-                    "batch_size": 64,
-                    "shuffle": false,
-                    "num_workers": 4
+                    "DataLoader_kwargs": {
+                        "batch_size": 64,
+                        "shuffle": true,
+                        "num_workers": 4
+                    }
                 }
             }
         }
@@ -126,5 +131,10 @@
 
             "tensorboard": false
         }
+    },
+    "train": {
+        "optuna": false,
+        "k_fold": 1,
+        "multiprocessing": false
     }
 }

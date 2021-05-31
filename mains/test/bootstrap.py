@@ -1,4 +1,6 @@
 import os
+import sys
+sys.path.insert(1, os.path.join(sys.path[0], '../..'))
 import argparse
 import collections
 
@@ -7,13 +9,11 @@ import torch.nn as nn
 from torchvision.utils import make_grid, save_image
 import pandas as pd
 from sklearn.manifold import TSNE
-from sklearn.utils.class_weight import compute_class_weight
 from sklearn.utils import resample
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from base import Cross_Valid
 from logger import get_logger
 import models.loss as module_loss
 import models.metric as module_metric
@@ -30,9 +30,6 @@ np.random.seed(SEED)
 
 
 def main():
-    k_fold = config['trainer'].get('k_fold', 1)
-    fold_idx = config['trainer'].get('fold_idx', 0)
-
     logger = get_logger('test')
     test_msg = msg_box("TEST")
     logger.debug(test_msg)
@@ -45,32 +42,19 @@ def main():
     keys = ['datasets', 'test']
     for name in get_by_path(config, keys):
         test_datasets[name] = config.init_obj([*keys, name], 'data_loaders')
-    ## compute inverse class frequency as class weight
-    if config['datasets'].get('imbalanced', False):
-        target = test_datasets['data'].y_test  # TODO
-        class_weight = compute_class_weight(class_weight='balanced',
-                                            classes=target.unique(),
-                                            y=target)
-        class_weight = torch.FloatTensor(class_weight).to(device)
 
-    # data_loaders
-    test_data_loaders = dict()
-    keys = ['data_loaders', 'test']
-    for name in get_by_path(config, keys):
-        dataset = test_datasets[name]
-        loaders = config.init_obj([*keys, name], 'data_loaders', dataset)
-        test_data_loaders[name] = loaders.test_loader
+    results = pd.DataFrame()
+    for number in range(config.test_args.repetition):
+        # data_loaders
+        test_data_loaders = dict()
+        keys = ['data_loaders', 'test']
+        for name in get_by_path(config, keys):
+            dataset = test_datasets[name]
+            loaders = config.init_obj([*keys, name], 'data_loaders', dataset, number=number)
+            test_data_loaders[name] = loaders.test_loader
 
-    Cross_Valid.create_CV(k_fold, fold_idx)
-    for fold_idx in range(1, k_fold + 1):
         # models
-        if k_fold > 1:
-            fold_prefix = f'fold_{fold_idx}_'
-            dirname = os.path.dirname(config.resume)
-            basename = os.path.basename(config.resume)
-            resume = os.path.join(dirname, fold_prefix + basename)
-        else:
-            resume = config.resume
+        resume = config.resume
         logger.info(f"Loading model: {resume} ...")
         checkpoint = torch.load(resume)
         models = dict()
@@ -85,16 +69,10 @@ def main():
             model = model.to(device)
             model.eval()
             models[name] = model
+        model = models['model']
 
         # losses
-        kwargs = {}
-        if config['losses']['loss'].get('balanced', False):
-            loss_type = config['losses'][name]['type']
-            if loss_type == 'BCEWithLogitsLoss':
-                kwargs.update(pos_weight=class_weight[1])
-            elif loss_type == 'CrossEntropyLoss':
-                kwargs.update(weight=class_weight)
-        loss_fn = config.init_obj(['losses', 'loss'], module_loss, **kwargs)
+        loss_fn = config.init_obj(['losses', 'loss'], module_loss)
 
         # metrics
         metrics_iter = [getattr(module_metric, met) for met in config['metrics']['per_iteration']]
@@ -106,7 +84,6 @@ def main():
 
         with torch.no_grad():
             print("testing...")
-            model = models['model']
             test_loader = test_data_loaders['data']
 
             if len(metrics_epoch) > 0:
@@ -134,14 +111,18 @@ def main():
                 test_metrics.epoch_update(met.__name__, met(targets, outputs))
 
         test_log = test_metrics.result()
+        test_log = test_log['mean'].rename(number)
+        results = pd.concat((results, test_log), axis=1)
         logger.info(test_log)
-        # cross validation is enabled
-        if k_fold > 1:
-            log_mean = test_log['mean']
-            idx = Cross_Valid.fold_idx
-            save_path = config.save_dir['metric'] / f"fold_{idx}.pkl"
-            log_mean.to_pickle(save_path)
-            Cross_Valid.next_fold()
+
+    # result
+    msg = msg_box("result")
+    boot_result = pd.DataFrame()
+    boot_result['CI_median'] = results.median(axis=1)
+    boot_result['CI_low'] = results.quantile(q=0.025, axis=1)
+    boot_result['CI_high'] = results.quantile(q=0.975, axis=1)
+    boot_result['CI_half'] = (boot_result['CI_high'] - boot_result['CI_low']) / 2
+    logger.info(f"{msg}\n{boot_result}")
 
 
 if __name__ == '__main__':
@@ -163,7 +144,9 @@ if __name__ == '__main__':
 
     # config.test_args: additional arguments for testing
     test_args = args.add_argument_group('test_args')
+    test_args.add_argument('--repetition', default=1000, type=int)
     test_args.add_argument('--output_path', default=None, type=str)
 
     config = ConfigParser.from_args(args, options)
+
     main()

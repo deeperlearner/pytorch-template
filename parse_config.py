@@ -35,7 +35,7 @@ class ConfigParser:
             run_id = datetime.now().strftime(r'%m%d_%H%M%S')
         exp_dir = save_dir / self.config['name'] / run_id
 
-        dirs = {'train': ['log', 'model', 'metrics_best'], 'test': ['log', 'metric', 'fig']}
+        dirs = {'train': ['log', 'model'], 'test': ['log', 'fig']}
         self.save_dir = dict()
         for dir_name in dirs[self.run_args.mode]:
             dir_path = exp_dir / dir_name
@@ -44,13 +44,11 @@ class ConfigParser:
 
         log_config = {}
         if self.run_args.mode == 'train':
-            fold_idx = self.config['trainer'].get('fold_idx', 0)
-            if fold_idx > 0:
-                # multiprocessing is enabled.
+            mp = self.config['train']['multiprocessing']
+            if mp:
                 log_config.update({'log_config': 'logger/logger_config_mp.json'})
-            if fold_idx <= 1:
-                # backup config file to the experiment dirctory
-                write_json(self.config, exp_dir / os.path.basename(config_json))
+            # backup config file to the experiment dirctory
+            write_json(self.config, exp_dir / os.path.basename(config_json))
 
         # configure logging module
         setup_logging(self.save_dir['log'], root_dir=self.root_dir, filename=self.run_args.log_name, **log_config)

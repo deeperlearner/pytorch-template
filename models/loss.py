@@ -3,20 +3,25 @@ import torch.nn.functional as F
 from torch.nn import CrossEntropyLoss, MSELoss, BCELoss, BCEWithLogitsLoss
 
 
-def weighted_bce_loss(output, target, weight: torch.Tensor=None):
-    weighted_bce_loss = BCELoss(weight=weight[target.long()])
-    return weighted_bce_loss(output, target)
+def balanced_bce_loss(output, target, class_weight=None):
+    loss = BCELoss(weight=class_weight[target.long()])
+    return loss(output, target)
+
+
+# this contains sigmoid itself
+def balanced_bcewithlogits_loss(output, target, class_weight=None):
+    loss = BCEWithLogitsLoss(pos_weight=class_weight[1])
+    return loss
 
 
 # ref: https://github.com/kornia/kornia/blob/master/kornia/losses/focal.py
 def binary_focal_loss(output: torch.Tensor,
                       target: torch.Tensor,
-                      sigmoid = True,
                       alpha: float = 0.5,
                       gamma: float = 2.0,
                       reduction: str = 'sum',
                       eps: float = 1e-8) -> torch.Tensor:
-    p_t = torch.sigmoid(output) if sigmoid else output
+    p_t = output
     loss_tmp = -alpha * torch.pow(1 - p_t, gamma) * target * torch.log(p_t + eps) \
                - (1 - alpha) * torch.pow(p_t, gamma) * (1 - target) * torch.log(1 - p_t + eps)
 

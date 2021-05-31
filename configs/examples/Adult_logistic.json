@@ -2,7 +2,6 @@
     "n_gpu": 1,
     "root_dir": "./",
     "name": "Adult_logistic",
-    "optuna": false,
 
     "datasets": {
         "imbalanced": true,
@@ -49,10 +48,9 @@
         },
         "test": {
             "data": {
-                "module": ".imbalanced_loader",
-                "type": "ImbalancedDataLoader",
+                "module": ".boot_loader",
+                "type": "BootstrapDataLoader",
                 "kwargs": {
-                    "validation_split": 0,
                     "DataLoader_kwargs": {
                         "batch_size": 64,
                         "shuffle": false,
@@ -80,7 +78,14 @@
     },
     "metrics": {
         "per_iteration": ["binary_accuracy"],
-        "per_epoch": ["TPR", "PPV", "AUROC", "AUPRC"]
+        "per_epoch": ["TPR", "PPV", "AUROC", "AUPRC"],
+        "pick_threshold": {
+            "is_ftn": true,
+            "type": "Youden_J",
+            "kwargs": {
+                "beta": 1.0
+            }
+        }
     },
     "optimizers": {
         "model": {
@@ -102,11 +107,8 @@
     "trainer": {
         "module": ".trainer",
         "type": "Trainer",
-        "k_fold": 1,
-        "fold_idx": 0,
         "kwargs": {
-            "apex": true,
-            "opt_J": true,
+            "apex": false,
 
             "finetune": false,
             "epochs": 2,
@@ -119,7 +121,12 @@
             "monitor": "max val_binary_accuracy",
             "early_stop": 10,
 
-            "tensorboard": true
+            "tensorboard": false
         }
+    },
+    "train": {
+        "optuna": false,
+        "k_fold": 1,
+        "multiprocessing": false
     }
 }

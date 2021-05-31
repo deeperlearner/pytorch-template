@@ -7,7 +7,7 @@ import torch
 from torchvision.utils import make_grid
 
 from base import BaseTrainer
-from models.metric import MetricTracker, Youden_J
+from models.metric import MetricTracker
 from utils import inf_loop
 
 
@@ -162,8 +162,8 @@ class Trainer(BaseTrainer):
             for met in self.metrics_epoch:
                 self.valid_metrics.epoch_update(met.__name__, met(targets, outputs))
 
-            if self.opt_J:
-                self.threshold = Youden_J(targets, outputs)
+            if self.metrics_threshold is not None:
+                self.threshold = self.metrics_threshold(targets, outputs)
 
         # # add histogram of model parameters to the tensorboard
         # for name, param in self.models['model'].named_parameters():

@@ -3,9 +3,8 @@ class Cross_Valid:
     fold_idx = 0
 
     @classmethod
-    def create_CV(cls, k_fold, fold_idx):
+    def create_CV(cls, k_fold):
         cls.k_fold = k_fold
-        cls.fold_idx = 1 if fold_idx == 0 else fold_idx
         return cls()
 
     @classmethod

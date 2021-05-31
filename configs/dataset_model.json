@@ -75,13 +75,9 @@
             "is_ftn": true,
             "type": "nll_loss"
         },
-        "bce_logits": {
-            "type": "BCEWithLogitsLoss",
-            "balanced": true
-        },
-        "ce": {
-            "type": "CrossEntropyLoss",
-            "balanced": true
+        "balanced_bce": {
+            "is_ftn": true,
+            "type": "balanced_bce_loss"
         },
         "focal": {
             "is_ftn": true,
@@ -89,8 +85,15 @@
         }
     },
     "metrics": {
-        "per_iteration": ["accuracy"],
-        "per_epoch": ["AUROC", "AUPRC"]
+        "per_iteration": ["binary_accuracy"],
+        "per_epoch": ["TPR", "PPV", "AUROC", "AUPRC"],
+        "pick_threshold": {
+            "is_ftn": true,
+            "type": "Youden_J",
+            "kwargs": {
+                "beta": 1.0
+            }
+        }
     },
     "optimizers": {
         "model": {
@@ -112,11 +115,8 @@
     "trainer": {
         "module": ".trainer",
         "type": "Trainer",
-        "k_fold": 5,
-        "fold_idx": 0,
         "kwargs": {
             "apex": false,
-            "opt_J": true,
 
             "finetune": false,
             "epochs": 2,
@@ -129,15 +129,12 @@
             "monitor": "min val_loss",
             "early_stop": 10,
 
-            "tensorboard": true
+            "tensorboard": false
         }
     },
     "train": {
         "optuna": false,
         "k_fold": 1,
-        "multithreading": false
-    },
-    "test": {
-        "bootstrap": false
+        "multiprocessing": false
     }
 }
