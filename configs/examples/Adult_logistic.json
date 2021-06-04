@@ -48,8 +48,8 @@
         },
         "test": {
             "data": {
-                "module": ".boot_loader",
-                "type": "BootstrapDataLoader",
+                "module": ".imbalanced_loader",
+                "type": "ImbalancedDataLoader",
                 "kwargs": {
                     "DataLoader_kwargs": {
                         "batch_size": 64,
@@ -128,5 +128,8 @@
         "optuna": false,
         "k_fold": 1,
         "multiprocessing": false
+    },
+    "test": {
+        "bootstrapping": true
     }
 }

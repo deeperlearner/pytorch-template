@@ -74,13 +74,14 @@ In metric part, I add two commonly used metrics AUROC/AUPRC. These two metrics n
 
 ### MetricTracker
 Continue from AUROC/AUPRC, I revise the MetricTracker, which is moved to `models/metric.py`.
-The MetricTracker can record both accuracy-like metric (metrics_iter) and AUROC-like (metrics_epoch) metric.
+The MetricTracker can record both iteration-based metrics (metrics_iter) and epoch-based metrics (metrics_epoch).
 
 ### Cross validation
 Cross validation are supported.
-Class `Cross_Valid` in `base/base_dataloader.py` records the index of cross validation.
-The models and metric results of each fold are saved.
-`ensemble.py` can ensemble k-fold validation results.
+Class `Cross_Valid` in `mains/base_dataloader.py` records the index of cross validation.
+The model and metric results of each fold are saved.
+
+(TODO)
 Also, multi-process cross validation is supported, which allows you to run many folds simultaneously in the background.
 The multi-processing is handled by `scripts/run/run.sh`. You can decide how many processes you want to run at a time by edit the shell script.
 
@@ -93,19 +94,9 @@ RTX GPU can use apex to do automatic mixed precision training.
 ### [Optuna](https://github.com/optuna/optuna)
 Use optuna to find hyperparameters.
 
-### Examples
-I add some example codes to use the above features.
-- MNIST dataset
-- ImageNet dataset (The data need to be downloaded by yourself)
-- Adult dataset
-
-try `bash scripts/run/examples.sh run_all` to run all examples.
-
 ## Folder Structure
   ```
   Pytorch-Template/
-  │
-  ├── parse_config.py - class to handle config file and cli options
   │
   ├── base/ - abstract base classes
   │
@@ -117,19 +108,21 @@ try `bash scripts/run/examples.sh run_all` to run all examples.
   │
   ├── logger/ - module for tensorboard visualization and logging
   │
-  ├── models/ - models, losses, and metrics
+  ├── mains/ - different kinds of train & test
   │
-  ├── saved/ - train information
+  ├── models/ - models, losses, and metrics
   │
   ├── output/ - test information
   │
-  ├── scripts/ - scripts for *.sh
+  ├── saved/ - train information
   │
-  ├── train_test/ - different kinds of train & test
+  ├── scripts/ - scripts for *.sh
   │
   ├── trainers/ - trainers
   │  
-  └── utils/ - small utility functions
+  ├── utils/ - small utility functions
+  │
+  └── parse_config.py - class to handle config file and cli options
   ```
 
 ## Count Lines of Codes
@@ -140,12 +133,16 @@ try `bash scripts/run/examples.sh run_all` to run all examples.
 `cloc --vcs=git --by-file`
 
 ## Usage
-There are some examples config files in `config/examples/`. Try `bash run_examples.sh` to run code.
-
 ### Config file format
 Config file is in `.json` format, see [`dataset_model.json`](https://github.com/deeperlearner/Pytorch-Template/blob/master/configs/dataset_model.json):
 
-Some examples are in `configs/examples/*.json`.
+### Examples
+There are some examples config files in `config/examples/*.json`.
+- MNIST dataset
+- ImageNet dataset (The data need to be downloaded by yourself)
+- Adult dataset
+
+Try `bash scripts/run/examples.sh run_all` to run example configs.
 
 ### Using config files
 Modify the configurations in `.json` config files, then run:
@@ -286,7 +283,14 @@ You can monitor multiple metrics by providing a list in the configuration file, 
   ```json
   "metrics": {
       "per_iteration": ["accuracy", "top_k_acc"],
-      "per_epoch": ["AUROC", "AUPRC"]
+      "per_epoch": ["AUROC", "AUPRC"],
+      "pick_threshold" {
+          "is_ftn": true,
+          "type": "Youden_J",
+          "kwargs": {
+              "beta": 1.0
+          }
+      }
   }
   ```
 

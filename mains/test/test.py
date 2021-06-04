@@ -1,17 +1,16 @@
 import os
 import sys
-sys.path.insert(1, os.path.join(sys.path[0], '../..'))
 import argparse
 import collections
+import time
 
 import torch
-import torch.nn as nn
-import pandas as pd
-from sklearn.utils.class_weight import compute_class_weight
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
+sys.path.insert(1, os.path.join(sys.path[0], '../..'))
 from logger import get_logger
 from mains import Cross_Valid
 import models.loss as module_loss
@@ -19,6 +18,7 @@ import models.metric as module_metric
 from models.metric import MetricTracker
 from parse_config import ConfigParser
 from utils import ensure_dir, prepare_device, get_by_path, msg_box
+from utils.bootstrap import bootstrapping
 
 # fix random seeds for reproducibility
 SEED = 123
@@ -41,16 +41,10 @@ def main():
     keys = ['datasets', 'test']
     for name in get_by_path(config, keys):
         test_datasets[name] = config.init_obj([*keys, name], 'data_loaders')
-    ## compute inverse class frequency as class weight
-    if config['datasets'].get('imbalanced', False):
-        target = test_datasets['data'].y_test  # TODO
-        class_weight = compute_class_weight(class_weight='balanced',
-                                            classes=target.unique(),
-                                            y=target)
-        class_weight = torch.FloatTensor(class_weight).to(device)
 
     results = pd.DataFrame()
     Cross_Valid.create_CV(K_FOLD)
+    start = time.time()
     for k in range(K_FOLD):
         # data_loaders
         test_data_loaders = dict()
@@ -85,18 +79,16 @@ def main():
         model = models['model']
 
         # losses
-        kwargs = {}
-        if 'balanced' in get_by_path(config, ['losses', 'loss', 'type']):
-            kwargs.update(class_weight=class_weight)
-        loss_fn = config.init_obj(['losses', 'loss'], module_loss, **kwargs)
+        loss_fn = config.init_obj(['losses', 'loss'], module_loss)
 
         # metrics
-        metrics_iter = [getattr(module_metric, met) for met in config['metrics']['per_iteration']]
         metrics_epoch = [getattr(module_metric, met) for met in config['metrics']['per_epoch']]
-        keys_loss = ['loss']
-        keys_iter = [m.__name__ for m in metrics_iter]
         keys_epoch = [m.__name__ for m in metrics_epoch]
-        test_metrics = MetricTracker(keys_loss + keys_iter, keys_epoch)
+        test_metrics = MetricTracker([], keys_epoch)
+        if 'pick_threshold' in config['metrics']:
+            threshold = checkpoint['threshold']
+            setattr(module_metric, 'THRESHOLD', threshold)
+            logger.info(f"threshold: {threshold}")
 
         with torch.no_grad():
             print("testing...")
@@ -117,17 +109,12 @@ def main():
                 # save sample images, or do something with output here
                 #
 
-                # computing loss, metrics on test set
-                loss = loss_fn(output, target)
-                test_metrics.iter_update('loss', loss.item())
-                for met in metrics_iter:
-                    test_metrics.iter_update(met.__name__, met(target, output))
-
             for met in metrics_epoch:
                 test_metrics.epoch_update(met.__name__, met(targets, outputs))
 
         test_log = test_metrics.result()
-        results = pd.concat((results, test_log))
+        test_log = test_log['mean'].rename(k)
+        results = pd.concat((results, test_log), axis=1)
         logger.info(test_log)
 
         # cross validation
@@ -136,9 +123,19 @@ def main():
 
     # result
     msg = msg_box("result")
-    sum_result = results.groupby(results.index)
-    avg_result = sum_result.mean(numeric_only=False)
-    logger.info(f"{msg}\n{avg_result}")
+    logger.info(msg)
+
+    end = time.time()
+    logger.info(f"Consuming time: {end - start:.3f} seconds.")
+
+    avg_result = results.mean(axis=1)
+    logger.info(avg_result)
+
+    # bootstrap
+    if config['test']['bootstrapping']:
+        assert K_FOLD == 1, "k-fold ensemble and bootstrap is mutually exclusive."
+        N = config.test_args.bootstrap_times
+        bootstrapping(targets, outputs, metrics_epoch, test_metrics, repeat=N)
 
 
 if __name__ == '__main__':
@@ -154,12 +151,14 @@ if __name__ == '__main__':
     mod_args = args.add_argument_group('mod_args')
     CustomArgs = collections.namedtuple('CustomArgs', "flags type target")
     options = [
+        CustomArgs(['--name'], type=str, target="name"),
     ]
     for opt in options:
         mod_args.add_argument(*opt.flags, type=opt.type)
 
     # config.test_args: additional arguments for testing
     test_args = args.add_argument_group('test_args')
+    test_args.add_argument('--bootstrap_times', default=1000, type=int)
     test_args.add_argument('--output_path', default=None, type=str)
 
     config = ConfigParser.from_args(args, options)

@@ -10,9 +10,8 @@ if [ "$MODE" = "debug" ]; then
     EXP="Adult_logistic"
     RUN_ID="debug"
     python3 mains/train/train.py -c "configs/$CONFIG.json" --run_id $RUN_ID
-    # python3 mains/test/test.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID
-    python3 mains/test/bootstrap.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID \
-        --repetition 10
+    python3 mains/test/test.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID \
+        --bootstrap_times 10
 else
     # MNIST_LeNet
     CONFIG="examples/MNIST_LeNet"
@@ -34,7 +33,7 @@ else
     EXP="Adult_logistic"
     RUN_ID="0"
     python3 mains/train/train.py -c "configs/$CONFIG.json" --run_id $RUN_ID
-    python3 mains/test/bootstrap.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID
+    python3 mains/test/test.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID
 
     # Not implemented yet
     # I'm going to try `import torch.multiprocessing as mp`

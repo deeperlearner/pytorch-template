@@ -75,6 +75,9 @@
             "is_ftn": true,
             "type": "nll_loss"
         },
+        "bce": {
+            "type": "BCELoss"
+        },
         "balanced_bce": {
             "is_ftn": true,
             "type": "balanced_bce_loss"
@@ -136,5 +139,8 @@
         "optuna": false,
         "k_fold": 1,
         "multiprocessing": false
+    },
+    "test": {
+        "bootstrapping": true
     }
 }

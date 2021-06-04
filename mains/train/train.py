@@ -1,14 +1,15 @@
 import os 
 import sys
-sys.path.insert(1, os.path.join(sys.path[0], '../..'))
 import argparse
 import collections
+import time
 
 import torch
 from apex import amp
 from sklearn.utils.class_weight import compute_class_weight
 import optuna
 
+sys.path.insert(1, os.path.join(sys.path[0], '../..'))
 from logger import get_logger
 from mains import Cross_Valid
 import models.loss as module_loss
@@ -75,6 +76,7 @@ def main():
 
     results = []
     Cross_Valid.create_CV(K_FOLD)
+    start = time.time()
     for k in range(K_FOLD):
         # data_loaders
         train_data_loaders = dict()
@@ -149,8 +151,14 @@ def main():
 
     # result
     msg = msg_box("result")
+    logger.info(msg)
+
+    end = time.time()
+    logger.info(f"Consuming time: {end - start:.3f} seconds.")
+
     avg_result = sum(results) / len(results)
-    logger.info(f"{msg}\n{MNT_METRIC}: {avg_result}")
+    logger.info(f"{MNT_METRIC}: {avg_result:.6f}")
+
     return avg_result
 
 
@@ -190,10 +198,10 @@ if __name__ == '__main__':
 
     config = ConfigParser.from_args(args, options)
     K_FOLD = config['train']['k_fold']
-    optuna_search = config['train']['optuna']
-
+    OPTUNA_SEARCH = config['train']['optuna']
     MAX_MIN, MNT_METRIC = config['trainer']['kwargs']['monitor'].split()
-    if optuna_search:
+
+    if OPTUNA_SEARCH:
         study = optuna.create_study(direction='maximize' if MAX_MIN == 'max' else 'minimize')
         study.optimize(objective, n_trials=10)
     else:

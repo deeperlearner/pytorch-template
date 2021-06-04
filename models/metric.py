@@ -13,48 +13,48 @@ smooth = 1e-6
 class MetricTracker:
     def __init__(self, keys_iter: list, keys_epoch: list, writer=None):
         self.writer = writer
-        self.metrics_iter = pd.DataFrame(index=keys_iter,
-                                         columns=['current', 'sum', 'square_sum',
-                                                  'counts', 'mean', 'square_avg', 'std'],
+        self.iter_record = pd.DataFrame(index=keys_iter,
+                                        columns=['current', 'sum', 'square_sum',
+                                                 'counts', 'mean', 'square_avg', 'std'],
+                                        dtype=np.float64)
+        self.epoch_record = pd.DataFrame(index=keys_epoch, columns=['mean'],
                                          dtype=np.float64)
-        self.metrics_epoch = pd.DataFrame(index=keys_epoch, columns=['mean'],
-                                          dtype=np.float64)
         self.reset()
 
     def reset(self):
-        for col in self.metrics_iter.columns:
-            self.metrics_iter[col].values[:] = 0
+        for col in self.iter_record.columns:
+            self.iter_record[col].values[:] = 0
 
     def iter_update(self, key, value, n=1):
         if self.writer is not None:
             self.writer.add_scalar(key, value)
-        self.metrics_iter.at[key, 'current'] = value
-        self.metrics_iter.at[key, 'sum'] += value * n
-        self.metrics_iter.at[key, 'square_sum'] += value * value * n
-        self.metrics_iter.at[key, 'counts'] += n
+        self.iter_record.at[key, 'current'] = value
+        self.iter_record.at[key, 'sum'] += value * n
+        self.iter_record.at[key, 'square_sum'] += value * value * n
+        self.iter_record.at[key, 'counts'] += n
 
     def epoch_update(self, key, value):
         if self.writer is not None:
             self.writer.add_scalar(key, value)
-        self.metrics_epoch.at[key, 'mean'] = value
+        self.epoch_record.at[key, 'mean'] = value
 
     def current(self):
-        return dict(self.metrics_iter['current'])
+        return dict(self.iter_record['current'])
 
     def avg(self):
-        for key, row in self.metrics_iter.iterrows():
-            self.metrics_iter.at[key, 'mean'] = row['sum'] / row['counts']
-            self.metrics_iter.at[key, 'square_avg'] = row['square_sum'] / row['counts']
+        for key, row in self.iter_record.iterrows():
+            self.iter_record.at[key, 'mean'] = row['sum'] / row['counts']
+            self.iter_record.at[key, 'square_avg'] = row['square_sum'] / row['counts']
 
     def std(self):
-        for key, row in self.metrics_iter.iterrows():
-            self.metrics_iter.at[key, 'std'] = sqrt(row['square_avg'] - row['mean']**2 + smooth)
+        for key, row in self.iter_record.iterrows():
+            self.iter_record.at[key, 'std'] = sqrt(row['square_avg'] - row['mean']**2 + smooth)
 
     def result(self):
         self.avg()
         self.std()
-        iter_result = self.metrics_iter[['mean', 'std']]
-        epoch_result = self.metrics_epoch
+        iter_result = self.iter_record[['mean', 'std']]
+        epoch_result = self.epoch_record
         return pd.concat([iter_result, epoch_result])
 
 
@@ -115,8 +115,8 @@ def PPV(target, output):
 def F_beta_score(target, output, beta=1.):
     recall = TPR(target, output)
     precision = PPV(target, output)
-    F_beta = (precision * recall) / (beta**2 * precision + recall)
-    return F_beta
+    score = (precision * recall) / (beta**2 * precision + recall)
+    return score
 
 
 def AUROC(target, output):

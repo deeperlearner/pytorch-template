@@ -136,5 +136,8 @@
         "optuna": false,
         "k_fold": 1,
         "multiprocessing": false
+    },
+    "test": {
+        "bootstrapping": false
     }
 }

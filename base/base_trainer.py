@@ -105,7 +105,7 @@ class BaseTrainer:
                     break
 
             if epoch % self.save_period == 0 or best:
-                self.logger.info("Best {}: {:.5f}".format(self.mnt_metric, self.mnt_best))
+                self.logger.info("Best {}: {:.6f}".format(self.mnt_metric, self.mnt_best))
                 self._save_checkpoint(epoch, save_best=best)
 
         return log_best

@@ -1,10 +1,10 @@
 import os
 import time
 
-import numpy as np
-import pandas as pd
 import torch
 from torchvision.utils import make_grid
+import numpy as np
+import pandas as pd
 
 from base import BaseTrainer
 from models.metric import MetricTracker
@@ -60,7 +60,6 @@ class Trainer(BaseTrainer):
         :param epoch: Integer, current training epoch.
         :return: A log that contains average loss and metric in this epoch.
         """
-        start = time.time()
         train_loader = self.train_data_loaders['data']
 
         self.model.train()
@@ -69,6 +68,7 @@ class Trainer(BaseTrainer):
             outputs = torch.FloatTensor().to(self.device)
             targets = torch.FloatTensor().to(self.device)
 
+        start = time.time()
         for batch_idx, (data, target) in enumerate(train_loader):
             data, target = data.to(self.device), target.to(self.device)
 
