@@ -127,10 +127,14 @@ Use optuna to find hyperparameters.
 
 ## Count Lines of Codes
 - wc
-`wc -l **/*.* *.*`
+  ```
+  wc -l **/*.* *.*
+  ```
 - cloc
-`sudo apt install cloc`
-`cloc --vcs=git --by-file`
+  ```
+  sudo apt install cloc
+  cloc --vcs=git --by-file
+  ```
 
 ## Usage
 ### Config file format
@@ -146,7 +150,6 @@ Try `bash scripts/run/examples.sh run_all` to run example configs.
 
 ### Using config files
 Modify the configurations in `.json` config files, then run:
-
   ```
   python train.py --config config.json
   ```
@@ -170,22 +173,21 @@ Specify indices of available GPUs by cuda environmental variable.
   ```
 
 ## Customization
-
 ### Project initialization
 Use the `torch_new_project.sh` script to make your new project directory with template files.
 
-Add this line to ~/.bashrc:
-`export Pytorch_Template=/path/to/Pytorch_Template`
-
-Add symbolic link at /usr/local/bin so that you can run this script everywhere.
-
-`sudo ln -s $Pytorch_Template/scripts/new_project/torch_new_project.sh /usr/local/bin/torch_new_project`
-
-`torch_new_project ProjectName` produces a new project folder named 'ProjectName' will be made.
+1. Add this line to ~/.bashrc:
+  ```
+  export Pytorch_Template=/path/to/Pytorch_Template
+  ```
+1. Add symbolic link at /usr/local/bin so that you can run this script everywhere.
+  ```
+  sudo ln -s $Pytorch_Template/scripts/new_project/torch_new_project.sh /usr/local/bin/torch_new_project
+  ```
+1. `torch_new_project ProjectName` produces a new project folder named 'ProjectName' will be made.
 This script will filter out unneccessary files listed in `copy_exclude`.
 
 ### Custom CLI options
-
 Changing values of config file is a clean, safe and easy way of tuning hyperparameters. However, sometimes
 it is better to have command line options if some values need to be changed too often or quickly.
 
@@ -306,12 +308,12 @@ If you have additional information to be logged, in `_train_epoch()` of your tra
 ### Testing
 You can test trained model by running `test.py` passing path to the trained checkpoint by `--resume` argument.
 
-### Validation data
-To split validation data from a data loader, call `BaseDataLoader.split_validation()`, then it will return a data loader for validation of size specified in your config file.
+### Validation data (TODO)
+To split validation data from a data loader, call `BaseDataLoader._train_valid_split()`, then it will return a data loader for validation of size specified in your config file.
 The `validation_split` can be a ratio of validation set per total data(0.0 <= float < 1.0), or the number of samples (0 <= int < `n_total_samples`).
 
-**Note**: the `split_validation()` method will modify the original data loader
-**Note**: `split_validation()` will return `None` if `"validation_split"` is set to `0`
+**Note**: the `_train_valid_split()` method will modify the original data loader
+**Note**: `_train_valid_split()` will return `None` if `"validation_split"` is set to `0`
 
 ### Checkpoints
 You can specify the name of the training session in config files:

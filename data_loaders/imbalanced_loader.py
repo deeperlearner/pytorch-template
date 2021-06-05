@@ -5,7 +5,6 @@ from torch.utils.data import DataLoader
 from torch.utils.data.sampler import WeightedRandomSampler
 
 from base import BaseDataLoader
-from logger import get_logger
 from mains import Cross_Valid
 from utils import msg_box
 
@@ -14,25 +13,19 @@ class ImbalancedDataLoader(BaseDataLoader):
     """
     This loader will balance the ratio of class for each mini-batch
     """
-    logger = get_logger('data_loader')
-
     def __init__(self, dataset, class_weight=None, target=None,
                  validation_split=0.0, DataLoader_kwargs=None,
                  do_transform=False):
         super().__init__(dataset, validation_split, DataLoader_kwargs)
 
-        if Cross_Valid.k_fold > 1:
-            fold_msg = msg_box(f"Fold {Cross_Valid.fold_idx}")
-            self.logger.info(fold_msg)
-
-        if dataset.mode == 'train':
+        if dataset.mode in ('train', 'valid'):
             if Cross_Valid.k_fold > 1:
                 split_idx = dataset.get_split_idx(Cross_Valid.fold_idx)
                 train_sampler, valid_sampler = self._get_sampler(
                     *split_idx, class_weight, target)
             else:
                 if validation_split > 0.0:
-                    split_idx = self._train_valid_split()
+                    split_idx = self._train_valid_split(labels=dataset.y_train)
                     train_sampler, valid_sampler = self._get_sampler(
                         *split_idx, class_weight, target)
                 else:

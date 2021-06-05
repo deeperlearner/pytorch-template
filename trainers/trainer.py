@@ -60,14 +60,13 @@ class Trainer(BaseTrainer):
         :param epoch: Integer, current training epoch.
         :return: A log that contains average loss and metric in this epoch.
         """
-        train_loader = self.train_data_loaders['data']
-
         self.model.train()
         self.train_metrics.reset()
         if len(self.metrics_epoch) > 0:
             outputs = torch.FloatTensor().to(self.device)
             targets = torch.FloatTensor().to(self.device)
 
+        train_loader = self.train_data_loaders['data']
         start = time.time()
         for batch_idx, (data, target) in enumerate(train_loader):
             data, target = data.to(self.device), target.to(self.device)
@@ -134,8 +133,6 @@ class Trainer(BaseTrainer):
         :param epoch: Integer, current training epoch.
         :return: A log that contains information about validation
         """
-        valid_loader = self.train_data_loaders['data']
-
         self.model.eval()
         self.valid_metrics.reset()
         with torch.no_grad():
@@ -143,6 +140,7 @@ class Trainer(BaseTrainer):
                 outputs = torch.FloatTensor().to(self.device)
                 targets = torch.FloatTensor().to(self.device)
 
+            valid_loader = self.train_data_loaders['data']
             for batch_idx, (data, target) in enumerate(valid_loader):
                 data, target = data.to(self.device), target.to(self.device)
 

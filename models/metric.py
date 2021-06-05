@@ -119,6 +119,7 @@ def F_beta_score(target, output, beta=1.):
     return score
 
 
+# AUC
 def AUROC(target, output):
     with torch.no_grad():
         y_true = target.cpu().numpy()
