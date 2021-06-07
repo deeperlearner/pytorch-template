@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn.utils import resample
 
 from logger import get_logger
-from utils import msg_box
+from utils import msg_box, consuming_time
 
 
 def bootstrapping(targets, outputs, metrics_epoch, test_metrics, repeat=1000):
@@ -33,7 +33,8 @@ def bootstrapping(targets, outputs, metrics_epoch, test_metrics, repeat=1000):
     logger.info(msg)
 
     end = time.time()
-    logger.info(f"Consuming time: {end - start:.3f} seconds.")
+    total_time = consuming_time(start, end)
+    logger.info(f"Consuming time: {total_time}.")
 
     boot_result = pd.DataFrame()
     boot_result['CI_median'] = results.median(axis=1)

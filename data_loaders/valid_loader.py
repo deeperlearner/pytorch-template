@@ -6,7 +6,6 @@ from torch.utils.data.sampler import SubsetRandomSampler
 
 from base import BaseDataLoader
 from mains import Cross_Valid
-from utils import msg_box
 
 
 class ValidDataLoader(BaseDataLoader):

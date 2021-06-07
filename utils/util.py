@@ -4,6 +4,7 @@ from itertools import repeat
 from collections import OrderedDict
 from functools import reduce
 from operator import getitem
+import time
 
 import torch
 
@@ -66,3 +67,9 @@ def msg_box(msg):
     h = ''.join(['+'] + ['-' * row] + ['+'])
     result = h + f"\n|{msg}|\n" + h
     return result
+
+
+def consuming_time(start, end):
+    ty_res = time.gmtime(end - start)
+    res = time.strftime("%H hours, %M minutes, %S seconds", ty_res)
+    return res

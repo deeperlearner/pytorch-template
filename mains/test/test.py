@@ -17,7 +17,7 @@ import models.loss as module_loss
 import models.metric as module_metric
 from models.metric import MetricTracker
 from parse_config import ConfigParser
-from utils import ensure_dir, prepare_device, get_by_path, msg_box
+from utils import ensure_dir, prepare_device, get_by_path, msg_box, consuming_time
 from utils.bootstrap import bootstrapping
 
 # fix random seeds for reproducibility
@@ -126,7 +126,8 @@ def main():
     logger.info(msg)
 
     end = time.time()
-    logger.info(f"Consuming time: {end - start:.3f} seconds.")
+    total_time = consuming_time(start, end)
+    logger.info(f"Consuming time: {total_time}.")
 
     avg_result = results.mean(axis=1)
     logger.info(avg_result)

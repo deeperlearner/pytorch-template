@@ -8,7 +8,7 @@ import pandas as pd
 
 from base import BaseTrainer
 from models.metric import MetricTracker
-from utils import inf_loop
+from utils import inf_loop, consuming_time
 
 
 class Trainer(BaseTrainer):
@@ -100,6 +100,7 @@ class Trainer(BaseTrainer):
 
             if batch_idx == self.len_epoch:
                 break
+        end = time.time()
 
         for met in self.metrics_epoch:
             self.train_metrics.epoch_update(met.__name__, met(targets, outputs))
@@ -114,12 +115,9 @@ class Trainer(BaseTrainer):
             self.lr_scheduler.step()
 
         log = pd.concat([train_log, valid_log])
-        end = time.time()
-        ty_res = time.gmtime(end - start)
-        res = time.strftime("%H hours, %M minutes, %S seconds", ty_res)
         epoch_log = {'epochs': epoch,
                      'iterations': self.len_epoch * epoch,
-                     'Runtime': res}
+                     'Runtime': consuming_time(start, end)}
         epoch_info = ', '.join(f"{key}: {value}" for key, value in epoch_log.items())
         logger_info = f"{epoch_info}\n{log}"
         self.logger.info(logger_info)
