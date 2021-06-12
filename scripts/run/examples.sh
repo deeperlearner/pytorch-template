@@ -9,7 +9,8 @@ if [ "$MODE" = "debug" ]; then
     CONFIG="examples/Adult_logistic"
     EXP="Adult_logistic"
     RUN_ID="debug"
-    python3 mains/train/train.py -c "configs/$CONFIG.json" --run_id $RUN_ID
+    python3 mains/train/train.py -c "configs/$CONFIG.json" --run_id $RUN_ID --optuna
+    python3 mains/train/train.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --run_id $RUN_ID
     python3 mains/test/test.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID
 else
     # MNIST_LeNet

@@ -2,6 +2,7 @@
     "n_gpu": 1,
     "root_dir": "./",
     "name": "ImageNet_VGG16",
+    "k_fold": 1,
 
     "datasets": {
         "train": {
@@ -131,13 +132,5 @@
 
             "tensorboard": false
         }
-    },
-    "train": {
-        "optuna": false,
-        "k_fold": 1,
-        "multiprocessing": false
-    },
-    "test": {
-        "bootstrapping": false
     }
 }

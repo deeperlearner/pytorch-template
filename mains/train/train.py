@@ -19,10 +19,6 @@ from utils import ensure_dir, prepare_device, set_by_path, get_by_path, msg_box,
 
 
 def main():
-    logger = get_logger('train')
-    train_msg = msg_box("TRAIN")
-    logger.debug(train_msg)
-
     # setup GPU device if available, move model into configured device
     device, device_ids = prepare_device(config['n_gpu'])
 
@@ -71,13 +67,13 @@ def main():
                               'threshold': metrics_threshold}
                  }
 
-    if K_FOLD > 1:  # cross validation enabled
-        train_datasets['data'].split_cv_indexes(K_FOLD)
+    if k_fold > 1:  # cross validation enabled
+        train_datasets['data'].split_cv_indexes(k_fold)
 
     results = []
-    Cross_Valid.create_CV(K_FOLD)
+    Cross_Valid.create_CV(k_fold)
     start = time.time()
-    for k in range(K_FOLD):
+    for k in range(k_fold):
         # data_loaders
         train_data_loaders = dict()
         valid_data_loaders = dict()
@@ -143,26 +139,27 @@ def main():
         trainer = config.init_obj(['trainer'], 'trainers', torch_objs,
                                   config.save_dir, config.resume, device)
         log_best = trainer.train()
-        results.append(log_best[MNT_METRIC])
+        results.append(log_best[mnt_metric])
 
         # cross validation
-        if K_FOLD > 1:
+        if k_fold > 1:
             Cross_Valid.next_fold()
 
-    # result
     msg = msg_box("result")
-    logger.info(msg)
 
     end = time.time()
     total_time = consuming_time(start, end)
-    logger.info(f"Consuming time: {total_time}.")
+    msg += f"\nConsuming time: {total_time}."
 
     avg_result = sum(results) / len(results)
-    logger.info(f"{MNT_METRIC}: {avg_result:.6f}")
+    msg += f"\n{mnt_metric}: {avg_result:.6f}"
+
+    logger.info(msg)
 
     return avg_result
 
 
+objective_results = []
 def objective(trial):
     # TODO: hyperparameters search spaces
     search_opt_type = trial.suggest_categorical("optimizer", ['Adam', 'RMSprop', 'SGD'])
@@ -171,6 +168,11 @@ def objective(trial):
     set_by_path(config, "optimizers;model;kwargs;lr", search_lr)
 
     result = main()
+    objective_results.append(result)
+    if (max_min == 'max' and result > max(objective_results) or
+            max_min == 'min' and result < min(objective_results)):
+        config.backup()
+
     return result
 
 
@@ -182,6 +184,8 @@ if __name__ == '__main__':
     run_args.add_argument('--mode', default='train', type=str)
     run_args.add_argument('--run_id', default=None, type=str)
     run_args.add_argument('--log_name', default=None, type=str)
+    run_args.add_argument('--optuna', action='store_true')
+    run_args.add_argument('--mp', action='store_true', help="multiprocessing")
 
     # custom cli options to modify configuration from default values given in json file.
     mod_args = args.add_argument_group('mod_args')
@@ -198,12 +202,24 @@ if __name__ == '__main__':
         mod_args.add_argument(*opt.flags, type=opt.type)
 
     config = ConfigParser.from_args(args, options)
-    K_FOLD = config['train']['k_fold']
-    OPTUNA_SEARCH = config['train']['optuna']
-    MAX_MIN, MNT_METRIC = config['trainer']['kwargs']['monitor'].split()
+    logger = get_logger('train')
+    msg = msg_box("TRAIN")
+    logger.debug(msg)
+    k_fold = config['k_fold']
+    max_min, mnt_metric = config['trainer']['kwargs']['monitor'].split()
 
-    if OPTUNA_SEARCH:
-        study = optuna.create_study(direction='maximize' if MAX_MIN == 'max' else 'minimize')
-        study.optimize(objective, n_trials=10)
+    if config.run_args.optuna:
+        direction = 'maximize' if max_min == 'max' else 'minimize'
+        start = time.time()
+        study = optuna.create_study(direction=direction)
+        study.optimize(objective, n_trials=3)
+
+        msg = msg_box("Optuna result")
+        end = time.time()
+        total_time = consuming_time(start, end)
+        msg += f"\nConsuming time: {total_time}."
+        msg += f"\nM{direction[1:-3]}al {mnt_metric}: {study.best_value:.6f}"
+        msg += f"\nBest hyperparameters: {study.best_params}"
+        logger.info(msg)
     else:
         main()

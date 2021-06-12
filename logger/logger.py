@@ -27,15 +27,15 @@ def setup_logging(save_dir, root_dir='./', filename=None,
         logging.basicConfig(level=default_level)
 
 
-log_levels = {
+LOG_LEVELS = {
     0: logging.WARNING,
     1: logging.INFO,
     2: logging.DEBUG,
 }
 def get_logger(name, verbosity=2):
-    assert verbosity in log_levels, \
+    assert verbosity in LOG_LEVELS, \
         "verbosity option {verbosity} is invalid. \
-         Valid options are {log_levels.keys()}."
+         Valid options are {LOG_LEVELS.keys()}."
     logger = logging.getLogger(name)
-    logger.setLevel(log_levels[verbosity])
+    logger.setLevel(LOG_LEVELS[verbosity])
     return logger

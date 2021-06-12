@@ -29,10 +29,6 @@ np.random.seed(SEED)
 
 
 def main():
-    logger = get_logger('test')
-    test_msg = msg_box("TEST")
-    logger.debug(test_msg)
-
     # setup GPU device if available, move model into configured device
     device, device_ids = prepare_device(config['n_gpu'])
 
@@ -43,9 +39,9 @@ def main():
         test_datasets[name] = config.init_obj([*keys, name], 'data_loaders')
 
     results = pd.DataFrame()
-    Cross_Valid.create_CV(K_FOLD)
+    Cross_Valid.create_CV(k_fold)
     start = time.time()
-    for k in range(K_FOLD):
+    for k in range(k_fold):
         # data_loaders
         test_data_loaders = dict()
         keys = ['data_loaders', 'test']
@@ -55,7 +51,7 @@ def main():
             test_data_loaders[name] = loaders.test_loader
 
         # models
-        if K_FOLD > 1:
+        if k_fold > 1:
             fold_prefix = f'fold_{k}_'
             dirname = os.path.dirname(config.resume)
             basename = os.path.basename(config.resume)
@@ -118,23 +114,23 @@ def main():
         logger.info(test_log)
 
         # cross validation
-        if K_FOLD > 1:
+        if k_fold > 1:
             Cross_Valid.next_fold()
 
-    # result
     msg = msg_box("result")
-    logger.info(msg)
 
     end = time.time()
     total_time = consuming_time(start, end)
-    logger.info(f"Consuming time: {total_time}.")
+    msg += f"\nConsuming time: {total_time}."
 
     avg_result = results.mean(axis=1)
-    logger.info(avg_result)
+    msg += f"\n{avg_result}"
+
+    logger.info(msg)
 
     # bootstrap
-    if config['test']['bootstrapping']:
-        assert K_FOLD == 1, "k-fold ensemble and bootstrap is mutually exclusive."
+    if config.test_args.bootstrapping:
+        assert k_fold == 1, "k-fold ensemble and bootstrap are mutually exclusive."
         N = config.test_args.bootstrap_times
         bootstrapping(targets, outputs, metrics_epoch, test_metrics, repeat=N)
 
@@ -159,10 +155,14 @@ if __name__ == '__main__':
 
     # config.test_args: additional arguments for testing
     test_args = args.add_argument_group('test_args')
+    test_args.add_argument('--bootstrapping', action='store_true')
     test_args.add_argument('--bootstrap_times', default=1000, type=int)
     test_args.add_argument('--output_path', default=None, type=str)
 
     config = ConfigParser.from_args(args, options)
-    K_FOLD = config['train']['k_fold']
+    logger = get_logger('test')
+    msg = msg_box("TEST")
+    logger.debug(msg)
+    k_fold = config['k_fold']
 
     main()

@@ -2,6 +2,7 @@
     "n_gpu": 1,
     "root_dir": "./",
     "name": "Adult_logistic",
+    "k_fold": 3,
 
     "datasets": {
         "imbalanced": true,
@@ -123,13 +124,5 @@
 
             "tensorboard": false
         }
-    },
-    "train": {
-        "optuna": false,
-        "k_fold": 1,
-        "multiprocessing": false
-    },
-    "test": {
-        "bootstrapping": true
     }
 }

@@ -2,6 +2,7 @@
     "n_gpu": 1,
     "root_dir": "./",
     "name": "dataset_model",
+    "k_fold": 1,
 
     "datasets": {
         "imbalanced": false,
@@ -134,13 +135,5 @@
 
             "tensorboard": false
         }
-    },
-    "train": {
-        "optuna": false,
-        "k_fold": 1,
-        "multiprocessing": false
-    },
-    "test": {
-        "bootstrapping": true
     }
 }

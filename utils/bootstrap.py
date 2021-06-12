@@ -9,10 +9,10 @@ from utils import msg_box, consuming_time
 
 
 def bootstrapping(targets, outputs, metrics_epoch, test_metrics, repeat=1000):
-    logger = get_logger('Booststrapping')
-    msg = msg_box("Booststrap")
+    logger = get_logger('Bootstrapping')
+    msg = msg_box("Bootstrap")
+    msg += f"\nBootstrap for {repeat} times..."
     logger.info(msg)
-    logger.info(f"Booststrap for {repeat} times...")
 
     results = pd.DataFrame()
     start = time.time()
@@ -28,17 +28,17 @@ def bootstrapping(targets, outputs, metrics_epoch, test_metrics, repeat=1000):
         test_result = test_result['mean'].rename(number)
         results = pd.concat((results, test_result), axis=1)
 
-    # results
     msg = msg_box("result")
-    logger.info(msg)
 
     end = time.time()
     total_time = consuming_time(start, end)
-    logger.info(f"Consuming time: {total_time}.")
+    msg += f"\nConsuming time: {total_time}."
 
     boot_result = pd.DataFrame()
     boot_result['CI_median'] = results.median(axis=1)
     boot_result['CI_low'] = results.quantile(q=0.025, axis=1)
     boot_result['CI_high'] = results.quantile(q=0.975, axis=1)
     boot_result['CI_half'] = (boot_result['CI_high'] - boot_result['CI_low']) / 2
-    logger.info(boot_result)
+    msg += f"\n{boot_result}"
+
+    logger.info(msg)

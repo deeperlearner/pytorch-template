@@ -21,8 +21,8 @@ class ConfigParser:
         # test_args: self.test_args
 
         # load config file and apply modification
-        config_json = self.run_args.config
-        config = read_json(Path(config_json))
+        self.config_json = self.run_args.config
+        config = read_json(Path(self.config_json))
         self._config = _update_config(config, modification)
         self.resume = Path(self.run_args.resume) if self.run_args.resume is not None else None
 
@@ -33,22 +33,20 @@ class ConfigParser:
         save_dir = Path(self.root_dir) / save_name[self.run_args.mode]
         if run_id is None:  # use timestamp as default run-id
             run_id = datetime.now().strftime(r'%m%d_%H%M%S')
-        exp_dir = save_dir / self.config['name'] / run_id
+        self.exp_dir = save_dir / self.config['name'] / run_id
 
         dirs = {'train': ['log', 'model'], 'test': ['fig', 'log']}
         self.save_dir = dict()
         for dir_name in dirs[self.run_args.mode]:
-            dir_path = exp_dir / dir_name
+            dir_path = self.exp_dir / dir_name
             ensure_dir(dir_path)
             self.save_dir[dir_name] = dir_path
 
         log_config = {}
         if self.run_args.mode == 'train':
-            mp = self.config['train']['multiprocessing']
-            if mp:
+            if self.run_args.mp:  # multiprocessing
                 log_config.update({'log_config': 'logger/logger_config_mp.json'})
-            # backup config file to the experiment dirctory
-            write_json(self.config, exp_dir / os.path.basename(config_json))
+            self.backup()
 
         # configure logging module
         setup_logging(self.save_dir['log'], root_dir=self.root_dir, filename=self.run_args.log_name, **log_config)
@@ -123,6 +121,10 @@ class ConfigParser:
     @property
     def config(self):
         return self._config
+
+    # backup config file to the experiment dirctory
+    def backup(self):
+        write_json(self.config, self.exp_dir / os.path.basename(self.config_json))
 
 
 # helper functions to update config dict with custom cli options
