@@ -5,6 +5,8 @@ from pathlib import Path
 from functools import partial
 from datetime import datetime
 import importlib
+import glob
+import shutil
 
 from logger import setup_logging
 from utils import ensure_dir, read_json, write_json, set_by_path, get_by_path
@@ -35,7 +37,7 @@ class ConfigParser:
             run_id = datetime.now().strftime(r'%m%d_%H%M%S')
         self.exp_dir = save_dir / self.config['name'] / run_id
 
-        dirs = {'train': ['log', 'model'], 'test': ['fig', 'log']}
+        dirs = {'train': ['log', 'model', 'tuned_model'], 'test': ['fig', 'log']}
         self.save_dir = dict()
         for dir_name in dirs[self.run_args.mode]:
             dir_path = self.exp_dir / dir_name
@@ -125,6 +127,12 @@ class ConfigParser:
     # backup config file to the experiment dirctory
     def backup(self):
         write_json(self.config, self.exp_dir / os.path.basename(self.config_json))
+
+    # backup best models into tuned_model/
+    def cp_models(self):
+        model_files = os.path.join(self.save_dir['model'], "*model_best.pth")
+        for model_file in glob.glob(model_files):
+            shutil.copy(model_file, self.save_dir['tuned_model'])
 
 
 # helper functions to update config dict with custom cli options

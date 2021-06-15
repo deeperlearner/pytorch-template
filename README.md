@@ -92,7 +92,10 @@ Be careful to adjust the number of processes and the number of workers in the `d
 RTX GPU can use apex to do automatic mixed precision training.
 
 ### [Optuna](https://github.com/optuna/optuna)
-Use optuna to find hyperparameters.
+Use optuna to find best hyperparameters.
+  ```
+  python3 mains/train/train.py -c config.json --optuna
+  ```
 
 ## Folder Structure
   ```

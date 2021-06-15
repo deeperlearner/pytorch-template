@@ -162,16 +162,22 @@ def main():
 objective_results = []
 def objective(trial):
     # TODO: hyperparameters search spaces
-    search_opt_type = trial.suggest_categorical("optimizer", ['Adam', 'RMSprop', 'SGD'])
-    set_by_path(config, "optimizers;model;type", search_opt_type)
-    search_lr = trial.suggest_float("lr", 1e-4, 1e-3, log=True)
-    set_by_path(config, "optimizers;model;kwargs;lr", search_lr)
+    optimizer = trial.suggest_categorical("optimizer", ['Adam', 'RMSprop', 'SGD'])
+    set_by_path(config, "optimizers;model;type", optimizer)
+    lr = trial.suggest_float("lr", 1e-4, 1e-3, log=True)
+    set_by_path(config, "optimizers;model;kwargs;lr", lr)
 
     result = main()
     objective_results.append(result)
-    if (max_min == 'max' and result > max(objective_results) or
-            max_min == 'min' and result < min(objective_results)):
+    msg = msg_box("Optuna progress")
+    i, N = len(objective_results), config.run_args.optuna_trial
+    msg += f"\ntrial: ({i}/{N})"
+    if (max_min == 'max' and result >= max(objective_results) or
+            max_min == 'min' and result <= min(objective_results)):
+        msg += "\nBackuping best hyperparameters result..."
         config.backup()
+        config.cp_models()
+    logger.info(msg)
 
     return result
 
@@ -185,6 +191,7 @@ if __name__ == '__main__':
     run_args.add_argument('--run_id', default=None, type=str)
     run_args.add_argument('--log_name', default=None, type=str)
     run_args.add_argument('--optuna', action='store_true')
+    run_args.add_argument('--optuna_trial', default=3, type=int)
     run_args.add_argument('--mp', action='store_true', help="multiprocessing")
 
     # custom cli options to modify configuration from default values given in json file.
@@ -212,7 +219,7 @@ if __name__ == '__main__':
         direction = 'maximize' if max_min == 'max' else 'minimize'
         start = time.time()
         study = optuna.create_study(direction=direction)
-        study.optimize(objective, n_trials=3)
+        study.optimize(objective, n_trials=config.run_args.optuna_trial)
 
         msg = msg_box("Optuna result")
         end = time.time()
