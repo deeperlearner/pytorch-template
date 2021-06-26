@@ -4,11 +4,11 @@
 # This script initializes new pytorch project with the template files.
 #
 # Add this line to ~/.bashrc
-# `export Pytorch_Template=/path/to/Pytorch_Template`
+# `export pytorch_template=/path/to/pytorch-template`
 # Add symbolic link at /usr/local/bin so that you can run this script everywhere.
-# `sudo ln -s $Pytorch_Template/scripts/torch_new_project.sh /usr/local/bin/torch_new_project`
+# `sudo ln -s $pytorch_template/scripts/new_project/torch_new_project.sh /usr/local/bin/torch_new_project`
 
-source_dir=$Pytorch_Template
+source_dir=$pytorch_template
 target_dir=$1
 
 # copy template files
