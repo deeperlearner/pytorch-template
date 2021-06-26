@@ -1,4 +1,4 @@
-# PyTorch Template Project
+# PyTorch Template for all kinds of ML Projects
 A pytorch template files generator, which supports multiple instances of dataset, dataloader, model, loss, optimizer and lr_scheduler.
 
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
