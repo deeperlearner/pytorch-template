@@ -73,6 +73,8 @@ class Trainer(BaseTrainer):
 
             self.optimizer.zero_grad()
             output = self.model(data)
+            # print(output.size())
+            # print(target.size())
             if len(self.metrics_epoch) > 0:
                 outputs = torch.cat((outputs, output))
                 targets = torch.cat((targets, target))
