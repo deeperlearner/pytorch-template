@@ -3,8 +3,9 @@
 # bash ./scripts/run/examples.sh $1
 # $1: debug, preprocess, run_all
 
-MODE=$1
 
+# "CONFIG##*/" is the basename of CONFIG
+MODE=$1
 if [ "$MODE" = "debug" ]; then
     CONFIG="examples/Adult_logistic"
     EXP="Adult_logistic"

@@ -123,8 +123,10 @@ def main():
     total_time = consuming_time(start, end)
     msg += f"\nConsuming time: {total_time}."
 
-    avg_result = results.mean(axis=1)
-    msg += f"\n{avg_result}"
+    result = pd.DataFrame()
+    result['mean'] = results.mean(axis=1)
+    result['std'] = results.std(axis=1)
+    msg += f"\n{result}"
 
     logger.info(msg)
 

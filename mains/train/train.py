@@ -5,6 +5,7 @@ import collections
 import time
 
 import torch
+import pandas as pd
 from apex import amp
 from sklearn.utils.class_weight import compute_class_weight
 import optuna
@@ -70,7 +71,7 @@ def main():
     if k_fold > 1:  # cross validation enabled
         train_datasets['data'].split_cv_indexes(k_fold)
 
-    results = []
+    results = pd.DataFrame()
     Cross_Valid.create_CV(k_fold)
     start = time.time()
     for k in range(k_fold):
@@ -138,8 +139,8 @@ def main():
 
         trainer = config.init_obj(['trainer'], 'trainers', torch_objs,
                                   config.save_dir, config.resume, device)
-        log_best = trainer.train()
-        results.append(log_best[mnt_metric])
+        train_log = trainer.train()
+        results = pd.concat((results, train_log), axis=1)
 
         # cross validation
         if k_fold > 1:
@@ -151,12 +152,14 @@ def main():
     total_time = consuming_time(start, end)
     msg += f"\nConsuming time: {total_time}."
 
-    avg_result = sum(results) / len(results)
-    msg += f"\n{mnt_metric}: {avg_result:.6f}"
+    result = pd.DataFrame()
+    result['mean'] = results.mean(axis=1)
+    result['std'] = results.std(axis=1)
+    msg += f"\n{result}"
 
     logger.info(msg)
 
-    return avg_result
+    return result
 
 
 objective_results = []
@@ -168,18 +171,19 @@ def objective(trial):
     set_by_path(config, "optimizers;model;kwargs;lr", lr)
 
     result = main()
-    objective_results.append(result)
+    best = result.at[mnt_metric, 'mean']
+    objective_results.append(best)
     msg = msg_box("Optuna progress")
     i, N = len(objective_results), config.run_args.optuna_trial
     msg += f"\ntrial: ({i}/{N})"
-    if (max_min == 'max' and result >= max(objective_results) or
-            max_min == 'min' and result <= min(objective_results)):
-        msg += "\nBackuping best hyperparameters result..."
+    if (max_min == 'max' and best >= max(objective_results) or
+            max_min == 'min' and best <= min(objective_results)):
+        msg += "\nBackuping best hyperparameters config and model..."
         config.backup()
         config.cp_models()
     logger.info(msg)
 
-    return result
+    return best
 
 
 if __name__ == '__main__':
