@@ -140,7 +140,7 @@ class Trainer(BaseTrainer):
                 outputs = torch.FloatTensor().to(self.device)
                 targets = torch.FloatTensor().to(self.device)
 
-            valid_loader = self.train_data_loaders['data']
+            valid_loader = self.valid_data_loaders['data']
             for batch_idx, (data, target) in enumerate(valid_loader):
                 data, target = data.to(self.device), target.to(self.device)
 
