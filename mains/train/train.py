@@ -203,7 +203,6 @@ if __name__ == '__main__':
     CustomArgs = collections.namedtuple('CustomArgs', "flags type target")
     options = [
         CustomArgs(['--name'], type=str, target="name"),
-        CustomArgs(['--fold_idx'], type=int, target="trainer;fold_idx"),  # fold_idx > 0 means multiprocessing is enabled
         CustomArgs(['--num_workers'], type=int, target="data_loaders;train;data;kwargs;DataLoader_kwargs;num_workers"),
         CustomArgs(['--lr', '--learning_rate'], type=float, target="optimizers;model;args;lr"),
         CustomArgs(['--bs', '--batch_size'], type=int,

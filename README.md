@@ -149,7 +149,7 @@ There are some examples config files in `config/examples/*.json`.
 - ImageNet dataset (The data need to be downloaded by yourself)
 - Adult dataset
 
-Try `bash scripts/run/examples.sh run_all` to run example configs.
+Try `./scripts/run/examples.sh -r` to run example configs.
 
 ### Using config files
 Modify the configurations in `.json` config files, then run:

@@ -30,9 +30,9 @@ class ValidDataLoader(BaseDataLoader):
 
             if do_transform:
                 dataset.transform(split_idx)
-
             self.train_loader = DataLoader(dataset, sampler=train_sampler, **self.init_kwargs)
             self.valid_loader = DataLoader(dataset, sampler=valid_sampler, **self.init_kwargs)
+
         elif dataset.mode == 'test':
             if do_transform:
                 dataset.transform()
