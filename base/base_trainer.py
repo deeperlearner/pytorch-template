@@ -3,11 +3,13 @@ from abc import abstractmethod
 
 import torch
 import numpy as np
-from apex import amp
 
 from logger import get_logger, TensorboardWriter
 from mains import Cross_Valid
-from utils import msg_box
+from utils import msg_box, is_apex_available
+
+if is_apex_available():
+    from apex import amp
 
 
 class BaseTrainer:

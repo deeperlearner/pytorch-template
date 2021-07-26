@@ -6,7 +6,6 @@ import time
 
 import torch
 import pandas as pd
-from apex import amp
 from sklearn.utils.class_weight import compute_class_weight
 import optuna
 
@@ -16,7 +15,11 @@ from mains import Cross_Valid
 import models.loss as module_loss
 import models.metric as module_metric
 from parse_config import ConfigParser
-from utils import ensure_dir, prepare_device, set_by_path, get_by_path, msg_box, consuming_time
+from utils import ensure_dir, prepare_device, set_by_path, get_by_path, \
+    msg_box, consuming_time, is_apex_available
+
+if is_apex_available():
+    from apex import amp
 
 
 def main():

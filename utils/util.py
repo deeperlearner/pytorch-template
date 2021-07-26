@@ -5,6 +5,7 @@ from collections import OrderedDict
 from functools import reduce
 from operator import getitem
 import time
+import importlib
 
 import torch
 
@@ -73,3 +74,7 @@ def consuming_time(start, end):
     ty_res = time.gmtime(end - start)
     res = time.strftime("%H hours, %M minutes, %S seconds", ty_res)
     return res
+
+
+def is_apex_available():
+    return importlib.util.find_spec("apex") is not None
