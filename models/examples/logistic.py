@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 class LogisticRegression(nn.Module):
     def __init__(self, in_features=1):
-        super().__init__()
+        super(LogisticRegression, self).__init__()
         self.linear = nn.Linear(in_features, 1)
 
     def forward(self, x):

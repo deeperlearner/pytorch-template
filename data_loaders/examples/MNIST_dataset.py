@@ -9,5 +9,5 @@ class MNISTDataset(MNIST):
             transforms.ToTensor(),
             transforms.Normalize((0.1307,), (0.3081,))
         ])
-        super().__init__(data_dir, train=mode == 'train', download=True, transform=transform)
+        super(MNISTDataset, self).__init__(data_dir, train=mode == 'train', download=True, transform=transform)
         self.mode = mode

@@ -5,7 +5,7 @@ from torchvision.models import vgg16
 
 class VGG16(nn.Module):
     def __init__(self, feature_extracting, use_pretrained=True, num_classes=50):
-        super().__init__()
+        super(VGG16, self).__init__()
         # VGG16 as feature extractor
         self.feature_extractor = vgg16(pretrained=use_pretrained)
         if feature_extracting:

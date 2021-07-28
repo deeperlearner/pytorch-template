@@ -17,7 +17,7 @@ class Trainer(BaseTrainer):
     """
     def __init__(self, torch_objs: dict, save_dir, resume, device, **kwargs):
         self.device = device
-        super().__init__(torch_objs, save_dir, **kwargs)
+        super(Trainer, self).__init__(torch_objs, save_dir, **kwargs)
 
         if resume is not None:
             self._resume_checkpoint(resume, finetune=self.finetune)

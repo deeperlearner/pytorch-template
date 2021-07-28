@@ -15,7 +15,7 @@ class ImbalancedDataLoader(BaseDataLoader):
     def __init__(self, dataset, class_weight=None, target=None,
                  validation_split=0.0, DataLoader_kwargs=None,
                  do_transform=False):
-        super().__init__(dataset, validation_split, DataLoader_kwargs)
+        super(ImbalancedDataLoader, self).__init__(dataset, validation_split, DataLoader_kwargs)
 
         if dataset.mode in ('train', 'valid'):
             if Cross_Valid.k_fold > 1:
