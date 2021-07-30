@@ -1,19 +1,15 @@
-import os 
+import os
 import sys
-import argparse
-import collections
 import time
 
 import torch
 import pandas as pd
 from sklearn.utils.class_weight import compute_class_weight
-import optuna
 
-sys.path.insert(1, os.path.join(sys.path[0], '../..'))
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from logger import get_logger
 from mains import Cross_Valid
 import models.metric as module_metric
-from parse_config import ConfigParser
 from utils import ensure_dir, prepare_device, set_by_path, get_by_path, \
     msg_box, consuming_time, is_apex_available
 
@@ -21,7 +17,8 @@ if is_apex_available():
     from apex import amp
 
 
-def main():
+logger = get_logger('train')
+def train(config):
     # setup GPU device if available, move model into configured device
     device, device_ids = prepare_device(config['n_gpu'])
 
@@ -70,6 +67,7 @@ def main():
                               'threshold': metrics_threshold}
                  }
 
+    k_fold = config['k_fold']
     if k_fold > 1:  # cross validation enabled
         train_datasets['data'].split_cv_indexes(k_fold)
 
@@ -161,76 +159,3 @@ def main():
     logger.info(msg)
 
     return result
-
-
-objective_results = []
-def objective(trial):
-    # TODO: hyperparameters search spaces
-    optimizer = trial.suggest_categorical("optimizer", ['Adam', 'RMSprop', 'SGD'])
-    set_by_path(config, "optimizers;model;type", optimizer)
-    lr = trial.suggest_float("lr", 1e-4, 1e-3, log=True)
-    set_by_path(config, "optimizers;model;kwargs;lr", lr)
-
-    result = main()
-    best = result.at[mnt_metric, 'mean']
-    objective_results.append(best)
-    msg = msg_box("Optuna progress")
-    i, N = len(objective_results), config.run_args.optuna_trial
-    msg += f"\ntrial: ({i}/{N})"
-    if (max_min == 'max' and best >= max(objective_results) or
-            max_min == 'min' and best <= min(objective_results)):
-        msg += "\nBackuping best hyperparameters config and model..."
-        config.backup()
-        config.cp_models()
-    logger.info(msg)
-
-    return best
-
-
-if __name__ == '__main__':
-    args = argparse.ArgumentParser(description='training')
-    run_args = args.add_argument_group('run_args')
-    run_args.add_argument('-c', '--config', default="configs/config.json", type=str)
-    run_args.add_argument('--resume', default=None, type=str)
-    run_args.add_argument('--mode', default='train', type=str)
-    run_args.add_argument('--run_id', default=None, type=str)
-    run_args.add_argument('--log_name', default=None, type=str)
-    run_args.add_argument('--optuna', action='store_true')
-    run_args.add_argument('--optuna_trial', default=3, type=int)
-    run_args.add_argument('--mp', action='store_true', help="multiprocessing")
-
-    # custom cli options to modify configuration from default values given in json file.
-    mod_args = args.add_argument_group('mod_args')
-    CustomArgs = collections.namedtuple('CustomArgs', "flags type target")
-    options = [
-        CustomArgs(['--name'], type=str, target="name"),
-        CustomArgs(['--num_workers'], type=int, target="data_loaders;train;data;kwargs;DataLoader_kwargs;num_workers"),
-        CustomArgs(['--lr', '--learning_rate'], type=float, target="optimizers;model;args;lr"),
-        CustomArgs(['--bs', '--batch_size'], type=int,
-                   target="data_loaders;train;data;args;DataLoader_kwargs;batch_size"),
-    ]
-    for opt in options:
-        mod_args.add_argument(*opt.flags, type=opt.type)
-
-    config = ConfigParser.from_args(args, options)
-    logger = get_logger('train')
-    msg = msg_box("TRAIN")
-    logger.debug(msg)
-    k_fold = config['k_fold']
-    max_min, mnt_metric = config['trainer']['kwargs']['monitor'].split()
-
-    if config.run_args.optuna:
-        direction = 'maximize' if max_min == 'max' else 'minimize'
-        start = time.time()
-        study = optuna.create_study(direction=direction)
-        study.optimize(objective, n_trials=config.run_args.optuna_trial)
-
-        msg = msg_box("Optuna result")
-        end = time.time()
-        total_time = consuming_time(start, end)
-        msg += f"\nConsuming time: {total_time}."
-        msg += f"\nM{direction[1:-3]}al {mnt_metric}: {study.best_value:.6f}"
-        msg += f"\nBest hyperparameters: {study.best_params}"
-        logger.info(msg)
-    else:
-        main()

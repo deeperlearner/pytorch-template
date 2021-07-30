@@ -10,7 +10,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-sys.path.insert(1, os.path.join(sys.path[0], '../..'))
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from logger import get_logger
 from mains import Cross_Valid
 import models.metric as module_metric
