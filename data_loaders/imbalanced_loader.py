@@ -14,7 +14,7 @@ class ImbalancedDataLoader(BaseDataLoader):
     """
     def __init__(self, dataset, class_weight=None, target=None,
                  validation_split=0.0, DataLoader_kwargs=None,
-                 do_transform=False):
+                 stratify_by_labels=None, do_transform=False):
         super(ImbalancedDataLoader, self).__init__(dataset, validation_split, DataLoader_kwargs)
 
         if dataset.mode in ('train', 'valid'):
@@ -24,7 +24,7 @@ class ImbalancedDataLoader(BaseDataLoader):
                     *split_idx, class_weight, target)
             else:
                 if validation_split > 0.0:
-                    split_idx = self._train_valid_split(labels=dataset.y_train)
+                    split_idx = self._train_valid_split(labels=stratify_by_labels)
                     train_sampler, valid_sampler = self._get_sampler(
                         *split_idx, class_weight, target)
                 else:
