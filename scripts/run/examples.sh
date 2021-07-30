@@ -83,5 +83,5 @@ while getopts "dpr" flag; do
 done
 
 TOTAL_TIME=$(date +%T -d "1/1 + $TOTAL_SECONDS sec")
-echo -e "===============================" | tee -a $LOG_FILE
+echo -e "---------------------------------" | tee -a $LOG_FILE
 echo -e "total running time: $TOTAL_TIME" | tee -a $LOG_FILE
