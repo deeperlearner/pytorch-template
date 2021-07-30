@@ -2,13 +2,13 @@
     "n_gpu": 1,
     "root_dir": "./",
     "name": "Adult_logistic",
-    "k_fold": 3,
+    "k_fold": 1,
 
     "datasets": {
         "imbalanced": true,
         "train": {
             "data": {
-                "module": ".examples.Adult_dataset",
+                "module": "data_loaders.examples.Adult_dataset",
                 "type": "AdultDataset",
                 "kwargs": {
                     "data_dir": "./data/Adult",
@@ -20,7 +20,7 @@
         },
         "test": {
             "data": {
-                "module": ".examples.Adult_dataset",
+                "module": "data_loaders.examples.Adult_dataset",
                 "type": "AdultDataset",
                 "kwargs": {
                     "data_dir": "./data/Adult",
@@ -32,7 +32,7 @@
     "data_loaders": {
         "train": {
             "data": {
-                "module": ".imbalanced_loader",
+                "module": "data_loaders.imbalanced_loader",
                 "type": "ImbalancedDataLoader",
                 "kwargs": {
                     "validation_split": 0.2,
@@ -49,7 +49,7 @@
         },
         "test": {
             "data": {
-                "module": ".imbalanced_loader",
+                "module": "data_loaders.imbalanced_loader",
                 "type": "ImbalancedDataLoader",
                 "kwargs": {
                     "DataLoader_kwargs": {
@@ -64,7 +64,7 @@
     },
     "models": {
         "model": {
-            "module": ".examples.logistic",
+            "module": "models.examples.logistic",
             "type": "LogisticRegression",
             "kwargs": {
                 "in_features": 105
@@ -74,6 +74,7 @@
     "losses": {
         "loss": {
             "is_ftn": true,
+            "module": "models.loss",
             "type": "binary_focal_loss"
         }
     },
@@ -82,6 +83,7 @@
         "per_epoch": ["TPR", "PPV", "AUROC", "AUPRC"],
         "pick_threshold": {
             "is_ftn": true,
+            "module": "models.metric",
             "type": "Youden_J",
             "kwargs": {
                 "beta": 1.0
@@ -90,6 +92,7 @@
     },
     "optimizers": {
         "model": {
+            "module": "torch.optim",
             "type": "SGD",
             "kwargs": {
                 "lr": 0.001
@@ -98,6 +101,7 @@
     },
     "lr_schedulers": {
         "model": {
+            "module": "torch.optim.lr_scheduler",
             "type": "StepLR",
             "kwargs": {
                 "step_size": 50,
@@ -106,7 +110,7 @@
         }
     },
     "trainer": {
-        "module": ".trainer",
+        "module": "trainers.trainer",
         "type": "Trainer",
         "kwargs": {
             "apex": false,

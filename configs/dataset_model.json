@@ -8,7 +8,7 @@
         "imbalanced": false,
         "train": {
             "data": {
-                "module": ".*_dataset",
+                "module": "data_loaders.*_dataset",
                 "type": "*Dataset",
                 "kwargs": {
                     "data_dir": "./data",
@@ -21,7 +21,7 @@
         },
         "test": {
             "data": {
-                "module": ".*_dataset",
+                "module": "data_loaders.*_dataset",
                 "type": "*Dataset",
                 "kwargs": {
                     "data_dir": "./data",
@@ -34,7 +34,7 @@
     "data_loaders": {
         "train": {
             "data": {
-                "module": ".valid_loader",
+                "module": "data_loaders.valid_loader",
                 "type": "ValidDataLoader",
                 "kwargs": {
                     "validation_split": 0.2,
@@ -51,7 +51,7 @@
         },
         "test": {
             "data": {
-                "module": ".valid_loader",
+                "module": "data_loaders.valid_loader",
                 "type": "ValidDataLoader",
                 "kwargs": {
                     "validation_split": 0,
@@ -67,24 +67,28 @@
     },
     "models": {
         "model": {
-            "module": ".model",
+            "module": "models.model",
             "type": "MyModel"
         }
     },
     "losses": {
         "nll": {
             "is_ftn": true,
+            "module": "models.loss",
             "type": "nll_loss"
         },
         "bce": {
+            "module": "models.loss",
             "type": "BCELoss"
         },
         "balanced_bce": {
             "is_ftn": true,
+            "module": "models.loss",
             "type": "balanced_bce_loss"
         },
         "focal": {
             "is_ftn": true,
+            "module": "models.loss",
             "type": "binary_focal_loss"
         }
     },
@@ -93,6 +97,7 @@
         "per_epoch": ["TPR", "PPV", "AUROC", "AUPRC"],
         "pick_threshold": {
             "is_ftn": true,
+            "module": "models.metric",
             "type": "Youden_J",
             "kwargs": {
                 "beta": 1.0
@@ -101,6 +106,7 @@
     },
     "optimizers": {
         "model": {
+            "module": "torch.optim",
             "type": "Adam",
             "kwargs": {
                 "lr": 0.001
@@ -109,6 +115,7 @@
     },
     "lr_schedulers": {
         "model": {
+            "module": "torch.optim.lr_scheduler",
             "type": "StepLR",
             "kwargs": {
                 "step_size": 50,
@@ -117,7 +124,7 @@
         }
     },
     "trainer": {
-        "module": ".trainer",
+        "module": "trainers.trainer",
         "type": "Trainer",
         "kwargs": {
             "apex": false,
