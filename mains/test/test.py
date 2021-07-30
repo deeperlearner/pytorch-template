@@ -13,7 +13,6 @@ from tqdm import tqdm
 sys.path.insert(1, os.path.join(sys.path[0], '../..'))
 from logger import get_logger
 from mains import Cross_Valid
-import models.loss as module_loss
 import models.metric as module_metric
 from models.metric import MetricTracker
 from parse_config import ConfigParser
@@ -36,7 +35,7 @@ def main():
     test_datasets = dict()
     keys = ['datasets', 'test']
     for name in get_by_path(config, keys):
-        test_datasets[name] = config.init_obj([*keys, name], 'data_loaders')
+        test_datasets[name] = config.init_obj([*keys, name])
 
     results = pd.DataFrame()
     Cross_Valid.create_CV(k_fold)
@@ -47,7 +46,7 @@ def main():
         keys = ['data_loaders', 'test']
         for name in get_by_path(config, keys):
             dataset = test_datasets[name]
-            loaders = config.init_obj([*keys, name], 'data_loaders', dataset)
+            loaders = config.init_obj([*keys, name], dataset)
             test_data_loaders[name] = loaders.test_loader
 
         # models
@@ -63,7 +62,7 @@ def main():
         models = dict()
         logger_model = get_logger('model', verbosity=0)
         for name in config['models']:
-            model = config.init_obj(['models', name], 'models')
+            model = config.init_obj(['models', name])
             logger_model.info(model)
             state_dict = checkpoint['models'][name]
             if config['n_gpu'] > 1:
@@ -75,7 +74,7 @@ def main():
         model = models['model']
 
         # losses
-        loss_fn = config.init_obj(['losses', 'loss'], module_loss)
+        loss_fn = config.init_obj(['losses', 'loss'])
 
         # metrics
         metrics_epoch = [getattr(module_metric, met) for met in config['metrics']['per_epoch']]

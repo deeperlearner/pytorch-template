@@ -12,7 +12,6 @@ import optuna
 sys.path.insert(1, os.path.join(sys.path[0], '../..'))
 from logger import get_logger
 from mains import Cross_Valid
-import models.loss as module_loss
 import models.metric as module_metric
 from parse_config import ConfigParser
 from utils import ensure_dir, prepare_device, set_by_path, get_by_path, \
@@ -32,13 +31,13 @@ def main():
     ## train
     keys = ['datasets', 'train']
     for name in get_by_path(config, keys):
-        train_datasets[name] = config.init_obj([*keys, name], 'data_loaders')
+        train_datasets[name] = config.init_obj([*keys, name])
     ## valid
     valid_exist = False
     keys = ['datasets', 'valid']
     for name in get_by_path(config, keys):
         valid_exist = True
-        valid_datasets[name] = config.init_obj([*keys, name], 'data_loaders')
+        valid_datasets[name] = config.init_obj([*keys, name])
     ## compute inverse class frequency as class weight
     if config['datasets'].get('imbalanced', False):
         target = train_datasets['data'].y_train  # TODO
@@ -55,13 +54,13 @@ def main():
         kwargs = {}
         if 'balanced' in get_by_path(config, ['losses', name, 'type']):
             kwargs.update(class_weight=class_weight)
-        losses[name] = config.init_obj(['losses', name], module_loss, **kwargs)
+        losses[name] = config.init_obj(['losses', name], **kwargs)
 
     # metrics
     metrics_iter = [getattr(module_metric, met) for met in config['metrics']['per_iteration']]
     metrics_epoch = [getattr(module_metric, met) for met in config['metrics']['per_epoch']]
     if 'pick_threshold' in config['metrics']:
-        metrics_threshold = config.init_obj(['metrics', 'pick_threshold'], module_metric)
+        metrics_threshold = config.init_obj(['metrics', 'pick_threshold'])
     else:
         metrics_threshold = None
 
@@ -90,7 +89,7 @@ def main():
                     class_weight=class_weight.cpu().detach().numpy(),
                     target=target)
             dataset = train_datasets[name]
-            loaders = config.init_obj([*keys, name], 'data_loaders', dataset, **kwargs)
+            loaders = config.init_obj([*keys, name], dataset, **kwargs)
             train_data_loaders[name] = loaders.train_loader
             if not valid_exist:
                 valid_data_loaders[name] = loaders.valid_loader
@@ -98,14 +97,14 @@ def main():
         keys = ['data_loaders', 'valid']
         for name in get_by_path(config, keys):
             dataset = valid_datasets[name]
-            loaders = config.init_obj([*keys, name], 'data_loaders', dataset)
+            loaders = config.init_obj([*keys, name], dataset)
             valid_data_loaders[name] = loaders.valid_loader
 
         # models
         models = dict()
         logger_model = get_logger('model', verbosity=1)
         for name in config['models']:
-            model = config.init_obj(['models', name], 'models')
+            model = config.init_obj(['models', name])
             logger_model.info(model)
             model = model.to(device)
             if len(device_ids) > 1:
@@ -116,13 +115,12 @@ def main():
         optimizers = dict()
         for name in config['optimizers']:
             trainable_params = filter(lambda p: p.requires_grad, models[name].parameters())
-            optimizers[name] = config.init_obj(['optimizers', name], torch.optim, trainable_params)
+            optimizers[name] = config.init_obj(['optimizers', name], trainable_params)
 
         # learning rate schedulers
         lr_schedulers = dict()
         for name in config['lr_schedulers']:
-            lr_schedulers[name] = config.init_obj(['lr_schedulers', name],
-                                                  torch.optim.lr_scheduler, optimizers[name])
+            lr_schedulers[name] = config.init_obj(['lr_schedulers', name], optimizers[name])
 
         torch_objs.update(
             {'data_loaders': {'train': train_data_loaders,
@@ -140,7 +138,7 @@ def main():
                 models['model'], optimizers['model'], opt_level='O1')
             torch_objs['amp'] = amp
 
-        trainer = config.init_obj(['trainer'], 'trainers', torch_objs,
+        trainer = config.init_obj(['trainer'], torch_objs,
                                   config.save_dir, config.resume, device)
         train_log = trainer.train()
         results = pd.concat((results, train_log), axis=1)

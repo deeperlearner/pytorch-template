@@ -7,7 +7,7 @@
     "datasets": {
         "train": {
             "data": {
-                "module": ".examples.ImageNet_dataset",
+                "module": "data_loaders.examples.ImageNet_dataset",
                 "type": "ImageNetDataset",
                 "kwargs": {
                     "data_dir": "./data/ImageNet",
@@ -17,7 +17,7 @@
         },
         "valid": {
             "data": {
-                "module": ".examples.ImageNet_dataset",
+                "module": "data_loaders.examples.ImageNet_dataset",
                 "type": "ImageNetDataset",
                 "kwargs": {
                     "data_dir": "./data/ImageNet",
@@ -27,7 +27,7 @@
         },
         "test": {
             "data": {
-                "module": ".examples.ImageNet_dataset",
+                "module": "data_loaders.examples.ImageNet_dataset",
                 "type": "ImageNetDataset",
                 "kwargs": {
                     "data_dir": "./data/ImageNet",
@@ -39,7 +39,7 @@
     "data_loaders": {
         "train": {
             "data": {
-                "module": ".valid_loader",
+                "module": "data_loaders.valid_loader",
                 "type": "ValidDataLoader",
                 "kwargs": {
                     "DataLoader_kwargs": {
@@ -52,7 +52,7 @@
         },
         "valid": {
             "data": {
-                "module": ".valid_loader",
+                "module": "data_loaders.valid_loader",
                 "type": "ValidDataLoader",
                 "kwargs": {
                     "DataLoader_kwargs": {
@@ -65,7 +65,7 @@
         },
         "test": {
             "data": {
-                "module": ".valid_loader",
+                "module": "data_loaders.valid_loader",
                 "type": "ValidDataLoader",
                 "kwargs": {
                     "DataLoader_kwargs": {
@@ -79,7 +79,7 @@
     },
     "models": {
         "model": {
-            "module": ".examples.VGG16",
+            "module": "models.examples.VGG16",
             "type": "VGG16",
             "kwargs": {
                 "feature_extracting": true
@@ -88,6 +88,7 @@
     },
     "losses": {
         "loss": {
+            "module": "models.loss",
             "type": "CrossEntropyLoss"
         }
     },
@@ -97,6 +98,7 @@
     },
     "optimizers": {
         "model": {
+            "module": "torch.optim",
             "type": "SGD",
             "kwargs": {
                 "lr": 0.001,
@@ -106,6 +108,7 @@
     },
     "lr_schedulers": {
         "model": {
+            "module": "torch.optim.lr_scheduler",
             "type": "StepLR",
             "kwargs": {
                 "step_size": 50,
@@ -114,7 +117,7 @@
         }
     },
     "trainer": {
-        "module": ".trainer",
+        "module": "trainers.trainer",
         "type": "Trainer",
         "kwargs": {
             "apex": false,

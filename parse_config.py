@@ -88,7 +88,7 @@ class ConfigParser:
         _kwargs.update(kwargs)
         return _kwargs
 
-    def init_obj(self, keys, module, *args, **kwargs):
+    def init_obj(self, keys, *args, **kwargs):
         """
         Returns an object or a function, which is specified in config[keys[0]]...[keys[-1]].
         In config[keys[0]]...[keys[-1]],
@@ -97,16 +97,12 @@ class ConfigParser:
             'type': Class name.
             'kwargs': Keyword arguments for the class initialization.
         keys is the list of config entries.
-        module is the package module.
         Additional *args and **kwargs would be forwarded to obj()
-        Usage: `objects = config.init_obj(['A', 'B', 'C'], module, a, b=1)`
+        Usage: `objects = config.init_obj(['A', 'B', 'C'], a, b=1)`
         """
         obj_config = get_by_path(self, keys)
-        try:
-            module_name = obj_config['module']
-            module_obj = importlib.import_module(module_name, package=module)
-        except KeyError:  # In case no 'module' is specified
-            module_obj = module
+        module_name = obj_config['module']
+        module_obj = importlib.import_module(module_name)
         class_name = obj_config['type']
         obj = getattr(module_obj, class_name)
         kwargs_obj = self._update_kwargs(obj_config, kwargs)
