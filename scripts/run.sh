@@ -28,8 +28,8 @@ while getopts "dpr" flag; do
       CONFIG="dataset_model"
       EXP="dataset_model"
       RUN_ID=$VERSION
-      python3 mains/main.py -c "configs/$CONFIG.json" --mode train --run_id $RUN_ID --log_name "optuna.log" --name $EXP
-      python3 mains/main.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --resume "saved/$EXP/$RUN_ID/tuned_model/model_best.pth" --mode test --run_id $RUN_ID
+      python3 mains/main.py -c "configs/$CONFIG.json" --mode train --optuna --run_id $RUN_ID --log_name "optuna.log" --name $EXP
+      python3 mains/main.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --mode test --resume "saved/$EXP/$RUN_ID/tuned_model/model_best.pth" --run_id $RUN_ID
 
       time_log
       ;;

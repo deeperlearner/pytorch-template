@@ -72,14 +72,15 @@ def Youden_J(target, output, beta=1.):
     return THRESHOLD
 
 
-def F_beta(target, output, beta=1.):
+def F_beta(target, output, beta=1.0):
     global THRESHOLD
     with torch.no_grad():
         y_true = target.cpu().numpy()
         probas_pred = output.cpu().numpy()
         ppv, tpr, thresholds = precision_recall_curve(y_true, probas_pred)
-        THRESHOLD = thresholds[np.argmax(beta * tpr - fpr)]
+        THRESHOLD = thresholds[np.argmax(beta * tpr - ppv)]
     return THRESHOLD
+
 
 #############################
 # for binary classification #
@@ -112,10 +113,10 @@ def PPV(target, output):
     return value
 
 
-def F_beta_score(target, output, beta=1.):
+def F_beta_score(target, output, beta=1.0):
     recall = TPR(target, output)
     precision = PPV(target, output)
-    score = (precision * recall) / (beta**2 * precision + recall)
+    score = (precision * recall) / (beta ** 2 * precision + recall)
     return score
 
 
@@ -159,9 +160,9 @@ def top_k_acc(target, output, k=3):
 
 
 def mean_iou_score(target, output):
-    '''
+    """
     Compute mean IoU score over 6 classes
-    '''
+    """
     with torch.no_grad():
         predict = torch.argmax(output, dim=1)
         predict = predict.cpu().numpy()

@@ -10,8 +10,13 @@ sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from logger import get_logger
 from mains import Cross_Valid
 import models.metric as module_metric
-from utils import ensure_dir, prepare_device, set_by_path, get_by_path, \
-    msg_box, consuming_time, is_apex_available
+from utils import (
+    prepare_device,
+    get_by_path,
+    msg_box,
+    consuming_time,
+    is_apex_available,
+)
 
 if is_apex_available():
     from apex import amp

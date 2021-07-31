@@ -48,13 +48,13 @@ if __name__ == '__main__':
     msg = msg_box(mode.upper())
     logger.debug(msg)
 
-    n_trials = config['optuna']['n_trials']
-    if mode == 'train':
-        if n_trials > 0:
-            objective = config.init_obj(['optuna'])
+    if mode == "train":
+        if config.run_args.optuna:
+            max_min, mnt_metric = config["trainer"]["kwargs"]["monitor"].split()
+            objective = config.init_obj(["optuna"])
+            n_trials = config["optuna"]["n_trials"]
 
-            max_min, mnt_metric = config['trainer']['kwargs']['monitor'].split()
-            direction = 'maximize' if max_min == 'max' else 'minimize'
+            direction = "maximize" if max_min == "max" else "minimize"
             start = time.time()
             study = optuna.create_study(direction=direction)
             study.optimize(objective, n_trials=n_trials)

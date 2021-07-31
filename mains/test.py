@@ -10,13 +10,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-sys.path.insert(1, os.path.join(sys.path[0], '..'))
+sys.path.insert(1, os.path.join(sys.path[0], ".."))
 from logger import get_logger
 from mains import Cross_Valid
 import models.metric as module_metric
 from models.metric import MetricTracker
 from parse_config import ConfigParser
-from utils import ensure_dir, prepare_device, get_by_path, msg_box, consuming_time
+from utils import prepare_device, get_by_path, msg_box, consuming_time
 from utils.bootstrap import bootstrapping
 
 # fix random seeds for reproducibility
