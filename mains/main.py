@@ -9,6 +9,7 @@ import optuna
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from logger import get_logger
 from parse_config import ConfigParser
+from mains import train, test
 from utils import msg_box, consuming_time
 
 
@@ -35,27 +36,37 @@ if __name__ == '__main__':
     for opt in options:
         mod_args.add_argument(*opt.flags, type=opt.type)
 
+    # config.test_args: additional arguments for testing
+    test_args = args.add_argument_group('test_args')
+    test_args.add_argument('--bootstrapping', action='store_true')
+    test_args.add_argument('--bootstrap_times', default=1000, type=int)
+    test_args.add_argument('--output_path', default=None, type=str)
+
     config = ConfigParser.from_args(args, options)
     logger = get_logger('main')
-    msg = msg_box("TRAIN")
+    mode = config.run_args.mode
+    msg = msg_box(mode.upper())
     logger.debug(msg)
-    max_min, mnt_metric = config['trainer']['kwargs']['monitor'].split()
 
     n_trials = config['optuna']['n_trials']
-    if n_trials > 0:
-        objective = config.init_obj(['optuna'])
+    if mode == 'train':
+        if n_trials > 0:
+            objective = config.init_obj(['optuna'])
 
-        direction = 'maximize' if max_min == 'max' else 'minimize'
-        start = time.time()
-        study = optuna.create_study(direction=direction)
-        study.optimize(objective, n_trials=n_trials)
+            max_min, mnt_metric = config['trainer']['kwargs']['monitor'].split()
+            direction = 'maximize' if max_min == 'max' else 'minimize'
+            start = time.time()
+            study = optuna.create_study(direction=direction)
+            study.optimize(objective, n_trials=n_trials)
 
-        msg = msg_box("Optuna result")
-        end = time.time()
-        total_time = consuming_time(start, end)
-        msg += f"\nConsuming time: {total_time}."
-        msg += f"\nM{direction[1:-3]}al {mnt_metric}: {study.best_value:.6f}"
-        msg += f"\nBest hyperparameters: {study.best_params}"
-        logger.info(msg)
-    else:
-        train(config)
+            msg = msg_box("Optuna result")
+            end = time.time()
+            total_time = consuming_time(start, end)
+            msg += f"\nConsuming time: {total_time}."
+            msg += f"\nM{direction[1:-3]}al {mnt_metric}: {study.best_value:.6f}"
+            msg += f"\nBest hyperparameters: {study.best_params}"
+            logger.info(msg)
+        else:
+            train(config)
+    elif mode == 'test':
+        test(config)

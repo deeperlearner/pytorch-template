@@ -27,7 +27,8 @@ torch.backends.cudnn.benchmark = False
 np.random.seed(SEED)
 
 
-def main():
+logger = get_logger('test')
+def test(config):
     # setup GPU device if available, move model into configured device
     device, device_ids = prepare_device(config['n_gpu'])
 
@@ -38,6 +39,7 @@ def main():
         test_datasets[name] = config.init_obj([*keys, name])
 
     results = pd.DataFrame()
+    k_fold = config['k_fold']
     Cross_Valid.create_CV(k_fold)
     start = time.time()
     for k in range(k_fold):
@@ -134,36 +136,3 @@ def main():
         assert k_fold == 1, "k-fold ensemble and bootstrap are mutually exclusive."
         N = config.test_args.bootstrap_times
         bootstrapping(targets, outputs, metrics_epoch, test_metrics, repeat=N)
-
-
-if __name__ == '__main__':
-    args = argparse.ArgumentParser(description='testing')
-    run_args = args.add_argument_group('run_args')
-    run_args.add_argument('-c', '--config', default="configs/examples/mnist.json", type=str)
-    run_args.add_argument('--resume', default=None, type=str)
-    run_args.add_argument('--mode', default='test', type=str)
-    run_args.add_argument('--run_id', default=None, type=str)
-    run_args.add_argument('--log_name', default=None, type=str)
-
-    # custom cli options to modify configuration from default values given in json file.
-    mod_args = args.add_argument_group('mod_args')
-    CustomArgs = collections.namedtuple('CustomArgs', "flags type target")
-    options = [
-        CustomArgs(['--name'], type=str, target="name"),
-    ]
-    for opt in options:
-        mod_args.add_argument(*opt.flags, type=opt.type)
-
-    # config.test_args: additional arguments for testing
-    test_args = args.add_argument_group('test_args')
-    test_args.add_argument('--bootstrapping', action='store_true')
-    test_args.add_argument('--bootstrap_times', default=1000, type=int)
-    test_args.add_argument('--output_path', default=None, type=str)
-
-    config = ConfigParser.from_args(args, options)
-    logger = get_logger('test')
-    msg = msg_box("TEST")
-    logger.debug(msg)
-    k_fold = config['k_fold']
-
-    main()
