@@ -5,7 +5,8 @@
     "k_fold": 1,
     "optuna": {
         "n_trials": 0,
-        "module": "mains.tune.objective",
+        "is_ftn": true,
+        "module": "tune.objective",
         "type": "objective"
     },
 

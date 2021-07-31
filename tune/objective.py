@@ -20,7 +20,7 @@ def objective(trial):
     best = result.at[mnt_metric, 'mean']
     objective_results.append(best)
     msg = msg_box("Optuna progress")
-    i, N = len(objective_results), config.run_args.optuna_trial
+    i, N = len(objective_results), config['optuna']['n_trials']
     msg += f"\ntrial: ({i}/{N})"
 
     if (max_min == 'max' and best >= max(objective_results) or

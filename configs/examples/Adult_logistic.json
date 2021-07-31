@@ -3,6 +3,12 @@
     "root_dir": "./",
     "name": "Adult_logistic",
     "k_fold": 1,
+    "optuna": {
+        "n_trials": 3,
+        "is_ftn": true,
+        "module": "tune.objective",
+        "type": "objective"
+    },
 
     "datasets": {
         "imbalanced": true,

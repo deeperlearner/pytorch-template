@@ -9,7 +9,6 @@ import optuna
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from logger import get_logger
 from parse_config import ConfigParser
-from tune.objective import objective
 from utils import msg_box, consuming_time
 
 
@@ -21,8 +20,6 @@ if __name__ == '__main__':
     run_args.add_argument('--mode', default='train', type=str)
     run_args.add_argument('--run_id', default=None, type=str)
     run_args.add_argument('--log_name', default=None, type=str)
-    run_args.add_argument('--optuna', action='store_true')
-    run_args.add_argument('--optuna_trial', default=3, type=int)
     run_args.add_argument('--mp', action='store_true', help="multiprocessing")
 
     # custom cli options to modify configuration from default values given in json file.
@@ -44,11 +41,14 @@ if __name__ == '__main__':
     logger.debug(msg)
     max_min, mnt_metric = config['trainer']['kwargs']['monitor'].split()
 
-    if config.run_args.optuna:
+    n_trials = config['optuna']['n_trials']
+    if n_trials > 0:
+        objective = config.init_obj(['optuna'])
+
         direction = 'maximize' if max_min == 'max' else 'minimize'
         start = time.time()
         study = optuna.create_study(direction=direction)
-        study.optimize(objective, n_trials=config.run_args.optuna_trial)
+        study.optimize(objective, n_trials=n_trials)
 
         msg = msg_box("Optuna result")
         end = time.time()
