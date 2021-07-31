@@ -9,7 +9,7 @@ from utils import msg_box, consuming_time
 
 
 def bootstrapping(targets, outputs, metrics_epoch, test_metrics, repeat=1000):
-    logger = get_logger('Bootstrapping')
+    logger = get_logger("Bootstrapping")
     msg = msg_box("Bootstrap")
     msg += f"\nBootstrap for {repeat} times..."
     logger.info(msg)
@@ -25,7 +25,7 @@ def bootstrapping(targets, outputs, metrics_epoch, test_metrics, repeat=1000):
         for met in metrics_epoch:
             test_metrics.epoch_update(met.__name__, met(targets_, outputs_))
         test_result = test_metrics.result()
-        test_result = test_result['mean'].rename(number)
+        test_result = test_result["mean"].rename(number)
         results = pd.concat((results, test_result), axis=1)
 
     msg = msg_box("result")
@@ -35,10 +35,10 @@ def bootstrapping(targets, outputs, metrics_epoch, test_metrics, repeat=1000):
     msg += f"\nConsuming time: {total_time}."
 
     boot_result = pd.DataFrame()
-    boot_result['CI_median'] = results.median(axis=1)
-    boot_result['CI_low'] = results.quantile(q=0.025, axis=1)
-    boot_result['CI_high'] = results.quantile(q=0.975, axis=1)
-    boot_result['CI_half'] = (boot_result['CI_high'] - boot_result['CI_low']) / 2
+    boot_result["CI_median"] = results.median(axis=1)
+    boot_result["CI_low"] = results.quantile(q=0.025, axis=1)
+    boot_result["CI_high"] = results.quantile(q=0.975, axis=1)
+    boot_result["CI_half"] = (boot_result["CI_high"] - boot_result["CI_low"]) / 2
     msg += f"\n{boot_result}"
 
     logger.info(msg)

@@ -366,9 +366,9 @@ If you need more visualizations, use `add_scalar('tag', data)`, `add_image('tag'
 **Note**: You don't have to specify current steps, since `WriterTensorboard` class defined at `logger/visualization.py` will track current steps.
 
 ## Contribution
-Feel free to contribute any kind of function or enhancement, here the coding style follows PEP8
+Feel free to contribute any kind of function or enhancement, here the codes using black formatter
 
-Code should pass the [Flake8](http://flake8.pycqa.org/en/latest/) check before committing.
+Code should use the [black](https://github.com/psf/black) to format the codes before committing.
 
 ## TODOs
 

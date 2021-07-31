@@ -1,4 +1,4 @@
-flake8
+black
 matplotlib
 numpy
 pandas

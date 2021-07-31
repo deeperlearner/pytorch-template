@@ -13,7 +13,8 @@ class BaseDataLoader(DataLoader):
     """
     Base data loader
     """
-    logger = get_logger('data_loader')
+
+    logger = get_logger("data_loader")
 
     def __init__(self, dataset, validation_split=0.0, DataLoader_kwargs=None):
         self.n_samples = len(dataset)
@@ -29,5 +30,5 @@ class BaseDataLoader(DataLoader):
             np.arange(self.n_samples),
             test_size=self.split,
             random_state=0,
-            stratify=labels
+            stratify=labels,
         )

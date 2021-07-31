@@ -26,18 +26,20 @@ class ConfigParser:
         self.config_json = self.run_args.config
         config = read_json(Path(self.config_json))
         self._config = _update_config(config, modification)
-        self.resume = Path(self.run_args.resume) if self.run_args.resume is not None else None
+        self.resume = (
+            Path(self.run_args.resume) if self.run_args.resume is not None else None
+        )
 
-        self.root_dir = self.config['root_dir']
+        self.root_dir = self.config["root_dir"]
         run_id = self.run_args.run_id
 
-        save_name = {'train': 'saved/', 'test': 'output/'}
+        save_name = {"train": "saved/", "test": "output/"}
         save_dir = Path(self.root_dir) / save_name[self.run_args.mode]
         if run_id is None:  # use timestamp as default run-id
-            run_id = datetime.now().strftime(r'%m%d_%H%M%S')
-        self.exp_dir = save_dir / self.config['name'] / run_id
+            run_id = datetime.now().strftime(r"%m%d_%H%M%S")
+        self.exp_dir = save_dir / self.config["name"] / run_id
 
-        dirs = {'train': ['log', 'model', 'tuned_model'], 'test': ['fig', 'log']}
+        dirs = {"train": ["log", "model", "tuned_model"], "test": ["fig", "log"]}
         self.save_dir = dict()
         for dir_name in dirs[self.run_args.mode]:
             dir_path = self.exp_dir / dir_name
@@ -45,16 +47,21 @@ class ConfigParser:
             self.save_dir[dir_name] = dir_path
 
         log_config = {}
-        if self.run_args.mode == 'train':
+        if self.run_args.mode == "train":
             if self.run_args.mp:  # multiprocessing
-                log_config.update({'log_config': 'logger/logger_config_mp.json'})
+                log_config.update({"log_config": "logger/logger_config_mp.json"})
             self.backup()
 
         # configure logging module
-        setup_logging(self.save_dir['log'], root_dir=self.root_dir, filename=self.run_args.log_name, **log_config)
+        setup_logging(
+            self.save_dir["log"],
+            root_dir=self.root_dir,
+            filename=self.run_args.log_name,
+            **log_config
+        )
 
     @classmethod
-    def from_args(cls, parser, options=''):
+    def from_args(cls, parser, options=""):
         """
         Initialize this class from some cli arguments. Used in train, test.
         """
@@ -65,15 +72,20 @@ class ConfigParser:
 
         modification = None
         for group in parser._action_groups:
-            if group.title == 'mod_args':
+            if group.title == "mod_args":
                 # parse custom cli options into dictionary
-                modification = {opt.target: getattr(args, _get_opt_name(opt.flags)) for opt in options}
+                modification = {
+                    opt.target: getattr(args, _get_opt_name(opt.flags))
+                    for opt in options
+                }
             else:
-                group_dict = {g.dest: getattr(args, g.dest, None) for g in group._group_actions}
+                group_dict = {
+                    g.dest: getattr(args, g.dest, None) for g in group._group_actions
+                }
                 arg_group = argparse.Namespace(**group_dict)
-                if group.title == 'run_args':
+                if group.title == "run_args":
                     cls.run_args = arg_group
-                elif group.title == 'test_args':
+                elif group.title == "test_args":
                     cls.test_args = arg_group
 
         return cls(modification)
@@ -81,10 +93,12 @@ class ConfigParser:
     @staticmethod
     def _update_kwargs(_config, kwargs):
         try:
-            _kwargs = dict(_config['kwargs'])
+            _kwargs = dict(_config["kwargs"])
         except KeyError:  # In case no arguments are specified
             _kwargs = dict()
-        assert all([k not in _kwargs for k in kwargs]), 'Overwriting kwargs given in config file is not allowed'
+        assert all(
+            [k not in _kwargs for k in kwargs]
+        ), "Overwriting kwargs given in config file is not allowed"
         _kwargs.update(kwargs)
         return _kwargs
 
@@ -101,13 +115,13 @@ class ConfigParser:
         Usage: `objects = config.init_obj(['A', 'B', 'C'], a, b=1)`
         """
         obj_config = get_by_path(self, keys)
-        module_name = obj_config['module']
+        module_name = obj_config["module"]
         module_obj = importlib.import_module(module_name)
-        class_name = obj_config['type']
+        class_name = obj_config["type"]
         obj = getattr(module_obj, class_name)
         kwargs_obj = self._update_kwargs(obj_config, kwargs)
 
-        if obj_config.get('is_ftn', False):
+        if obj_config.get("is_ftn", False):
             return partial(obj, *args, **kwargs_obj)
         return obj(*args, **kwargs_obj)
 
@@ -126,9 +140,9 @@ class ConfigParser:
 
     # backup best models into tuned_model/
     def cp_models(self):
-        model_files = os.path.join(self.save_dir['model'], "*model_best.pth")
+        model_files = os.path.join(self.save_dir["model"], "*model_best.pth")
         for model_file in glob.glob(model_files):
-            shutil.copy(model_file, self.save_dir['tuned_model'])
+            shutil.copy(model_file, self.save_dir["tuned_model"])
 
 
 # helper functions to update config dict with custom cli options
@@ -144,6 +158,6 @@ def _update_config(config, modification):
 
 def _get_opt_name(flags):
     for flg in flags:
-        if flg.startswith('--'):
-            return flg.replace('--', '')
-    return flags[0].replace('--', '')
+        if flg.startswith("--"):
+            return flg.replace("--", "")
+    return flags[0].replace("--", "")

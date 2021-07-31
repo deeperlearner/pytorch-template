@@ -25,8 +25,8 @@ class MyModel(nn.Module):
 
 def weights_init(m):
     classname = m.__class__.__name__
-    if classname.find('Conv') != -1:
+    if classname.find("Conv") != -1:
         nn.init.normal_(m.weight.data)
-    elif classname.find('BatchNorm') != -1:
+    elif classname.find("BatchNorm") != -1:
         nn.init.normal_(m.weight.data, mean=1.0, std=0.02)
         nn.init.constant_(m.bias.data, 0)

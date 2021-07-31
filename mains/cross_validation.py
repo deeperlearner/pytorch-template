@@ -11,4 +11,3 @@ class Cross_Valid:
     @classmethod
     def next_fold(cls):
         cls.fold_idx += 1
-

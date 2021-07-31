@@ -6,44 +6,56 @@ import time
 
 import optuna
 
-sys.path.insert(1, os.path.join(sys.path[0], '..'))
+sys.path.insert(1, os.path.join(sys.path[0], ".."))
 from logger import get_logger
 from parse_config import ConfigParser
 from mains import train, test
 from utils import msg_box, consuming_time
 
 
-if __name__ == '__main__':
-    args = argparse.ArgumentParser(description='training')
-    run_args = args.add_argument_group('run_args')
-    run_args.add_argument('-c', '--config', default="configs/config.json", type=str)
-    run_args.add_argument('--resume', default=None, type=str)
-    run_args.add_argument('--mode', default='train', type=str)
-    run_args.add_argument('--run_id', default=None, type=str)
-    run_args.add_argument('--log_name', default=None, type=str)
-    run_args.add_argument('--mp', action='store_true', help="multiprocessing")
+if __name__ == "__main__":
+    args = argparse.ArgumentParser(description="training")
+
+    # crutial args executed in scripts
+    run_args = args.add_argument_group("run_args")
+    run_args.add_argument("-c", "--config", default="configs/config.json", type=str)
+    run_args.add_argument("--mode", default="train", type=str)
+    run_args.add_argument("--optuna", action="store_true")
+    run_args.add_argument("--resume", default=None, type=str)
+    run_args.add_argument("--run_id", default=None, type=str)
+    run_args.add_argument("--log_name", default=None, type=str)
+    run_args.add_argument("--mp", action="store_true", help="multiprocessing")
 
     # custom cli options to modify configuration from default values given in json file.
-    mod_args = args.add_argument_group('mod_args')
-    CustomArgs = collections.namedtuple('CustomArgs', "flags type target")
+    mod_args = args.add_argument_group("mod_args")
+    CustomArgs = collections.namedtuple("CustomArgs", "flags type target")
     options = [
-        CustomArgs(['--name'], type=str, target="name"),
-        CustomArgs(['--num_workers'], type=int, target="data_loaders;train;data;kwargs;DataLoader_kwargs;num_workers"),
-        CustomArgs(['--lr', '--learning_rate'], type=float, target="optimizers;model;args;lr"),
-        CustomArgs(['--bs', '--batch_size'], type=int,
-                   target="data_loaders;train;data;args;DataLoader_kwargs;batch_size"),
+        CustomArgs(["--name"], type=str, target="name"),
+        CustomArgs(
+            ["--num_workers"],
+            type=int,
+            target="data_loaders;train;data;kwargs;DataLoader_kwargs;num_workers",
+        ),
+        CustomArgs(
+            ["--lr", "--learning_rate"], type=float, target="optimizers;model;args;lr"
+        ),
+        CustomArgs(
+            ["--bs", "--batch_size"],
+            type=int,
+            target="data_loaders;train;data;args;DataLoader_kwargs;batch_size",
+        ),
     ]
     for opt in options:
         mod_args.add_argument(*opt.flags, type=opt.type)
 
     # config.test_args: additional arguments for testing
-    test_args = args.add_argument_group('test_args')
-    test_args.add_argument('--bootstrapping', action='store_true')
-    test_args.add_argument('--bootstrap_times', default=1000, type=int)
-    test_args.add_argument('--output_path', default=None, type=str)
+    test_args = args.add_argument_group("test_args")
+    test_args.add_argument("--bootstrapping", action="store_true")
+    test_args.add_argument("--bootstrap_times", default=1000, type=int)
+    test_args.add_argument("--output_path", default=None, type=str)
 
     config = ConfigParser.from_args(args, options)
-    logger = get_logger('main')
+    logger = get_logger("main")
     mode = config.run_args.mode
     msg = msg_box(mode.upper())
     logger.debug(msg)
@@ -68,5 +80,5 @@ if __name__ == '__main__':
             logger.info(msg)
         else:
             train(config)
-    elif mode == 'test':
+    elif mode == "test":
         test(config)
