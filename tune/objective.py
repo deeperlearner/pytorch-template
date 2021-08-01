@@ -3,7 +3,6 @@ from mains import train
 from parse_config import ConfigParser
 from utils import msg_box, consuming_time
 
-
 objective_results = []
 
 
