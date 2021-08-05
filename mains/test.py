@@ -70,7 +70,6 @@ def test(config):
             model = model.to(device)
             model.eval()
             models[name] = model
-        model = models["model"]
 
         # losses
         loss_fn = config.init_obj(["losses", "loss"])
@@ -86,29 +85,10 @@ def test(config):
             setattr(module_metric, "THRESHOLD", threshold)
             logger.info(f"threshold: {threshold}")
 
-        with torch.no_grad():
-            print("testing...")
-            test_loader = test_data_loaders["data"]
-
-            if len(metrics_epoch) > 0:
-                outputs = torch.FloatTensor().to(device)
-                targets = torch.FloatTensor().to(device)
-            for batch_idx, (data, target) in enumerate(test_loader):
-                data, target = data.to(device), target.to(device)
-
-                output = model(data)
-                if len(metrics_epoch) > 0:
-                    outputs = torch.cat((outputs, output))
-                    targets = torch.cat((targets, target))
-
-                #
-                # save sample images, or do something with output here
-                #
-
-            for met in metrics_epoch:
-                test_metrics.epoch_update(met.__name__, met(targets, outputs))
-
-        test_log = test_metrics.result()
+        tester = config.init_obj(
+            ["tester"], test_data_loaders, models, device, metrics_epoch, test_metrics
+        )
+        test_log = tester.test()
         test_log = test_log["mean"].rename(k)
         results = pd.concat((results, test_log), axis=1)
         logger.info(test_log)
