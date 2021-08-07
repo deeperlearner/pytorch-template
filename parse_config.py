@@ -20,19 +20,22 @@ class ConfigParser:
         :param modification: Dict {keychain: value}, specifying position values to be replaced from config dict.
         """
         # run_args: self.run_args
-        # test_args: self.test_args
-
-        # load config file and apply modification
         self.config_json = self.run_args.config
         config = read_json(Path(self.config_json))
-        self._config = _update_config(config, modification)
         self.resume = (
             Path(self.run_args.resume) if self.run_args.resume is not None else None
         )
-
-        self.root_dir = self.config["root_dir"]
         run_id = self.run_args.run_id
 
+        # mod_args: self.mod_args
+        if modification is None:
+            modification = {}
+        modification.update(self.mod_args)
+        self._config = _update_config(config, modification)
+
+        # test_args: self.test_args
+
+        self.root_dir = self.config["root_dir"]
         save_name = {"train": "saved/", "test": "output/"}
         save_dir = Path(self.root_dir) / save_name[self.run_args.mode]
         if run_id is None:  # use timestamp as default run-id
@@ -78,6 +81,7 @@ class ConfigParser:
                     opt.target: getattr(args, _get_opt_name(opt.flags))
                     for opt in options
                 }
+                cls.mod_args = modification
             else:
                 group_dict = {
                     g.dest: getattr(args, g.dest, None) for g in group._group_actions
@@ -88,7 +92,7 @@ class ConfigParser:
                 elif group.title == "test_args":
                     cls.test_args = arg_group
 
-        return cls(modification)
+        return cls()
 
     @staticmethod
     def _update_kwargs(_config, kwargs):
