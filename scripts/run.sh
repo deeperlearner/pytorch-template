@@ -14,7 +14,7 @@ time_log() {
 
 mkdir -p log
 LOG_FILE="log/run.log"
-VERSION="v2.0.0"
+VERSION="v1.0.0"
 echo "===============================" >> $LOG_FILE
 echo "version: $VERSION" >> $LOG_FILE
 TOTAL_SECONDS=0
