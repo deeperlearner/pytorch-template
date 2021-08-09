@@ -14,7 +14,7 @@ time_log() {
 
 mkdir -p log
 LOG_FILE="log/examples.log"
-VERSION="v2.0.0"
+VERSION="v3.0.0"  # tester API is backward incompatible
 echo "===============================" >> $LOG_FILE
 echo "version: $VERSION" >> $LOG_FILE
 TOTAL_SECONDS=0

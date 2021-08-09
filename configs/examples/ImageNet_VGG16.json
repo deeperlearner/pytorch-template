@@ -135,5 +135,9 @@
 
             "tensorboard": false
         }
+    },
+    "tester": {
+        "module": "testers.tester",
+        "type": "Tester"
     }
 }
