@@ -66,6 +66,8 @@ if __name__ == "__main__":
             objective = config.init_obj(["optuna"])
             n_trials = config["optuna"]["n_trials"]
 
+            optuna.logging.enable_propagation()
+            optuna.logging.disable_default_handler()
             direction = "maximize" if max_min == "max" else "minimize"
             start = time.time()
             study = optuna.create_study(direction=direction)
