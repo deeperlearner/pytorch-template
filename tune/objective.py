@@ -33,7 +33,7 @@ def objective(trial):
         and best <= min(objective_results)
     ):
         msg += "\nBackuping best hyperparameters config and model..."
-        config.backup()
+        config.backup(best_hp=True)
         config.cp_models()
     logger.info(msg)
 

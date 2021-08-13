@@ -42,7 +42,7 @@ class ConfigParser:
             run_id = datetime.now().strftime(r"%m%d_%H%M%S")
         self.exp_dir = save_dir / self.config["name"] / run_id
 
-        dirs = {"train": ["log", "model", "tuned_model"], "test": ["fig", "log"]}
+        dirs = {"train": ["log", "model", "best_hp"], "test": ["fig", "log"]}
         self.save_dir = dict()
         for dir_name in dirs[self.run_args.mode]:
             dir_path = self.exp_dir / dir_name
@@ -139,14 +139,18 @@ class ConfigParser:
         return self._config
 
     # backup config file to the experiment dirctory
-    def backup(self):
-        write_json(self.config, self.exp_dir / os.path.basename(self.config_json))
+    def backup(self, best_hp=False):
+        if best_hp:
+            dir_path = self.exp_dir / "best_hp"
+        else:
+            dir_path = self.exp_dir
+        write_json(self.config, dir_path / os.path.basename(self.config_json))
 
-    # backup best models into tuned_model/
+    # backup best models into best_hp/
     def cp_models(self):
         model_files = os.path.join(self.save_dir["model"], "*model_best.pth")
         for model_file in glob.glob(model_files):
-            shutil.copy(model_file, self.save_dir["tuned_model"])
+            shutil.copy(model_file, self.save_dir["best_hp"])
 
 
 # helper functions to update config dict with custom cli options
