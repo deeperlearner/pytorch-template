@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
+# ------------------
+#  PyTorch Template
+# ------------------
+# Repository    : https://github.com/deeperlearner/pytorch-template
+VERSION="v3.0.1"
+
+
 # This script run train and test for examples
 usage() { echo "Usage: $0 [-dpr]" 1>&2; exit 1; }
-
 
 # record execution time to log
 time_log() {
@@ -14,7 +20,6 @@ time_log() {
 
 mkdir -p log
 LOG_FILE="log/examples.log"
-VERSION="v3.0.1"
 echo "===============================" >> $LOG_FILE
 echo "version: $VERSION" >> $LOG_FILE
 TOTAL_SECONDS=0
