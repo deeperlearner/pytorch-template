@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
+# ------------------
+#  PyTorch Template
+# ------------------
+# Repository    : https://github.com/deeperlearner/pytorch-template
+VERSION="v1.0.0"
+
+
 # This script run train and test
 usage() { echo "Usage: $0 [-dpr]" 1>&2; exit 1; }
-
 
 # record execution time to log
 time_log() {
@@ -14,7 +20,6 @@ time_log() {
 
 mkdir -p log
 LOG_FILE="log/run.log"
-VERSION="v1.0.0"
 echo "===============================" >> $LOG_FILE
 echo "version: $VERSION" >> $LOG_FILE
 TOTAL_SECONDS=0
@@ -28,8 +33,13 @@ while getopts "dpr" flag; do
       CONFIG="dataset_model"
       EXP="dataset_model"
       RUN_ID=$VERSION
+      # search for best hp
       python3 mains/main.py -c "configs/$CONFIG.json" --mode train --optuna --run_id $RUN_ID --log_name "optuna.log" --name $EXP
-      python3 mains/main.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --mode test --resume "saved/$EXP/$RUN_ID/tuned_model/model_best.pth" --run_id $RUN_ID
+      python3 mains/main.py -c "saved/$EXP/$RUN_ID/best_hp/${CONFIG##*/}.json" --mode test --resume "saved/$EXP/$RUN_ID/best_hp/model_best.pth" --run_id $RUN_ID
+
+      # run with config
+      python3 mains/main.py -c "configs/$CONFIG.json" --mode train --run_id $RUN_ID
+      python3 mains/main.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --mode test --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID
 
       time_log
       ;;

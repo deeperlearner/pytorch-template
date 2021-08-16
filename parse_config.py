@@ -20,26 +20,29 @@ class ConfigParser:
         :param modification: Dict {keychain: value}, specifying position values to be replaced from config dict.
         """
         # run_args: self.run_args
-        # test_args: self.test_args
-
-        # load config file and apply modification
         self.config_json = self.run_args.config
         config = read_json(Path(self.config_json))
-        self._config = _update_config(config, modification)
         self.resume = (
             Path(self.run_args.resume) if self.run_args.resume is not None else None
         )
-
-        self.root_dir = self.config["root_dir"]
         run_id = self.run_args.run_id
 
+        # mod_args: self.mod_args
+        if modification is None:
+            modification = {}
+        modification.update(self.mod_args)
+        self._config = _update_config(config, modification)
+
+        # test_args: self.test_args
+
+        self.root_dir = self.config["root_dir"]
         save_name = {"train": "saved/", "test": "output/"}
         save_dir = Path(self.root_dir) / save_name[self.run_args.mode]
         if run_id is None:  # use timestamp as default run-id
             run_id = datetime.now().strftime(r"%m%d_%H%M%S")
         self.exp_dir = save_dir / self.config["name"] / run_id
 
-        dirs = {"train": ["log", "model", "tuned_model"], "test": ["fig", "log"]}
+        dirs = {"train": ["log", "model", "best_hp"], "test": ["fig", "log"]}
         self.save_dir = dict()
         for dir_name in dirs[self.run_args.mode]:
             dir_path = self.exp_dir / dir_name
@@ -78,6 +81,7 @@ class ConfigParser:
                     opt.target: getattr(args, _get_opt_name(opt.flags))
                     for opt in options
                 }
+                cls.mod_args = modification
             else:
                 group_dict = {
                     g.dest: getattr(args, g.dest, None) for g in group._group_actions
@@ -88,7 +92,7 @@ class ConfigParser:
                 elif group.title == "test_args":
                     cls.test_args = arg_group
 
-        return cls(modification)
+        return cls()
 
     @staticmethod
     def _update_kwargs(_config, kwargs):
@@ -135,14 +139,18 @@ class ConfigParser:
         return self._config
 
     # backup config file to the experiment dirctory
-    def backup(self):
-        write_json(self.config, self.exp_dir / os.path.basename(self.config_json))
+    def backup(self, best_hp=False):
+        if best_hp:
+            dir_path = self.exp_dir / "best_hp"
+        else:
+            dir_path = self.exp_dir
+        write_json(self.config, dir_path / os.path.basename(self.config_json))
 
-    # backup best models into tuned_model/
+    # backup best models into best_hp/
     def cp_models(self):
         model_files = os.path.join(self.save_dir["model"], "*model_best.pth")
         for model_file in glob.glob(model_files):
-            shutil.copy(model_file, self.save_dir["tuned_model"])
+            shutil.copy(model_file, self.save_dir["best_hp"])
 
 
 # helper functions to update config dict with custom cli options
