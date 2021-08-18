@@ -164,7 +164,7 @@ Config file is in `.json` format, see [`configs/dataset_model.json`](https://git
 
 ### Examples
 
-There are some examples config files in `config/examples/*.json`.
+There are some examples config files in `configs/examples/*.json`.
 - MNIST dataset
 - ImageNet dataset (The data need to be downloaded by yourself)
 - Adult dataset
@@ -191,11 +191,11 @@ You can enable multi-GPU training by setting `n_gpu` argument of the config file
 If configured to use smaller number of gpu than available, first n devices will be used by default.
 Specify indices of available GPUs by cuda environmental variable.
   ```
-  python train.py --device 2,3 -c config.json
+  python mains/main.py --device 2,3 -c config.json --mode train
   ```
   This is equivalent to
   ```
-  CUDA_VISIBLE_DEVICES=2,3 python train.py -c config.py
+  CUDA_VISIBLE_DEVICES=2,3 python mains/main.py -c config.py --mode train
   ```
 
 ## Customization
@@ -234,7 +234,7 @@ you can change some of them using CLI flags.
   ```
 `target` argument should be sequence of keys, which are used to access that option in the config dict. In this example, `target` 
 for the learning rate option is `"optimizer;args;lr"` because `config['optimizer']['args']['lr']` points to the learning rate.
-`python train.py -c config.json --bs 256` runs training with options given in `config.json` except for the `batch size`
+`python mains/main.py -c config.json --mode train --bs 256` runs training with options given in `config.json` except for the `batch size`
 which is increased to 256 by command line options.
 
 
@@ -279,7 +279,7 @@ which is increased to 256 by command line options.
 
 2. **Implementing abstract methods**
 
-    You need to implement `_train_epoch()` for your training process, if you need validation then you can implement `_valid_epoch()` as in `trainer/trainer.py`
+    You need to implement `_train_epoch()` for your training process, if you need validation then you can implement `_valid_epoch()` as in `trainers/trainer.py`
 
 * **Example**
 
@@ -320,7 +320,7 @@ You can monitor multiple metrics by providing a list in the configuration file, 
   "metrics": {
       "per_iteration": ["accuracy", "top_k_acc"],
       "per_epoch": ["AUROC", "AUPRC"],
-      "pick_threshold" {
+      "pick_threshold": {
           "is_ftn": true,
           "type": "Youden_J",
           "kwargs": {
