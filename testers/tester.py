@@ -37,4 +37,4 @@ class Tester:
             for met in self.metrics_epoch:
                 self.test_metrics.epoch_update(met.__name__, met(targets, outputs))
 
-        return self.test_metrics.result()
+        return targets, outputs, self.test_metrics.result()
