@@ -3,7 +3,7 @@
 #  PyTorch Template
 # ------------------
 # Repository    : https://github.com/deeperlearner/pytorch-template
-VERSION="v3.0.1"
+VERSION="v3.0.2"
 
 
 # This script run train and test for examples
