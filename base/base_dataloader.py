@@ -26,9 +26,11 @@ class BaseDataLoader(DataLoader):
             self.logger.info(fold_msg)
 
     def _train_valid_split(self, labels=None):
+        samples_array = np.arange(self.n_samples)
+        SEED = Cross_Valid.repeat_idx
         return train_test_split(
-            np.arange(self.n_samples),
+            samples_array,
             test_size=self.split,
-            random_state=0,
+            random_state=SEED,
             stratify=labels,
         )

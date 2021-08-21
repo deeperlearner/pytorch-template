@@ -2,7 +2,10 @@
     "n_gpu": 1,
     "root_dir": "./",
     "name": "Adult_logistic",
-    "k_fold": 3,
+    "cross_validation": {
+        "repeat_time": 1,
+        "k_fold": 3
+    },
     "optuna": {
         "n_trials": 3,
         "is_ftn": true,
