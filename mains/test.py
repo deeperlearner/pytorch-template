@@ -88,7 +88,7 @@ def test(config):
         tester = config.init_obj(
             ["tester"], test_data_loaders, models, device, metrics_epoch, test_metrics
         )
-        test_log = tester.test()
+        targets, outputs, test_log = tester.test()
         test_log = test_log["mean"].rename(k)
         results = pd.concat((results, test_log), axis=1)
         logger.info(test_log)

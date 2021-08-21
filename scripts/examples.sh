@@ -3,7 +3,7 @@
 #  PyTorch Template
 # ------------------
 # Repository    : https://github.com/deeperlearner/pytorch-template
-VERSION="v3.0.1"
+VERSION="v3.0.2"
 
 
 # This script run train and test for examples
@@ -35,11 +35,13 @@ while getopts "dpr" flag; do
       RUN_ID=$VERSION
       # search for best hp
       python3 mains/main.py -c "configs/$CONFIG.json" --mode train --optuna --run_id $RUN_ID --log_name "optuna.log" --name $EXP
-      python3 mains/main.py -c "saved/$EXP/$RUN_ID/best_hp/${CONFIG##*/}.json" --mode test --resume "saved/$EXP/$RUN_ID/best_hp/model_best.pth" --run_id $RUN_ID
+      python3 mains/main.py -c "saved/$EXP/$RUN_ID/best_hp/${CONFIG##*/}.json" --mode test \
+          --resume "saved/$EXP/$RUN_ID/best_hp/model_best.pth" --run_id $RUN_ID
 
       # run with config
       python3 mains/main.py -c "configs/$CONFIG.json" --mode train --run_id $RUN_ID
-      python3 mains/main.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --mode test --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID
+      python3 mains/main.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --mode test \
+          --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID
 
       time_log
       ;;
@@ -60,7 +62,8 @@ while getopts "dpr" flag; do
       EXP="MNIST_LeNet"
       RUN_ID=$VERSION
       python3 mains/main.py -c "configs/$CONFIG.json" --mode train --run_id $RUN_ID
-      python3 mains/main.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --mode test --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID
+      python3 mains/main.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --mode test \
+          --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID
         
       # ImageNet_VGG16 (need to download ImageNet dataset)
       CONFIG="examples/ImageNet_VGG16"
@@ -68,14 +71,16 @@ while getopts "dpr" flag; do
       RUN_ID=$VERSION
       python3 mains/main.py -c "configs/$CONFIG.json" --mode train --run_id $RUN_ID
       # no test data
-      # python3 mains/main.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --mode test --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID
+      # python3 mains/main.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --mode test \
+      #     --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID
         
       # Adult_logistic cv by single-process
       CONFIG="examples/Adult_logistic"
       EXP="Adult_logistic"
       RUN_ID=$VERSION
       python3 mains/main.py -c "configs/$CONFIG.json" --mode train --run_id $RUN_ID
-      python3 mains/main.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --mode test --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID
+      python3 mains/main.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --mode test \
+          --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID
         
       # Not implemented yet
       # I'm going to try `import torch.multiprocessing as mp`
