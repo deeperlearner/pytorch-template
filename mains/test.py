@@ -11,7 +11,6 @@ from logger import get_logger
 from mains import Cross_Valid
 import models.metric as module_metric
 from models.metric import MetricTracker
-from parse_config import ConfigParser
 from utils import prepare_device, get_by_path, msg_box, consuming_time
 from utils.bootstrap import bootstrapping
 
