@@ -32,7 +32,7 @@ while getopts "dpr" flag; do
 
       CONFIG="examples/Adult_logistic"
       EXP="Adult_logistic"
-      RUN_ID=$VERSION
+      RUN_ID=${VERSION}
       # use optuna to find the best h.p.
       python3 mains/main.py -c "configs/$CONFIG.json" --mode train --optuna --run_id $RUN_ID --log_name "optuna.log" --name $EXP
       python3 mains/main.py -c "saved/$EXP/$RUN_ID/best_hp/${CONFIG##*/}.json" --mode test \
@@ -60,7 +60,7 @@ while getopts "dpr" flag; do
       # MNIST_LeNet
       CONFIG="examples/MNIST_LeNet"
       EXP="MNIST_LeNet"
-      RUN_ID=$VERSION
+      RUN_ID=${VERSION}
       python3 mains/main.py -c "configs/$CONFIG.json" --mode train --run_id $RUN_ID
       python3 mains/main.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --mode test \
           --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID
@@ -68,7 +68,7 @@ while getopts "dpr" flag; do
       # ImageNet_VGG16 (need to download ImageNet dataset)
       CONFIG="examples/ImageNet_VGG16"
       EXP="ImageNet_VGG16"
-      RUN_ID=$VERSION
+      RUN_ID=${VERSION}
       python3 mains/main.py -c "configs/$CONFIG.json" --mode train --run_id $RUN_ID
       # no test data
       # python3 mains/main.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --mode test \
@@ -77,7 +77,7 @@ while getopts "dpr" flag; do
       # Adult_logistic cv by single-process
       CONFIG="examples/Adult_logistic"
       EXP="Adult_logistic"
-      RUN_ID=$VERSION
+      RUN_ID=${VERSION}
       python3 mains/main.py -c "configs/$CONFIG.json" --mode train --run_id $RUN_ID
       python3 mains/main.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --mode test \
           --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID
@@ -87,7 +87,7 @@ while getopts "dpr" flag; do
       ## Adult_logistic cv by multi-process
       #CONFIG="examples/Adult_logistic"
       #EXP="Adult_logistic"
-      #RUN_ID=$VERSION
+      #RUN_ID=${VERSION}
 
       time_log
       ;;
