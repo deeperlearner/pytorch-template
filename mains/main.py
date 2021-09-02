@@ -9,7 +9,7 @@ import optuna
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
 from logger import get_logger
 from parse_config import ConfigParser
-from mains import train, test
+from mains import train, train_mp, test
 from utils import msg_box, consuming_time
 
 
@@ -18,13 +18,13 @@ if __name__ == "__main__":
 
     # crutial args executed in scripts
     run_args = args.add_argument_group("run_args")
+    run_args.add_argument("--optuna", action="store_true")
+    run_args.add_argument("--mp", action="store_true", help="multiprocessing")
     run_args.add_argument("-c", "--config", default="configs/config.json", type=str)
     run_args.add_argument("--mode", default="train", type=str)
-    run_args.add_argument("--optuna", action="store_true")
     run_args.add_argument("--resume", default=None, type=str)
     run_args.add_argument("--run_id", default=None, type=str)
     run_args.add_argument("--log_name", default=None, type=str)
-    run_args.add_argument("--mp", action="store_true", help="multiprocessing")
 
     # custom cli options to modify configuration from default values given in json file.
     mod_args = args.add_argument_group("mod_args")
@@ -81,6 +81,9 @@ if __name__ == "__main__":
             msg += f"\nBest hyperparameters: {study.best_params}"
             logger.info(msg)
         else:
-            train(config)
+            if config.run_args.mp:
+                train_mp(config)
+            else:
+                train(config)
     elif mode == "test":
         test(config)

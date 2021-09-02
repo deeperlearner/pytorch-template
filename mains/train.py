@@ -184,4 +184,7 @@ def train(config):
 
     logger.info(msg)
 
+    max_min, mnt_metric = config["trainer"]["kwargs"]["monitor"].split()
+    result = result.at[mnt_metric, "mean"]
+
     return result

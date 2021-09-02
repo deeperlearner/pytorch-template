@@ -1,0 +1,145 @@
+{
+    "n_gpu": 1,
+    "root_dir": "./",
+    "name": "Adult_logistic",
+    "cross_validation": {
+        "repeat_time": 1,
+        "k_fold": 3
+    },
+    "optuna": {
+        "n_trials": 3,
+        "is_ftn": true,
+        "module": "tune.objective_mp",
+        "type": "objective"
+    },
+
+    "datasets": {
+        "imbalanced": true,
+        "train": {
+            "data": {
+                "module": "data_loaders.examples.Adult_dataset",
+                "type": "AdultDataset",
+                "kwargs": {
+                    "data_dir": "./data/Adult",
+                    "mode": "train"
+                }
+            }
+        },
+        "valid": {
+        },
+        "test": {
+            "data": {
+                "module": "data_loaders.examples.Adult_dataset",
+                "type": "AdultDataset",
+                "kwargs": {
+                    "data_dir": "./data/Adult",
+                    "mode": "test"
+                }
+            }
+        }
+    },
+    "data_loaders": {
+        "train": {
+            "data": {
+                "module": "data_loaders.imbalanced_loader",
+                "type": "ImbalancedDataLoader",
+                "kwargs": {
+                    "validation_split": 0.2,
+                    "DataLoader_kwargs": {
+                        "batch_size": 64,
+                        "shuffle": true,
+                        "num_workers": 4
+                    },
+                    "do_transform": true
+                }
+            }
+        },
+        "valid": {
+        },
+        "test": {
+            "data": {
+                "module": "data_loaders.imbalanced_loader",
+                "type": "ImbalancedDataLoader",
+                "kwargs": {
+                    "DataLoader_kwargs": {
+                        "batch_size": 64,
+                        "shuffle": false,
+                        "num_workers": 4
+                    },
+                    "do_transform": true
+                }
+            }
+        }
+    },
+    "models": {
+        "model": {
+            "module": "models.examples.logistic",
+            "type": "LogisticRegression",
+            "kwargs": {
+                "in_features": 105
+            }
+        }
+    },
+    "losses": {
+        "loss": {
+            "is_ftn": true,
+            "module": "models.loss",
+            "type": "binary_focal_loss"
+        }
+    },
+    "metrics": {
+        "per_iteration": ["binary_accuracy"],
+        "per_epoch": ["TPR", "PPV", "AUROC", "AUPRC"],
+        "pick_threshold": {
+            "is_ftn": true,
+            "module": "models.metric",
+            "type": "Youden_J",
+            "kwargs": {
+                "beta": 1.0
+            }
+        }
+    },
+    "optimizers": {
+        "model": {
+            "module": "torch.optim",
+            "type": "SGD",
+            "kwargs": {
+                "lr": 0.001
+            }
+        }
+    },
+    "lr_schedulers": {
+        "model": {
+            "module": "torch.optim.lr_scheduler",
+            "type": "StepLR",
+            "kwargs": {
+                "step_size": 50,
+                "gamma": 0.1
+            }
+        }
+    },
+    "trainer": {
+        "module": "trainers.trainer",
+        "type": "Trainer",
+        "kwargs": {
+            "apex": false,
+
+            "finetune": false,
+            "epochs": 2,
+            "len_epoch": null,
+
+            "save_period": 5,
+            "save_the_best": true,
+            "verbosity": 2,
+
+            "monitor": "max val_binary_accuracy",
+            "early_stop": 10,
+
+            "tensorboard": false
+        }
+    },
+    "tester": {
+        "module": "testers.tester",
+        "type": "Tester"
+    }
+}

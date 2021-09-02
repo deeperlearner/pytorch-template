@@ -20,21 +20,20 @@ def objective(trial):
     max_min, mnt_metric = config["trainer"]["kwargs"]["monitor"].split()
 
     result = train(config)
-    best = result.at[mnt_metric, "mean"]
-    objective_results.append(best)
+    objective_results.append(result)
     msg = msg_box("Optuna progress")
     i, N = len(objective_results), config["optuna"]["n_trials"]
     msg += f"\ntrial: ({i}/{N})"
 
     if (
         max_min == "max"
-        and best >= max(objective_results)
+        and result >= max(objective_results)
         or max_min == "min"
-        and best <= min(objective_results)
+        and result <= min(objective_results)
     ):
         msg += "\nBackuping best hyperparameters config and model..."
         config.backup(best_hp=True)
         config.cp_models()
     logger.info(msg)
 
-    return best
+    return result

@@ -6,7 +6,7 @@ import pandas as pd
 from sklearn.utils.class_weight import compute_class_weight
 
 from logger import get_logger
-from mains import Cross_Valid
+from mains import Cross_Valid, Multiprocessor
 import models.metric as module_metric
 from utils import (
     prepare_device,
@@ -22,7 +22,17 @@ if is_apex_available():
 logger = get_logger("train_mp")
 
 
-def train_mp(config, fold_idx, queue):
+def train_mp(config):
+    k_fold = Cross_Valid.k_fold
+    # multiprocessing on each fold_idx
+    mp = Multiprocessor()
+    for fold_idx in range(k_fold):  # queue up k_fold tasks running `train_mp`
+        mp.run(train_on_fold_idx, config, fold_idx)
+    ret = mp.wait()  # get all results
+    return ret
+
+
+def train_on_fold_idx(config, fold_idx):
     # setup GPU device if available, move model into configured device
     device, device_ids = prepare_device(config["n_gpu"])
 
@@ -186,6 +196,7 @@ def train_mp(config, fold_idx, queue):
 
     logger.info(msg)
 
-    ret = queue.get()
-    ret["result"] = result
+    max_min, mnt_metric = config["trainer"]["kwargs"]["monitor"].split()
+    result = result.at[mnt_metric, "mean"]
+
     return result
