@@ -1,9 +1,4 @@
-from multiprocessing import Queue
-
-import torch.multiprocessing as _mp
-
-
-mp = _mp.get_context('spawn')
+from multiprocessing import Process, Queue
 
 
 # ref: https://stackoverflow.com/a/45829852/8380054
@@ -20,7 +15,7 @@ class Multiprocessor():
 
     def run(self, func, *args, **kwargs):
         args2 = [func, self.queue, args, kwargs]
-        p = mp.Process(target=self._wrapper, args=args2)
+        p = Process(target=self._wrapper, args=args2)
         self.processes.append(p)
         p.start()
 

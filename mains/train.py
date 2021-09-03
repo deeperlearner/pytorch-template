@@ -21,7 +21,7 @@ if is_apex_available():
 
 
 def train_mp(config):
-    k_fold = Cross_Valid.k_fold
+    k_fold = config["cross_validation"]["k_fold"]
     do_mp = config.run_args.mp
     # multiprocessing on each fold_idx
     mp = Multiprocessor()
