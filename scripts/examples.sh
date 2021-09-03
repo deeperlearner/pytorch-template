@@ -34,7 +34,7 @@ while getopts "dpr" flag; do
       EXP="Adult_logistic"
       RUN_ID=${VERSION}
       # use optuna to find the best h.p.
-      # python3 mains/main.py --optuna -c "configs/$CONFIG.json" --mode train --run_id $RUN_ID --log_name "optuna.log" --name $EXP
+      # python3 mains/main.py --optuna -c "configs/$CONFIG.json" --mode train --run_id $RUN_ID --name $EXP
       # python3 mains/main.py -c "saved/$EXP/$RUN_ID/best_hp/${CONFIG##*/}.json" --mode test \
       #     --resume "saved/$EXP/$RUN_ID/best_hp/model_best.pth" --run_id $RUN_ID
 
@@ -43,7 +43,7 @@ while getopts "dpr" flag; do
       # python3 mains/main.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --mode test \
       #     --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID --bootstrapping
 
-      CONFIG="examples/Adult_logistic_mp"
+      CONFIG="examples/Adult_logistic"
       EXP="Adult_logistic_mp"
       RUN_ID=${VERSION}
       python3 mains/main.py --optuna --mp -c "configs/$CONFIG.json" --mode train --run_id $RUN_ID --name $EXP

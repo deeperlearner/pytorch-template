@@ -7,7 +7,7 @@ import time
 import optuna
 
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
-from logger import get_logger
+from logger import change_log_name, get_logger
 from parse_config import ConfigParser
 from mains import train, train_mp, test
 from utils import msg_box, consuming_time
@@ -66,6 +66,8 @@ if __name__ == "__main__":
             objective = config.init_obj(["optuna"])
             n_trials = config["optuna"]["n_trials"]
 
+            change_log_name(config, log_name="optuna.log")
+            logger = get_logger("optuna")
             optuna.logging.enable_propagation()
             optuna.logging.disable_default_handler()
             direction = "maximize" if max_min == "max" else "minimize"
@@ -73,6 +75,7 @@ if __name__ == "__main__":
             study = optuna.create_study(direction=direction)
             study.optimize(objective, n_trials=n_trials)
 
+            change_log_name(config, log_name="optuna.log")
             msg = msg_box("Optuna result")
             end = time.time()
             total_time = consuming_time(start, end)

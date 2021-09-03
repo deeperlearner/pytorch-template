@@ -30,6 +30,6 @@
     },
     "root": {
         "level": "INFO",
-        "handlers": ["info_file_handler"]
+        "handlers": ["warning_file_handler"]
     }
 }
