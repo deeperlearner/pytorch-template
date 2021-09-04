@@ -7,7 +7,7 @@ import time
 import optuna
 
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
-from logger import change_log_name, get_logger
+from logger import get_logger
 from parse_config import ConfigParser
 from mains import train, train_mp, test
 from utils import msg_box, consuming_time
@@ -24,7 +24,6 @@ if __name__ == "__main__":
     run_args.add_argument("--mode", default="train", type=str)
     run_args.add_argument("--resume", default=None, type=str)
     run_args.add_argument("--run_id", default=None, type=str)
-    run_args.add_argument("--log_name", default=None, type=str)
 
     # custom cli options to modify configuration from default values given in json file.
     mod_args = args.add_argument_group("mod_args")
@@ -55,6 +54,7 @@ if __name__ == "__main__":
     test_args.add_argument("--output_path", default=None, type=str)
 
     config = ConfigParser.from_args(args, options)
+    config.set_log()
     logger = get_logger("main")
     mode = config.run_args.mode
     msg = msg_box(mode.upper())
@@ -66,7 +66,7 @@ if __name__ == "__main__":
             objective = config.init_obj(["optuna"])
             n_trials = config["optuna"]["n_trials"]
 
-            change_log_name(config, log_name="optuna.log")
+            config.set_log(log_name="optuna.log")
             logger = get_logger("optuna")
             optuna.logging.enable_propagation()
             optuna.logging.disable_default_handler()
@@ -75,7 +75,6 @@ if __name__ == "__main__":
             study = optuna.create_study(direction=direction)
             study.optimize(objective, n_trials=n_trials)
 
-            change_log_name(config, log_name="optuna.log")
             msg = msg_box("Optuna result")
             end = time.time()
             total_time = consuming_time(start, end)

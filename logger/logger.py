@@ -34,14 +34,6 @@ def setup_logging(
         logging.basicConfig(level=default_level)
 
 
-def change_log_name(config, log_name="info.log"):
-    setup_logging(
-        config.save_dir["log"],
-        root_dir=config.root_dir,
-        filename=log_name,
-    )
-
-
 LOG_LEVELS = {
     0: logging.WARNING,
     1: logging.INFO,

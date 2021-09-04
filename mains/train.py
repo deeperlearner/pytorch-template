@@ -5,7 +5,7 @@ import torch
 import pandas as pd
 from sklearn.utils.class_weight import compute_class_weight
 
-from logger import change_log_name, get_logger
+from logger import get_logger
 from mains import Cross_Valid, Multiprocessor
 import models.metric as module_metric
 from utils import (
@@ -34,10 +34,9 @@ def train_mp(config):
 def train(config, do_mp=False, fold_idx=0):
     # different logging when multiprocessing
     if do_mp:
-        log_name = f"fold_{fold_idx}.log"
-        change_log_name(config, log_name)
+        config.set_log(log_name=f"fold_{fold_idx}.log")
     else:
-        change_log_name(config)
+        config.set_log()
     logger = get_logger("train")
 
     # setup GPU device if available, move model into configured device

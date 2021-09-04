@@ -31,7 +31,7 @@ class ConfigParser:
         if modification is None:
             modification = {}
         modification.update(self.mod_args)
-        if self.run_args.mp:  # mute trainer when multiprocessing
+        if self.run_args.mp:  # lower trainer verbosity when multiprocessing
             modification.update({"trainer;kwargs;verbosity": 0})
         self._config = _update_config(config, modification)
 
@@ -53,13 +53,6 @@ class ConfigParser:
 
         if self.run_args.mode == "train":
             self.backup()
-
-        # configure logging module
-        setup_logging(
-            self.save_dir["log"],
-            root_dir=self.root_dir,
-            filename=self.run_args.log_name,
-        )
 
     @classmethod
     def from_args(cls, parser, options=""):
@@ -130,6 +123,14 @@ class ConfigParser:
     def __getitem__(self, name):
         """Access items like ordinary dict."""
         return self.config[name]
+
+    # configure logging module
+    def set_log(self, log_name=None):
+        setup_logging(
+            self.save_dir["log"],
+            root_dir=self.root_dir,
+            filename=log_name,
+        )
 
     # read-only attributes
     @property
