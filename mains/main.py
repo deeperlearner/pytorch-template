@@ -20,6 +20,7 @@ if __name__ == "__main__":
     run_args = args.add_argument_group("run_args")
     run_args.add_argument("--optuna", action="store_true")
     run_args.add_argument("--mp", action="store_true", help="multiprocessing")
+    run_args.add_argument("--n_jobs", default=2, type=int, help="number of jobs running at the same time")
     run_args.add_argument("-c", "--config", default="configs/config.json", type=str)
     run_args.add_argument("--mode", default="train", type=str)
     run_args.add_argument("--resume", default=None, type=str)

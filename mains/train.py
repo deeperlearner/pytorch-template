@@ -23,12 +23,22 @@ if is_apex_available():
 def train_mp(config):
     k_fold = config["cross_validation"]["k_fold"]
     do_mp = config.run_args.mp
-    # multiprocessing on each fold_idx
-    mp = Multiprocessor()
-    for fold_idx in range(k_fold):  # queue up k_fold tasks running `train`; each process runs on a fold_idx
-        mp.run(train, config, do_mp, fold_idx)
-    ret = mp.wait()  # get all results
-    return ret
+    n_jobs = config.run_args.n_jobs
+    assert n_jobs <= k_fold, "n_jobs can not be more than k_fold."
+
+    results = []
+    fold_idx = 0
+    while fold_idx < k_fold:
+        mp = Multiprocessor()
+        job_idx = 0
+        while job_idx < n_jobs and fold_idx < k_fold:
+            mp.run(train, config, do_mp, fold_idx)
+            job_idx += 1
+            fold_idx += 1
+        ret = mp.wait()  # get results of processes
+        results.extend(ret)
+
+    return results
 
 
 def train(config, do_mp=False, fold_idx=0):
