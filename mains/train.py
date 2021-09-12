@@ -6,7 +6,7 @@ import pandas as pd
 from sklearn.utils.class_weight import compute_class_weight
 
 from logger import get_logger
-from mains import Cross_Valid
+from mains import Cross_Valid, Multiprocessor
 import models.metric as module_metric
 from utils import (
     prepare_device,
@@ -19,10 +19,36 @@ from utils import (
 if is_apex_available():
     from apex import amp
 
-logger = get_logger("train")
+
+def train_mp(config):
+    k_fold = config["cross_validation"]["k_fold"]
+    do_mp = config.run_args.mp
+    n_jobs = config.run_args.n_jobs
+    assert n_jobs <= k_fold, "n_jobs can not be more than k_fold."
+
+    results = []
+    fold_idx = 0
+    while fold_idx < k_fold:
+        mp = Multiprocessor()
+        job_idx = 0
+        while job_idx < n_jobs and fold_idx < k_fold:
+            mp.run(train, config, do_mp, fold_idx)
+            job_idx += 1
+            fold_idx += 1
+        ret = mp.wait()  # get results of processes
+        results.extend(ret)
+
+    return results
 
 
-def train(config):
+def train(config, do_mp=False, fold_idx=0):
+    # different logging when multiprocessing
+    if do_mp:
+        config.set_log(log_name=f"fold_{fold_idx}.log")
+    else:
+        config.set_log()
+    logger = get_logger("train")
+
     # setup GPU device if available, move model into configured device
     device, device_ids = prepare_device(config["n_gpu"])
 
@@ -83,12 +109,14 @@ def train(config):
     k_fold = config["cross_validation"]["k_fold"]
 
     results = pd.DataFrame()
-    Cross_Valid.create_CV(repeat_time, k_fold)
+    Cross_Valid.create_CV(repeat_time, k_fold, fold_idx=fold_idx)
     start = time.time()
     for t in range(repeat_time):
         if k_fold > 1:  # cross validation enabled
             train_datasets["data"].split_cv_indexes(k_fold)
-        for k in range(k_fold):
+        # 1 loop for multi-process; k_fold loops for single-process
+        k_time = 1 if do_mp else k_fold
+        for k in range(k_time):
             # data_loaders
             train_data_loaders = dict()
             valid_data_loaders = dict()
@@ -165,7 +193,7 @@ def train(config):
             train_log = trainer.train()
             results = pd.concat((results, train_log), axis=1)
 
-            if k_fold > 1:
+            if k_time > 1:
                 Cross_Valid.next_fold()
 
         if repeat_time > 1:
@@ -183,5 +211,8 @@ def train(config):
     msg += f"\n{result}"
 
     logger.info(msg)
+
+    max_min, mnt_metric = config["trainer"]["kwargs"]["monitor"].split()
+    result = result.at[mnt_metric, "mean"]
 
     return result

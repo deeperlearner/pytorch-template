@@ -19,12 +19,12 @@ def setup_logging(
     if log_config.is_file():
         config = read_json(log_config)
         # modify logging paths based on run config
-        for _, handler in config["handlers"].items():
-            if "filename" in handler:
-                if filename is None:
-                    handler["filename"] = str(save_dir / handler["filename"])
+        for handler_k, handler_v in config["handlers"].items():
+            if "filename" in handler_v:
+                if filename is None or handler_k != "info_file_handler":
+                    handler_v["filename"] = str(save_dir / handler_v["filename"])
                 else:
-                    handler["filename"] = str(save_dir / filename)
+                    handler_v["filename"] = str(save_dir / filename)
 
         logging.config.dictConfig(config)
     else:

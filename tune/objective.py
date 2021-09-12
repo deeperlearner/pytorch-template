@@ -1,5 +1,5 @@
 from logger import get_logger
-from mains import train
+from mains import train, train_mp
 from parse_config import ConfigParser
 from utils import msg_box, consuming_time
 
@@ -18,23 +18,30 @@ def objective(trial):
     config = ConfigParser(modification)
     logger = get_logger("optuna")
     max_min, mnt_metric = config["trainer"]["kwargs"]["monitor"].split()
-
-    result = train(config)
-    best = result.at[mnt_metric, "mean"]
-    objective_results.append(best)
+    k_fold = config["cross_validation"]["k_fold"]
     msg = msg_box("Optuna progress")
     i, N = len(objective_results), config["optuna"]["n_trials"]
-    msg += f"\ntrial: ({i}/{N})"
-
-    if (
-        max_min == "max"
-        and best >= max(objective_results)
-        or max_min == "min"
-        and best <= min(objective_results)
-    ):
-        msg += "\nBackuping best hyperparameters config and model..."
-        config.backup(best_hp=True)
-        config.cp_models()
+    msg += f"\nTrial: ({i}/{N-1})"
     logger.info(msg)
 
-    return best
+    if config.run_args.mp:
+        # train with multiprocessing on k_fold
+        results = train_mp(config)
+        result = sum(results) / len(results)
+    else:
+        result = train(config)
+    objective_results.append(result)
+
+    config.set_log(log_name="optuna.log")
+    if (
+        max_min == "max"
+        and result >= max(objective_results)
+        or max_min == "min"
+        and result <= min(objective_results)
+    ):
+        msg = "Backing up best hyperparameters config and model..."
+        config.backup(best_hp=True)
+        config.cp_models()
+        logger.info(msg)
+
+    return result

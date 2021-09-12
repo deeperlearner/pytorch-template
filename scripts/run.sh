@@ -11,7 +11,7 @@ usage() { echo "Usage: $0 [-dpr]" 1>&2; exit 1; }
 
 # record execution time to log
 time_log() {
-    RUNNING_TIME=$(date +%T -d "1/1 + $SECONDS sec")
+    RUNNING_TIME=$(($SECONDS/86400))" days, "$(date +%T -d "1/1 + $SECONDS sec")
     echo -e "---------------------------------" | tee -a $LOG_FILE
     echo -e "$TYPE running time: $RUNNING_TIME" | tee -a $LOG_FILE
     let "TOTAL_SECONDS += $SECONDS"
@@ -34,7 +34,7 @@ while getopts "dpr" flag; do
       EXP="dataset_model"
       RUN_ID=${VERSION}
       # search for best hp
-      python3 mains/main.py -c "configs/$CONFIG.json" --mode train --optuna --run_id $RUN_ID --log_name "optuna.log" --name $EXP
+      python3 mains/main.py --optuna -c "configs/$CONFIG.json" --mode train --run_id $RUN_ID --name $EXP
       python3 mains/main.py -c "saved/$EXP/$RUN_ID/best_hp/${CONFIG##*/}.json" --mode test \
           --resume "saved/$EXP/$RUN_ID/best_hp/model_best.pth" --run_id $RUN_ID
 
@@ -69,6 +69,6 @@ while getopts "dpr" flag; do
   esac
 done
 
-TOTAL_TIME=$(date +%T -d "1/1 + $TOTAL_SECONDS sec")
+TOTAL_TIME=$(($TOTAL_SECONDS/86400))" days, "$(date +%T -d "1/1 + $TOTAL_SECONDS sec")
 echo -e "---------------------------------" | tee -a $LOG_FILE
 echo -e "total running time: $TOTAL_TIME" | tee -a $LOG_FILE

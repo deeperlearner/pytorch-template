@@ -8,11 +8,10 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 from logger import get_logger
-from mains import Cross_Valid
+from mains import Cross_Valid, bootstrapping
 import models.metric as module_metric
 from models.metric import MetricTracker
 from utils import prepare_device, get_by_path, msg_box, consuming_time
-from utils.bootstrap import bootstrapping
 
 # fix random seeds for reproducibility
 SEED = 123

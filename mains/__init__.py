@@ -1,3 +1,5 @@
+from .bootstrap import bootstrapping
 from .cross_validation import Cross_Valid
-from .train import train
+from .multiprocess import Multiprocessor
+from .train import train, train_mp
 from .test import test
