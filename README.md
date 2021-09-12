@@ -73,7 +73,7 @@ When there are more than one module, for example,
 - `trainers/first_trainer.py` and `trainers/second_trainer.py`
 - `models/model1.py` and `models/model2.py`
 
-Each of them has some classes. In `parse_config.py`, ConfigParser.init_obj() can automatically import the specified class by using importlib.
+Each of them has some classes. In `parse_config.py`, `ConfigParser.init_obj()` can automatically import the specified class by using `importlib`.
 
 ### AUROC/AUPRC
 
@@ -90,9 +90,9 @@ Cross validation is supported.
 Class `Cross_Valid` in `mains/cross_validation.py` records the index of cross validation.
 The model and metric results of each fold are saved.
 
-(TODO)
-Also, multi-process cross validation is supported, which allows you to run many folds simultaneously in the background.
-The multi-processing is handled by `scripts/run.sh`. You can decide how many processes you want to run at a time by edit the shell script.
+Also, multi-process cross validation is supported, which allows you to run many folds simultaneously.
+To enable multiprocessing, add flag `--mp`.
+You can decide how many processes you want to run at a time by specifying `--n_jobs <int>`.
 
 :warning: Caveat: If your dataset is large, running many processes may cost a lot of RAM.
 Be careful to adjust the number of processes and the number of workers in the `data_loaders` part of config.
