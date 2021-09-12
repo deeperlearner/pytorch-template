@@ -2,7 +2,10 @@
     "n_gpu": 1,
     "root_dir": "./",
     "name": "dataset_model",
-    "k_fold": 1,
+    "cross_validation": {
+        "repeat_time": 1,
+        "k_fold": 1
+    },
     "optuna": {
         "n_trials": 0,
         "is_ftn": true,

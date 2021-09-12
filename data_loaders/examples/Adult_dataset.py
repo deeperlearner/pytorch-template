@@ -7,6 +7,8 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import StratifiedKFold
 
+from mains import Cross_Valid
+
 
 class AdultDataset(Dataset):
 
@@ -87,7 +89,8 @@ class AdultDataset(Dataset):
         self.label.replace(to_replace=r">50K.?", value=1, regex=True, inplace=True)
 
     def split_cv_indexes(self, N):
-        kfold = StratifiedKFold(n_splits=N, shuffle=True)
+        SEED = Cross_Valid.repeat_idx
+        kfold = StratifiedKFold(n_splits=N, shuffle=True, random_state=SEED)
         X, y = self.x_num_train, self.y_train
         self.indexes = list(kfold.split(X, y))
 

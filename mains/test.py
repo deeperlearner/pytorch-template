@@ -11,7 +11,6 @@ from logger import get_logger
 from mains import Cross_Valid
 import models.metric as module_metric
 from models.metric import MetricTracker
-from parse_config import ConfigParser
 from utils import prepare_device, get_by_path, msg_box, consuming_time
 from utils.bootstrap import bootstrapping
 
@@ -35,9 +34,11 @@ def test(config):
     for name in get_by_path(config, keys):
         test_datasets[name] = config.init_obj([*keys, name])
 
+    repeat_time = config["cross_validation"]["repeat_time"]
+    k_fold = config["cross_validation"]["k_fold"]
+
     results = pd.DataFrame()
-    k_fold = config["k_fold"]
-    Cross_Valid.create_CV(k_fold)
+    Cross_Valid.create_CV(repeat_time, k_fold)
     start = time.time()
     for k in range(k_fold):
         # data_loaders
@@ -93,7 +94,6 @@ def test(config):
         results = pd.concat((results, test_log), axis=1)
         logger.info(test_log)
 
-        # cross validation
         if k_fold > 1:
             Cross_Valid.next_fold()
 

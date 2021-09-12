@@ -32,7 +32,7 @@ while getopts "dpr" flag; do
 
       CONFIG="dataset_model"
       EXP="dataset_model"
-      RUN_ID=$VERSION
+      RUN_ID=${VERSION}
       # search for best hp
       python3 mains/main.py -c "configs/$CONFIG.json" --mode train --optuna --run_id $RUN_ID --log_name "optuna.log" --name $EXP
       python3 mains/main.py -c "saved/$EXP/$RUN_ID/best_hp/${CONFIG##*/}.json" --mode test \
@@ -59,7 +59,7 @@ while getopts "dpr" flag; do
 
       CONFIG="dataset_model"
       EXP="dataset_model"
-      RUN_ID=$VERSION
+      RUN_ID=${VERSION}
 
       time_log
       ;;
