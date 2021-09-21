@@ -21,6 +21,7 @@ time_log() {
 mkdir -p log
 LOG_FILE="log/run.log"
 echo "===============================" >> $LOG_FILE
+echo "date: $(date)" >> $LOG_FILE
 echo "version: $VERSION" >> $LOG_FILE
 TOTAL_SECONDS=0
 # "CONFIG##*/" is the basename of CONFIG

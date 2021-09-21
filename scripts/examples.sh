@@ -3,7 +3,7 @@
 #  PyTorch Template
 # ------------------
 # Repository    : https://github.com/deeperlearner/pytorch-template
-VERSION="v4.1.0"
+VERSION="v4.1.1"
 
 
 # This script run train and test for examples
@@ -21,6 +21,7 @@ time_log() {
 mkdir -p log
 LOG_FILE="log/examples.log"
 echo "===============================" >> $LOG_FILE
+echo "date: $(date)" >> $LOG_FILE
 echo "version: $VERSION" >> $LOG_FILE
 TOTAL_SECONDS=0
 # "CONFIG##*/" is the basename of CONFIG
@@ -46,9 +47,9 @@ while getopts "dpr" flag; do
       CONFIG="examples/Adult_logistic"
       EXP="Adult_logistic_mp"
       RUN_ID=${VERSION}
-      python3 mains/main.py --optuna --mp -c "configs/$CONFIG.json" --mode train --run_id $RUN_ID --name $EXP
-      python3 mains/main.py -c "saved/$EXP/$RUN_ID/best_hp/${CONFIG##*/}.json" --mode test \
-          --resume "saved/$EXP/$RUN_ID/best_hp/model_best.pth" --run_id $RUN_ID
+      # python3 mains/main.py --optuna --mp -c "configs/$CONFIG.json" --mode train --run_id $RUN_ID --name $EXP
+      # python3 mains/main.py -c "saved/$EXP/$RUN_ID/best_hp/${CONFIG##*/}.json" --mode test \
+      #     --resume "saved/$EXP/$RUN_ID/best_hp/model_best.pth" --run_id $RUN_ID
 
       time_log
       ;;
