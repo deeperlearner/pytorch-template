@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 from torch.utils.data import DataLoader
-from torch.utils.data.sampler import WeightedRandomSampler
+from torch.utils.data.sampler import SubsetRandomSampler, WeightedRandomSampler
 
 from base import BaseDataLoader
 from mains import Cross_Valid
@@ -59,16 +59,11 @@ class ImbalancedDataLoader(BaseDataLoader):
 
     def _get_sampler(self, train_idx, valid_idx, class_weight, target):
         train_mask = np.zeros(self.n_samples)
-        valid_mask = np.zeros(self.n_samples)
-
         train_mask[train_idx] = 1.0
-        valid_mask[valid_idx] = 1.0
-
         train_weights = class_weight[target] * train_mask
-        valid_weights = class_weight[target] * valid_mask
 
         train_sampler = WeightedRandomSampler(train_weights, len(train_weights))
-        valid_sampler = WeightedRandomSampler(valid_weights, len(valid_weights))
+        valid_sampler = SubsetRandomSampler(valid_idx)
 
         # turn off shuffle option which is mutually exclusive with sampler
         self.init_kwargs["shuffle"] = False
