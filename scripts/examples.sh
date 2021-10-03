@@ -34,22 +34,18 @@ while getopts "dpr" flag; do
       CONFIG="examples/Adult_logistic"
       EXP="Adult_logistic"
       RUN_ID=${VERSION}
+
       # use optuna to find the best h.p.
-      python3 mains/main.py --optuna -c "configs/$CONFIG.json" --mode train --run_id $RUN_ID --name $EXP
+      python3 mains/main.py --optuna --mp -c "configs/$CONFIG.json" --mode train \
+          --run_id $RUN_ID --name $EXP
       python3 mains/main.py -c "saved/$EXP/$RUN_ID/best_hp/${CONFIG##*/}.json" --mode test \
           --resume "saved/$EXP/$RUN_ID/best_hp/model_best.pth" --run_id $RUN_ID
 
       # given h.p. with k_fold = 1
-      # python3 mains/main.py -c "configs/$CONFIG.json" --mode train --run_id $RUN_ID
-      # python3 mains/main.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --mode test \
-      #     --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID --bootstrapping
-
-      CONFIG="examples/Adult_logistic"
-      EXP="Adult_logistic_mp"
-      RUN_ID=${VERSION}
-      # python3 mains/main.py --optuna --mp -c "configs/$CONFIG.json" --mode train --run_id $RUN_ID --name $EXP
-      # python3 mains/main.py -c "saved/$EXP/$RUN_ID/best_hp/${CONFIG##*/}.json" --mode test \
-      #     --resume "saved/$EXP/$RUN_ID/best_hp/model_best.pth" --run_id $RUN_ID
+      python3 mains/main.py -c "configs/$CONFIG.json" --mode train \
+          --run_id $RUN_ID --name $EXP --k_fold 1
+      python3 mains/main.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --mode test \
+          --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID --bootstrapping
 
       time_log
       ;;

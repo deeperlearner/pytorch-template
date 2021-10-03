@@ -31,6 +31,7 @@ if __name__ == "__main__":
     CustomArgs = collections.namedtuple("CustomArgs", "flags type target")
     options = [
         CustomArgs(["--name"], type=str, target="name"),
+        CustomArgs(["--k_fold"], type=int, target="cross_validation;k_fold"),
         CustomArgs(
             ["--num_workers"],
             type=int,
