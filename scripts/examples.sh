@@ -7,7 +7,7 @@ VERSION="v4.1.1"
 
 
 # This script run train and test for examples
-usage() { echo "Usage: $0 [-dpr]" 1>&2; exit 1; }
+usage() { echo "Usage: $0 [-abc]" 1>&2; exit 1; }
 
 # record execution time to log
 time_log() {
@@ -25,9 +25,9 @@ echo "date: $(date)" >> $LOG_FILE
 echo "version: $VERSION" >> $LOG_FILE
 TOTAL_SECONDS=0
 # "CONFIG##*/" is the basename of CONFIG
-while getopts "dpr" flag; do
+while getopts "abc" flag; do
   case "$flag" in
-    d)
+    a)
       SECONDS=0
       TYPE="debug"
 
@@ -49,7 +49,7 @@ while getopts "dpr" flag; do
 
       time_log
       ;;
-    p)
+    b)
       SECONDS=0
       TYPE="preprocess"
 
@@ -57,7 +57,7 @@ while getopts "dpr" flag; do
 
       time_log
       ;;
-    r)
+    c)
       SECONDS=0
       TYPE="run"
 
