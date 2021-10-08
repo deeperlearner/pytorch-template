@@ -66,6 +66,9 @@ Multiple losses, optimizers, lr_schedulers can be found in many ML papers.
 
 If the paths of train/valid/test are already given, they can be directly put in the section in datasets, data_loaders.
 
+This is the flow chart of this template:
+![flow chart](https://i.imgur.com/TlG3Ayt.png)
+
 ### module/type
 
 When there are more than one module, for example,

@@ -7,7 +7,7 @@ VERSION="v1.0.0"
 
 
 # This script run train and test
-usage() { echo "Usage: $0 [-dpr]" 1>&2; exit 1; }
+usage() { echo "Usage: $0 [-abc]" 1>&2; exit 1; }
 
 # record execution time to log
 time_log() {
@@ -21,31 +21,35 @@ time_log() {
 mkdir -p log
 LOG_FILE="log/run.log"
 echo "===============================" >> $LOG_FILE
+echo "date: $(date)" >> $LOG_FILE
 echo "version: $VERSION" >> $LOG_FILE
 TOTAL_SECONDS=0
 # "CONFIG##*/" is the basename of CONFIG
-while getopts "dpr" flag; do
+while getopts "abc" flag; do
   case "$flag" in
-    d)
+    a)
       SECONDS=0
       TYPE="debug"
 
       CONFIG="dataset_model"
       EXP="dataset_model"
       RUN_ID=${VERSION}
-      # search for best hp
-      python3 mains/main.py --optuna -c "configs/$CONFIG.json" --mode train --run_id $RUN_ID --name $EXP
+
+      # use optuna to find the best h.p.
+      python3 mains/main.py --optuna --mp -c "configs/$CONFIG.json" --mode train \
+          --run_id $RUN_ID --name $EXP
       python3 mains/main.py -c "saved/$EXP/$RUN_ID/best_hp/${CONFIG##*/}.json" --mode test \
           --resume "saved/$EXP/$RUN_ID/best_hp/model_best.pth" --run_id $RUN_ID
 
-      # run with config
-      python3 mains/main.py -c "configs/$CONFIG.json" --mode train --run_id $RUN_ID
+      # given h.p. with k_fold = 1
+      python3 mains/main.py -c "configs/$CONFIG.json" --mode train \
+          --run_id $RUN_ID --name $EXP --k_fold 1
       python3 mains/main.py -c "saved/$EXP/$RUN_ID/${CONFIG##*/}.json" --mode test \
-          --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID
+          --resume "saved/$EXP/$RUN_ID/model/model_best.pth" --run_id $RUN_ID --bootstrapping
 
       time_log
       ;;
-    p)
+    b)
       SECONDS=0
       TYPE="preprocess"
 
@@ -53,7 +57,7 @@ while getopts "dpr" flag; do
 
       time_log
       ;;
-    r)
+    c)
       SECONDS=0
       TYPE="run"
 
