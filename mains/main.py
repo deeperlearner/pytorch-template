@@ -64,7 +64,8 @@ if __name__ == "__main__":
 
     if mode == "train":
         if config.run_args.optuna:
-            max_min, mnt_metric = config["trainer"]["kwargs"]["monitor"].split()
+            keys = ["trainers", "trainer", "kwargs", "monitor"]
+            max_min, mnt_metric = get_by_path(config, keys).split()
             objective = config.init_obj(["optuna"])
             n_trials = config["optuna"]["n_trials"]
 

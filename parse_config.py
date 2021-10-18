@@ -32,7 +32,7 @@ class ConfigParser:
             modification = {}
         modification.update(self.mod_args)
         if self.run_args.mp:  # lower trainer verbosity when multiprocessing
-            modification.update({"trainer;kwargs;verbosity": 0})
+            modification.update({"trainers;trainer;kwargs;verbosity": 0})
         self._config = _update_config(config, modification)
 
         # test_args: self.test_args

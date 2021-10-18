@@ -180,7 +180,8 @@ def train(config, do_mp=False, fold_idx=0):
             )
 
             # amp
-            if config["trainer"]["kwargs"]["apex"]:
+            keys = ["trainers", "trainer", "kwargs", "apex"]
+            if get_by_path(config, keys):
                 # TODO: revise here if multiple models and optimizers
                 models["model"], optimizers["model"] = amp.initialize(
                     models["model"], optimizers["model"], opt_level="O1"
@@ -188,7 +189,7 @@ def train(config, do_mp=False, fold_idx=0):
                 torch_objs["amp"] = amp
 
             trainer = config.init_obj(
-                ["trainer"], torch_objs, config.save_dir, config.resume, device
+                ["trainers", "trainer"], torch_objs, config.save_dir, config.resume, device
             )
             train_log = trainer.train()
             results = pd.concat((results, train_log), axis=1)
@@ -212,7 +213,7 @@ def train(config, do_mp=False, fold_idx=0):
 
     logger.info(msg)
 
-    max_min, mnt_metric = config["trainer"]["kwargs"]["monitor"].split()
+    mnt_metric = trainer.mnt_metric
     result = result.at[mnt_metric, "mean"]
 
     return result

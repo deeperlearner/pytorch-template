@@ -3,7 +3,7 @@
 #  PyTorch Template
 # ------------------
 # Repository    : https://github.com/deeperlearner/pytorch-template
-VERSION="v4.1.2"
+VERSION="v5.0.0"
 
 
 # This script run train and test for examples
@@ -36,11 +36,11 @@ while getopts "abc" flag; do
       RUN_ID=${VERSION}
 
       # use optuna to find the best h.p.
-      python3 mains/main.py --optuna --mp -c "configs/$CONFIG.json" --mode train \
-          --run_id $RUN_ID --name $EXP
-      python3 mains/main.py -c "saved/$EXP/$RUN_ID/best_hp/${CONFIG##*/}.json" --mode test \
-          --resume "saved/$EXP/$RUN_ID/best_hp/fold_0_model_best.pth" --run_id $RUN_ID --k_fold 1 --bootstrapping
-      exit
+      # python3 mains/main.py --optuna --mp -c "configs/$CONFIG.json" --mode train \
+      #     --run_id $RUN_ID --name $EXP
+      # python3 mains/main.py -c "saved/$EXP/$RUN_ID/best_hp/${CONFIG##*/}.json" --mode test \
+      #     --resume "saved/$EXP/$RUN_ID/best_hp/fold_0_model_best.pth" --run_id $RUN_ID --k_fold 1 --bootstrapping
+      # exit
 
       # given h.p. with k_fold = 1
       python3 mains/main.py -c "configs/$CONFIG.json" --mode train \
