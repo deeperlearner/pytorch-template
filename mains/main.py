@@ -52,7 +52,7 @@ if __name__ == "__main__":
     # config.test_args: additional arguments for testing
     test_args = args.add_argument_group("test_args")
     test_args.add_argument("--bootstrapping", action="store_true")
-    test_args.add_argument("--bootstrap_times", default=10000, type=int)
+    test_args.add_argument("--bootstrap_times", default=1000, type=int)
     test_args.add_argument("--output_path", default=None, type=str)
 
     config = ConfigParser.from_args(args, options)
