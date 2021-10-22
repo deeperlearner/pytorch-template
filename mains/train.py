@@ -128,6 +128,8 @@ def train(config, do_mp=False, fold_idx=0):
                 kwargs.update(
                     class_weight=class_weight.cpu().detach().numpy(), target=target
                 )
+            # stratify_by_labels
+            kwargs.update(stratify_by_labels=target)
             dataset = train_datasets[name]
             loaders = config.init_obj([*keys, name], dataset, **kwargs)
             train_data_loaders[name] = loaders.train_loader
