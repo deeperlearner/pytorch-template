@@ -58,8 +58,9 @@ def test(config):
             resume = config.resume
         logger.info(f"Loading model: {resume} ...")
         checkpoint = torch.load(resume)
-        models = dict()
+
         logger_model = get_logger("model", verbosity=0)
+        models = dict()
         name = "model"
         model = config.init_obj(["models", name])
         logger_model.info(model)
@@ -68,7 +69,6 @@ def test(config):
             model = torch.nn.DataParallel(model)
         model.load_state_dict(state_dict)
         model = model.to(device)
-        model.eval()
         models[name] = model
 
         # losses

@@ -60,9 +60,11 @@ def train(config, do_mp=False, fold_idx=0):
     name = "data"
     train_datasets[name] = config.init_obj([*keys, name])
     ## valid
-    valid_exist = False
     keys = ["datasets", "valid"]
-    # valid_datasets[name] = config.init_obj([*keys, name])
+    valid_exist = len(get_by_path(config, keys)) > 0
+    if valid_exist:
+        name = "data"
+        valid_datasets[name] = config.init_obj([*keys, name])
     ## compute inverse class frequency as class weight
     if config["datasets"].get("imbalanced", False):
         target = train_datasets["data"].y_train  # TODO
@@ -129,19 +131,20 @@ def train(config, do_mp=False, fold_idx=0):
             dataset = train_datasets[name]
             loaders = config.init_obj([*keys, name], dataset, **kwargs)
             train_data_loaders[name] = loaders.train_loader
+            ## valid
             if not valid_exist:
                 valid_data_loaders[name] = loaders.valid_loader
-            ## valid
-            # name = "data"
-            # keys = ["data_loaders", "valid"]
-            # dataset = valid_datasets[name]
-            # loaders = config.init_obj([*keys, name], dataset)
-            # valid_data_loaders[name] = loaders.valid_loader
+            else:
+                name = "data"
+                keys = ["data_loaders", "valid"]
+                dataset = valid_datasets[name]
+                loaders = config.init_obj([*keys, name], dataset)
+                valid_data_loaders[name] = loaders.valid_loader
 
             # models
+            logger_model = get_logger("model", verbosity=1)
             models = dict()
             name = "model"
-            logger_model = get_logger("model", verbosity=1)
             model = config.init_obj(["models", name])
             logger_model.info(model)
             model = model.to(device)

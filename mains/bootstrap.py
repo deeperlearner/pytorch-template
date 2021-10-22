@@ -15,6 +15,7 @@ def bootstrapping(targets, outputs, metrics_epoch, test_metrics, repeat=1000):
     logger.info(msg)
 
     results = pd.DataFrame()
+    test_metrics.reset()
     start = time.time()
     for number in range(repeat):
         ids = np.arange(len(outputs))
@@ -24,7 +25,7 @@ def bootstrapping(targets, outputs, metrics_epoch, test_metrics, repeat=1000):
 
         for met in metrics_epoch:
             test_metrics.epoch_update(met.__name__, met(targets_, outputs_))
-        test_result = test_metrics.result()
+        test_result = test_metrics.epoch_record
         test_result = test_result["mean"].rename(number)
         results = pd.concat((results, test_result), axis=1)
 

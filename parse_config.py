@@ -44,7 +44,7 @@ class ConfigParser:
             run_id = datetime.now().strftime(r"%m%d_%H%M%S")
         self.exp_dir = save_dir / self.config["name"] / run_id
 
-        dirs = {"train": ["log", "model", "best_hp"], "test": ["fig", "log"]}
+        dirs = {"train": ["log", "model", "best_hp"], "test": ["log"]}
         self.save_dir = dict()
         for dir_name in dirs[self.run_args.mode]:
             dir_path = self.exp_dir / dir_name
