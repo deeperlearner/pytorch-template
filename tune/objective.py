@@ -1,7 +1,7 @@
 from logger import get_logger
 from mains import train, train_mp
 from parse_config import ConfigParser
-from utils import msg_box, consuming_time
+from utils import msg_box, consuming_time, get_by_path
 
 objective_results = []
 
@@ -17,7 +17,8 @@ def objective(trial):
     }
     config = ConfigParser(modification)
     logger = get_logger("optuna")
-    max_min, mnt_metric = config["trainer"]["kwargs"]["monitor"].split()
+    keys = ["trainers", "trainer", "kwargs", "monitor"]
+    max_min, mnt_metric = get_by_path(config, keys).split()
     k_fold = config["cross_validation"]["k_fold"]
     msg = msg_box("Optuna progress")
     i, N = len(objective_results), config["optuna"]["n_trials"]

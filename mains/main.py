@@ -10,7 +10,7 @@ sys.path.insert(1, os.path.join(sys.path[0], ".."))
 from logger import get_logger
 from parse_config import ConfigParser
 from mains import train, train_mp, test
-from utils import msg_box, consuming_time
+from utils import msg_box, consuming_time, get_by_path
 
 
 if __name__ == "__main__":
