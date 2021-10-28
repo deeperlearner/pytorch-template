@@ -164,7 +164,7 @@ class BaseTrainer:
         torch.save(state, filename)
         self.logger.info("Saving model: {} ...".format(filename))
 
-    def _resume_checkpoint(self, resume_path, finetune=False):
+    def _resume_checkpoint(self, resume_path, resume_training=False):
         """
         Resume from saved checkpoints
 
@@ -173,8 +173,7 @@ class BaseTrainer:
         resume_path = str(resume_path)
         self.logger.info("Loading checkpoint: {} ...".format(resume_path))
         checkpoint = torch.load(resume_path)
-        if not finetune:
-            # resume training
+        if resume_training:
             self.start_epoch = checkpoint["epoch"] + 1
             self.mnt_best = checkpoint["monitor_best"]
 

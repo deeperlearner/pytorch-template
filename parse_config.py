@@ -32,7 +32,7 @@ class ConfigParser:
             modification = {}
         modification.update(self.mod_args)
         if self.run_args.mp:  # lower trainer verbosity when multiprocessing
-            modification.update({"trainer;kwargs;verbosity": 0})
+            modification.update({"trainers;trainer;kwargs;verbosity": 0})
         self._config = _update_config(config, modification)
 
         # test_args: self.test_args
@@ -44,7 +44,7 @@ class ConfigParser:
             run_id = datetime.now().strftime(r"%m%d_%H%M%S")
         self.exp_dir = save_dir / self.config["name"] / run_id
 
-        dirs = {"train": ["log", "model", "best_hp"], "test": ["fig", "log"]}
+        dirs = {"train": ["log", "model", "best_hp"], "test": ["log"]}
         self.save_dir = dict()
         for dir_name in dirs[self.run_args.mode]:
             dir_path = self.exp_dir / dir_name

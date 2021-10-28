@@ -21,7 +21,7 @@ class Trainer(BaseTrainer):
         super(Trainer, self).__init__(torch_objs, save_dir, **kwargs)
 
         if resume is not None:
-            self._resume_checkpoint(resume, finetune=self.finetune)
+            self._resume_checkpoint(resume)
 
         # data_loaders
         self.do_validation = self.valid_data_loaders["data"] is not None

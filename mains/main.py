@@ -10,7 +10,7 @@ sys.path.insert(1, os.path.join(sys.path[0], ".."))
 from logger import get_logger
 from parse_config import ConfigParser
 from mains import train, train_mp, test
-from utils import msg_box, consuming_time
+from utils import msg_box, consuming_time, get_by_path
 
 
 if __name__ == "__main__":
@@ -20,7 +20,7 @@ if __name__ == "__main__":
     run_args = args.add_argument_group("run_args")
     run_args.add_argument("--optuna", action="store_true")
     run_args.add_argument("--mp", action="store_true", help="multiprocessing")
-    run_args.add_argument("--n_jobs", default=2, type=int, help="number of jobs running at the same time")
+    run_args.add_argument("--n_jobs", default=3, type=int, help="number of jobs running at the same time")
     run_args.add_argument("-c", "--config", default="configs/config.json", type=str)
     run_args.add_argument("--mode", default="train", type=str)
     run_args.add_argument("--resume", default=None, type=str)
@@ -64,7 +64,8 @@ if __name__ == "__main__":
 
     if mode == "train":
         if config.run_args.optuna:
-            max_min, mnt_metric = config["trainer"]["kwargs"]["monitor"].split()
+            keys = ["trainers", "trainer", "kwargs", "monitor"]
+            max_min, mnt_metric = get_by_path(config, keys).split()
             objective = config.init_obj(["optuna"])
             n_trials = config["optuna"]["n_trials"]
 

@@ -57,13 +57,13 @@ def train(config, do_mp=False, fold_idx=0):
     valid_datasets = dict()
     ## train
     keys = ["datasets", "train"]
-    for name in get_by_path(config, keys):
-        train_datasets[name] = config.init_obj([*keys, name])
+    name = "data"
+    train_datasets[name] = config.init_obj([*keys, name])
     ## valid
-    valid_exist = False
     keys = ["datasets", "valid"]
-    for name in get_by_path(config, keys):
-        valid_exist = True
+    valid_exist = len(get_by_path(config, keys)) > 0
+    if valid_exist:
+        name = "data"
         valid_datasets[name] = config.init_obj([*keys, name])
     ## compute inverse class frequency as class weight
     if config["datasets"].get("imbalanced", False):
@@ -77,11 +77,11 @@ def train(config, do_mp=False, fold_idx=0):
 
     # losses
     losses = dict()
-    for name in config["losses"]:
-        kwargs = {}
-        if "balanced" in get_by_path(config, ["losses", name, "type"]):
-            kwargs.update(class_weight=class_weight)
-        losses[name] = config.init_obj(["losses", name], **kwargs)
+    name = "loss"
+    kwargs = {}
+    if "balanced" in get_by_path(config, ["losses", name, "type"]):
+        kwargs.update(class_weight=class_weight)
+    losses[name] = config.init_obj(["losses", name], **kwargs)
 
     # metrics
     metrics_iter = [
@@ -122,49 +122,52 @@ def train(config, do_mp=False, fold_idx=0):
             valid_data_loaders = dict()
             ## train
             keys = ["data_loaders", "train"]
-            for name in get_by_path(config, keys):
-                kwargs = {}
-                if "imbalanced" in get_by_path(config, [*keys, name, "module"]):
-                    kwargs.update(
-                        class_weight=class_weight.cpu().detach().numpy(), target=target
-                    )
-                dataset = train_datasets[name]
-                loaders = config.init_obj([*keys, name], dataset, **kwargs)
-                train_data_loaders[name] = loaders.train_loader
-                if not valid_exist:
-                    valid_data_loaders[name] = loaders.valid_loader
+            name = "data"
+            kwargs = {}
+            if "imbalanced" in get_by_path(config, [*keys, name, "module"]):
+                kwargs.update(
+                    class_weight=class_weight.cpu().detach().numpy(), target=target
+                )
+            # stratify_by_labels
+            kwargs.update(stratify_by_labels=target)
+            dataset = train_datasets[name]
+            loaders = config.init_obj([*keys, name], dataset, **kwargs)
+            train_data_loaders[name] = loaders.train_loader
             ## valid
-            keys = ["data_loaders", "valid"]
-            for name in get_by_path(config, keys):
+            if not valid_exist:
+                valid_data_loaders[name] = loaders.valid_loader
+            else:
+                name = "data"
+                keys = ["data_loaders", "valid"]
                 dataset = valid_datasets[name]
                 loaders = config.init_obj([*keys, name], dataset)
                 valid_data_loaders[name] = loaders.valid_loader
 
             # models
-            models = dict()
             logger_model = get_logger("model", verbosity=1)
-            for name in config["models"]:
-                model = config.init_obj(["models", name])
-                logger_model.info(model)
-                model = model.to(device)
-                if len(device_ids) > 1:
-                    model = torch.nn.DataParallel(model, device_ids=device_ids)
-                models[name] = model
+            models = dict()
+            name = "model"
+            model = config.init_obj(["models", name])
+            logger_model.info(model)
+            model = model.to(device)
+            if len(device_ids) > 1:
+                model = torch.nn.DataParallel(model, device_ids=device_ids)
+            models[name] = model
 
             # optimizers
             optimizers = dict()
-            for name in config["optimizers"]:
-                trainable_params = filter(
-                    lambda p: p.requires_grad, models[name].parameters()
-                )
-                optimizers[name] = config.init_obj(["optimizers", name], trainable_params)
+            name = "model"
+            trainable_params = filter(
+                lambda p: p.requires_grad, models[name].parameters()
+            )
+            optimizers[name] = config.init_obj(["optimizers", name], trainable_params)
 
             # learning rate schedulers
             lr_schedulers = dict()
-            for name in config["lr_schedulers"]:
-                lr_schedulers[name] = config.init_obj(
-                    ["lr_schedulers", name], optimizers[name]
-                )
+            name = "model"
+            lr_schedulers[name] = config.init_obj(
+                ["lr_schedulers", name], optimizers[name]
+            )
 
             torch_objs.update(
                 {
@@ -180,15 +183,17 @@ def train(config, do_mp=False, fold_idx=0):
             )
 
             # amp
-            if config["trainer"]["kwargs"]["apex"]:
+            keys = ["trainers", "trainer", "kwargs", "apex"]
+            if get_by_path(config, keys):
                 # TODO: revise here if multiple models and optimizers
-                models["model"], optimizers["model"] = amp.initialize(
-                    models["model"], optimizers["model"], opt_level="O1"
+                name = "model"
+                models[name], optimizers[name] = amp.initialize(
+                    models[name], optimizers[name], opt_level="O1"
                 )
                 torch_objs["amp"] = amp
 
             trainer = config.init_obj(
-                ["trainer"], torch_objs, config.save_dir, config.resume, device
+                ["trainers", "trainer"], torch_objs, config.save_dir, config.resume, device
             )
             train_log = trainer.train()
             results = pd.concat((results, train_log), axis=1)
@@ -212,7 +217,7 @@ def train(config, do_mp=False, fold_idx=0):
 
     logger.info(msg)
 
-    max_min, mnt_metric = config["trainer"]["kwargs"]["monitor"].split()
+    mnt_metric = trainer.mnt_metric
     result = result.at[mnt_metric, "mean"]
 
     return result
