@@ -114,7 +114,7 @@ Use optuna to find best hyperparameters.
 ## Folder Structure
 
   ```
-  Pytorch-Template/
+  pytorch-template/
   │
   ├── base/ - abstract base classes
   │

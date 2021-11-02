@@ -22,7 +22,11 @@ class ImbalancedDataLoader(BaseDataLoader):
         DataLoader_kwargs=None,
         stratify_by_labels=None,
         do_transform=False,
+        sampling_type="under_sampling",
+        RUS_rate=10.,
     ):
+        self.sampling_type = sampling_type
+        self.RUS_rate = RUS_rate
         super(ImbalancedDataLoader, self).__init__(
             dataset, validation_split, DataLoader_kwargs
         )
@@ -60,9 +64,13 @@ class ImbalancedDataLoader(BaseDataLoader):
     def _get_sampler(self, train_idx, valid_idx, class_weight, target):
         train_mask = np.zeros(self.n_samples)
         train_mask[train_idx] = 1.0
-        train_weights = class_weight[target] * train_mask
 
-        train_sampler = WeightedRandomSampler(train_weights, len(train_weights))
+        if self.sampling_type == "under_sampling":
+            class_weight = np.array([1., self.RUS_rate])  # (majority, minority)
+            train_weights = class_weight[target] * train_mask
+            num_samples = len(train_idx)  # tuning len_epoch in trainer to use fewer samples
+
+            train_sampler = WeightedRandomSampler(train_weights, num_samples, replacement=False)
         valid_sampler = SubsetRandomSampler(valid_idx)
 
         # turn off shuffle option which is mutually exclusive with sampler
