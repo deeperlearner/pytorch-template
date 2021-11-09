@@ -25,14 +25,15 @@ class Trainer(BaseTrainer):
 
         # data_loaders
         self.do_validation = self.valid_data_loaders["data"] is not None
+        BATCH_SIZE = self.train_data_loaders["data"].batch_size
+        self.log_step = int(np.sqrt(BATCH_SIZE))
+        self.train_step, self.valid_step = 0, 0
         if self.len_epoch is None:
             # epoch-based training
             self.len_epoch = len(self.train_data_loaders["data"])
         else:
             # iteration-based training
             self.train_data_loaders["data"] = inf_loop(self.train_data_loaders["data"])
-        self.log_step = int(np.sqrt(self.train_data_loaders["data"].batch_size))
-        self.train_step, self.valid_step = 0, 0
 
         # models
         self.model = self.models["model"]
