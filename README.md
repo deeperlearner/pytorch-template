@@ -209,11 +209,11 @@ Use the `torch_new_project.sh` script to make your new project directory with te
 
 1. Add this line to ~/.bashrc:
   ```
-  export Pytorch_Template=/path/to/Pytorch_Template
+  export pytorch_template=/path/to/pytorch-template
   ```
 1. Add symbolic link at /usr/local/bin so that you can run this script everywhere.
   ```
-  sudo ln -s $Pytorch_Template/scripts/new_project/torch_new_project.sh /usr/local/bin/torch_new_project
+  sudo ln -s $pytorch_template/scripts/new_project/torch_new_project.sh /usr/local/bin/torch_new_project
   ```
 1. `torch_new_project ProjectName` produces a new project folder named 'ProjectName' will be made.
 This script will filter out unneccessary files listed in `copy_exclude`.
