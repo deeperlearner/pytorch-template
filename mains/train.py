@@ -77,11 +77,13 @@ def train(config, do_mp=False, fold_idx=0):
 
     # losses
     losses = dict()
-    name = "loss"
-    kwargs = {}
-    if "balanced" in get_by_path(config, ["losses", name, "type"]):
-        kwargs.update(class_weight=class_weight)
-    losses[name] = config.init_obj(["losses", name], **kwargs)
+    # TODO: revise names for multiple losses
+    names = ["loss"]
+    for name in names:
+        kwargs = {}
+        if "balanced" in get_by_path(config, ["losses", name, "type"]):
+            kwargs.update(class_weight=class_weight)
+        losses[name] = config.init_obj(["losses", name], **kwargs)
 
     # metrics
     metrics_iter = [
@@ -146,28 +148,34 @@ def train(config, do_mp=False, fold_idx=0):
             # models
             logger_model = get_logger("model", verbosity=1)
             models = dict()
-            name = "model"
-            model = config.init_obj(["models", name])
-            logger_model.info(model)
-            model = model.to(device)
-            if len(device_ids) > 1:
-                model = torch.nn.DataParallel(model, device_ids=device_ids)
-            models[name] = model
+            # TODO: revise names for multiple models
+            names = ["model"]
+            for name in names:
+                model = config.init_obj(["models", name])
+                logger_model.info(model)
+                model = model.to(device)
+                if len(device_ids) > 1:
+                    model = torch.nn.DataParallel(model, device_ids=device_ids)
+                models[name] = model
 
             # optimizers
             optimizers = dict()
-            name = "model"
-            trainable_params = filter(
-                lambda p: p.requires_grad, models[name].parameters()
-            )
-            optimizers[name] = config.init_obj(["optimizers", name], trainable_params)
+            # TODO: revise names for multiple optimizers
+            names = ["model"]
+            for name in names:
+                trainable_params = filter(
+                    lambda p: p.requires_grad, models[name].parameters()
+                )
+                optimizers[name] = config.init_obj(["optimizers", name], trainable_params)
 
             # learning rate schedulers
             lr_schedulers = dict()
-            name = "model"
-            lr_schedulers[name] = config.init_obj(
-                ["lr_schedulers", name], optimizers[name]
-            )
+            # TODO: revise names for multiple lr_schedulers
+            names = ["model"]
+            for name in names:
+                lr_schedulers[name] = config.init_obj(
+                    ["lr_schedulers", name], optimizers[name]
+                )
 
             torch_objs.update(
                 {
@@ -185,11 +193,12 @@ def train(config, do_mp=False, fold_idx=0):
             # amp
             keys = ["trainers", "trainer", "kwargs", "apex"]
             if get_by_path(config, keys):
-                # TODO: revise here if multiple models and optimizers
-                name = "model"
-                models[name], optimizers[name] = amp.initialize(
-                    models[name], optimizers[name], opt_level="O1"
-                )
+                # TODO: revise names for multiple models
+                names = ["model"]
+                for name in names:
+                    models[name], optimizers[name] = amp.initialize(
+                        models[name], optimizers[name], opt_level="O1"
+                    )
                 torch_objs["amp"] = amp
 
             trainer = config.init_obj(
