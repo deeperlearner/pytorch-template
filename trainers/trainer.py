@@ -41,6 +41,7 @@ class Trainer(BaseTrainer):
         self.criterion = self.losses["loss"]
 
         # metrics
+        # TODO: revise keys_loss for multiple losses
         keys_loss = ["loss"]
         keys_iter = [m.__name__ for m in self.metrics_iter]
         keys_epoch = [m.__name__ for m in self.metrics_epoch]

@@ -29,9 +29,8 @@ def test(config):
 
     # datasets
     test_datasets = dict()
-    keys = ["datasets", "test"]
-    name = "data"
-    test_datasets[name] = config.init_obj([*keys, name])
+    for name in config["datasets"]["test"]:
+        test_datasets["data"] = config.init_obj(["datasets", "test", "data"])
 
     repeat_time = config["cross_validation"]["repeat_time"]
     k_fold = config["cross_validation"]["k_fold"]
@@ -42,11 +41,9 @@ def test(config):
     for k in range(k_fold):
         # data_loaders
         test_data_loaders = dict()
-        keys = ["data_loaders", "test"]
-        name = "data"
-        dataset = test_datasets[name]
-        loaders = config.init_obj([*keys, name], dataset)
-        test_data_loaders[name] = loaders.test_loader
+        dataset = test_datasets["data"]
+        loaders = config.init_obj(["data_loaders", "test", "data"], dataset)
+        test_data_loaders["data"] = loaders.test_loader
 
         # models
         if k_fold > 1:
@@ -61,15 +58,15 @@ def test(config):
 
         logger_model = get_logger("model", verbosity=0)
         models = dict()
-        name = "model"
-        model = config.init_obj(["models", name])
-        logger_model.info(model)
-        state_dict = checkpoint["models"][name]
-        if config["n_gpu"] > 1:
-            model = torch.nn.DataParallel(model)
-        model.load_state_dict(state_dict)
-        model = model.to(device)
-        models[name] = model
+        for name in config["models"]:
+            model = config.init_obj(["models", name])
+            logger_model.info(model)
+            state_dict = checkpoint["models"][name]
+            if config["n_gpu"] > 1:
+                model = torch.nn.DataParallel(model)
+            model.load_state_dict(state_dict)
+            model = model.to(device)
+            models[name] = model
 
         # losses
         loss_fn = config.init_obj(["losses", "loss"])

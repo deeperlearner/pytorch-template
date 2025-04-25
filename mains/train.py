@@ -56,15 +56,13 @@ def train(config, do_mp=False, fold_idx=0):
     train_datasets = dict()
     valid_datasets = dict()
     ## train
-    keys = ["datasets", "train"]
-    name = "data"
-    train_datasets[name] = config.init_obj([*keys, name])
+    for name in config["datasets"]["train"]:
+        train_datasets[name] = config.init_obj(["datasets", "train", name])
     ## valid
-    keys = ["datasets", "valid"]
-    valid_exist = len(get_by_path(config, keys)) > 0
+    valid_exist = len(get_by_path(config, ["datasets", "valid"])) > 0
     if valid_exist:
-        name = "data"
-        valid_datasets[name] = config.init_obj([*keys, name])
+        for name in config["datasets"]["valid"]:
+            valid_datasets[name] = config.init_obj(["datasets", "valid", name])
     ## compute inverse class frequency as class weight
     if config["datasets"].get("imbalanced", False):
         target = train_datasets["data"].y_train  # TODO
@@ -77,9 +75,7 @@ def train(config, do_mp=False, fold_idx=0):
 
     # losses
     losses = dict()
-    # TODO: revise names for multiple losses
-    names = ["loss"]
-    for name in names:
+    for name in config["losses"]:
         kwargs = {}
         if "balanced" in get_by_path(config, ["losses", name, "type"]):
             kwargs.update(class_weight=class_weight)
@@ -123,34 +119,28 @@ def train(config, do_mp=False, fold_idx=0):
             train_data_loaders = dict()
             valid_data_loaders = dict()
             ## train
-            keys = ["data_loaders", "train"]
-            name = "data"
             kwargs = {}
-            if "imbalanced" in get_by_path(config, [*keys, name, "module"]):
+            if "imbalanced" in get_by_path(config, ["data_loaders", "train", "data", "module"]):
                 kwargs.update(
                     class_weight=class_weight.cpu().detach().numpy(), target=target
                 )
             # stratify_by_labels
             kwargs.update(stratify_by_labels=target)
-            dataset = train_datasets[name]
-            loaders = config.init_obj([*keys, name], dataset, **kwargs)
-            train_data_loaders[name] = loaders.train_loader
+            dataset = train_datasets["data"]
+            loaders = config.init_obj(["data_loaders", "train", "data"], dataset, **kwargs)
+            train_data_loaders["data"] = loaders.train_loader
             ## valid
             if not valid_exist:
-                valid_data_loaders[name] = loaders.valid_loader
+                valid_data_loaders["data"] = loaders.valid_loader
             else:
-                name = "data"
-                keys = ["data_loaders", "valid"]
-                dataset = valid_datasets[name]
-                loaders = config.init_obj([*keys, name], dataset)
-                valid_data_loaders[name] = loaders.valid_loader
+                dataset = valid_datasets["data"]
+                loaders = config.init_obj(["data_loaders", "valid", "data"], dataset)
+                valid_data_loaders["data"] = loaders.valid_loader
 
             # models
             logger_model = get_logger("model", verbosity=1)
             models = dict()
-            # TODO: revise names for multiple models
-            names = ["model"]
-            for name in names:
+            for name in config["models"]:
                 model = config.init_obj(["models", name])
                 logger_model.info(model)
                 model = model.to(device)
@@ -160,9 +150,7 @@ def train(config, do_mp=False, fold_idx=0):
 
             # optimizers
             optimizers = dict()
-            # TODO: revise names for multiple optimizers
-            names = ["model"]
-            for name in names:
+            for name in config["optimizers"]:
                 trainable_params = filter(
                     lambda p: p.requires_grad, models[name].parameters()
                 )
@@ -170,9 +158,7 @@ def train(config, do_mp=False, fold_idx=0):
 
             # learning rate schedulers
             lr_schedulers = dict()
-            # TODO: revise names for multiple lr_schedulers
-            names = ["model"]
-            for name in names:
+            for name in config["lr_schedulers"]:
                 lr_schedulers[name] = config.init_obj(
                     ["lr_schedulers", name], optimizers[name]
                 )
@@ -193,9 +179,7 @@ def train(config, do_mp=False, fold_idx=0):
             # amp
             keys = ["trainers", "trainer", "kwargs", "apex"]
             if get_by_path(config, keys):
-                # TODO: revise names for multiple models
-                names = ["model"]
-                for name in names:
+                for name in config["models"]:
                     models[name], optimizers[name] = amp.initialize(
                         models[name], optimizers[name], opt_level="O1"
                     )
