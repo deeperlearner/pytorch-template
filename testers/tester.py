@@ -13,11 +13,11 @@ class Tester:
         self.metrics_epoch = metrics_epoch
         self.test_metrics = test_metrics
 
-    def test(self):
+    def test(self, dataset_name="data"):
         self.model.eval()
         with torch.no_grad():
             print("testing...")
-            test_loader = self.test_data_loaders["data"]
+            test_loader = self.test_data_loaders[dataset_name]
 
             if len(self.metrics_epoch) > 0:
                 outputs = torch.FloatTensor().to(self.device)

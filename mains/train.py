@@ -55,6 +55,7 @@ def train(config, do_mp=False, fold_idx=0):
     # datasets
     train_datasets = dict()
     valid_datasets = dict()
+    dataset_name = "data"
     ## train
     for name in config["datasets"]["train"]:
         train_datasets[name] = config.init_obj(["datasets", "train", name])
@@ -65,7 +66,7 @@ def train(config, do_mp=False, fold_idx=0):
             valid_datasets[name] = config.init_obj(["datasets", "valid", name])
     ## compute inverse class frequency as class weight
     if config["datasets"].get("imbalanced", False):
-        target = train_datasets["data"].y_train  # TODO
+        target = train_datasets[dataset_name].y_train  # TODO
         class_weight = compute_class_weight(
             class_weight="balanced", classes=target.unique(), y=target
         )
@@ -111,7 +112,7 @@ def train(config, do_mp=False, fold_idx=0):
     start = time.time()
     for t in range(repeat_time):
         if k_fold > 1:  # cross validation enabled
-            train_datasets["data"].split_cv_indexes(k_fold)
+            train_datasets[dataset_name].split_cv_indexes(k_fold)
         # 1 loop for multi-process; k_fold loops for single-process
         k_time = 1 if do_mp else k_fold
         for k in range(k_time):
@@ -120,22 +121,22 @@ def train(config, do_mp=False, fold_idx=0):
             valid_data_loaders = dict()
             ## train
             kwargs = {}
-            if "imbalanced" in get_by_path(config, ["data_loaders", "train", "data", "module"]):
+            if "imbalanced" in get_by_path(config, ["data_loaders", "train", dataset_name, "module"]):
                 kwargs.update(
                     class_weight=class_weight.cpu().detach().numpy(), target=target
                 )
             # stratify_by_labels
             kwargs.update(stratify_by_labels=target)
-            dataset = train_datasets["data"]
-            loaders = config.init_obj(["data_loaders", "train", "data"], dataset, **kwargs)
-            train_data_loaders["data"] = loaders.train_loader
+            dataset = train_datasets[dataset_name]
+            loaders = config.init_obj(["data_loaders", "train", dataset_name], dataset, **kwargs)
+            train_data_loaders[dataset_name] = loaders.train_loader
             ## valid
             if not valid_exist:
-                valid_data_loaders["data"] = loaders.valid_loader
+                valid_data_loaders[dataset_name] = loaders.valid_loader
             else:
-                dataset = valid_datasets["data"]
-                loaders = config.init_obj(["data_loaders", "valid", "data"], dataset)
-                valid_data_loaders["data"] = loaders.valid_loader
+                dataset = valid_datasets[dataset_name]
+                loaders = config.init_obj(["data_loaders", "valid", dataset_name], dataset)
+                valid_data_loaders[dataset_name] = loaders.valid_loader
 
             # models
             logger_model = get_logger("model", verbosity=1)

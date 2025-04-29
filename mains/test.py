@@ -30,7 +30,7 @@ def test(config):
     # datasets
     test_datasets = dict()
     for name in config["datasets"]["test"]:
-        test_datasets["data"] = config.init_obj(["datasets", "test", "data"])
+        test_datasets[name] = config.init_obj(["datasets", "test", name])
 
     repeat_time = config["cross_validation"]["repeat_time"]
     k_fold = config["cross_validation"]["k_fold"]
@@ -41,9 +41,10 @@ def test(config):
     for k in range(k_fold):
         # data_loaders
         test_data_loaders = dict()
-        dataset = test_datasets["data"]
-        loaders = config.init_obj(["data_loaders", "test", "data"], dataset)
-        test_data_loaders["data"] = loaders.test_loader
+        dataset_name = "data"
+        dataset = test_datasets[dataset_name]
+        loaders = config.init_obj(["data_loaders", "test", dataset_name], dataset)
+        test_data_loaders[dataset_name] = loaders.test_loader
 
         # models
         if k_fold > 1:
@@ -85,7 +86,7 @@ def test(config):
         tester = config.init_obj(
             ["tester"], test_data_loaders, models, device, metrics_epoch, test_metrics
         )
-        targets, outputs, test_log = tester.test()
+        targets, outputs, test_log = tester.test(dataset_name)
         test_log = test_log["mean"].rename(k)
         results = pd.concat((results, test_log), axis=1)
         logger.info(test_log)

@@ -38,12 +38,12 @@ if __name__ == "__main__":
             target="data_loaders;train;data;kwargs;DataLoader_kwargs;num_workers",
         ),
         CustomArgs(
-            ["--lr", "--learning_rate"], type=float, target="optimizers;model;args;lr"
+            ["--lr", "--learning_rate"], type=float, target="optimizers;model;kwargs;lr"
         ),
         CustomArgs(
             ["--bs", "--batch_size"],
             type=int,
-            target="data_loaders;train;data;args;DataLoader_kwargs;batch_size",
+            target="data_loaders;train;data;kwargs;DataLoader_kwargs;batch_size",
         ),
     ]
     for opt in options:
